@@ -28,7 +28,7 @@ return CMap::mergeArray(
             ),
             // Работа с миграциями, обновление БД модулей
             'migrator'=>array(
-                'class'=>'yupe\components\Migrator',
+                'class'=>'yupe\components\migrator\MigratorWeb',
             ),
             // параметры подключения к базе данных, подробнее http://www.yiiframework.ru/doc/guide/ru/database.overview
             // используется лишь после установки Юпи для тестирования:

@@ -474,6 +474,13 @@ class YupeModule extends WebModule
      **/
     public function init()
     {
+        $this->setImport(
+            array(
+                'yupe.models.*',
+                'yupe.components.*',
+            )
+        );
+
         parent::init();
     }
 

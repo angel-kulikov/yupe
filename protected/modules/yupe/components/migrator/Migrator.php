@@ -6,11 +6,11 @@
  * @package  yupe.modules.yupe.components
  * @author   Alexander Tischenko <tsm@glavset.ru>
  * @license  BSD https://raw.github.com/yupe/yupe/master/LICENSE
- * @version  0.5.3
+ * @version  0.6
  * @link     http://www.yupe.ru
  */
 
-namespace yupe\components;
+namespace yupe\components\migrator;
 
 use Yii;
 use CDbCacheDependency;
@@ -20,7 +20,7 @@ use CDbConnection;
 use TagsCache;
 use CHtml;
 
-class Migrator extends \CApplicationComponent
+abstract class Migrator extends \CApplicationComponent implements MigratorInterface
 {
     public $connectionID = 'db';
     public $migrationTable = 'migrations';
@@ -29,6 +29,19 @@ class Migrator extends \CApplicationComponent
      * @var CDbConnection
      */
     private $_db;
+
+    /**
+     * Форматированный вывод:
+     * 
+     * @param stirng $message - сообщение
+     * @param string $endline - конец строки
+     * 
+     * @return void
+     */
+    public function formating($message, $endline = "\n")
+    {
+        echo $message . $endline;
+    }
 
     /**
      * Инициализируем класс:
@@ -115,14 +128,17 @@ class Migrator extends \CApplicationComponent
             foreach ($data as $migration) {
                 if ($migration['apply_time'] == 0) {
                     try {
-                        echo Yii::t(
-                            'YupeModule.yupe',
-                            'Downgrade {migration} for {module}.',
-                            array(
-                                '{module}' => $module,
-                                '{migration}' => $migration['version'],
+                        $this->formating(
+                            Yii::t(
+                                'YupeModule.yupe',
+                                'Downgrade {migration} for {module}.',
+                                array(
+                                    '{module}' => $module,
+                                    '{migration}' => $migration['version'],
+                                )
                             )
-                        ) . '<br />';
+                        );
+
                         Yii::log(
                             Yii::t(
                                 'YupeModule.yupe',
@@ -152,14 +168,18 @@ class Migrator extends \CApplicationComponent
                                     )
                                 )
                             );
-                            echo Yii::t(
-                                'YupeModule.yupe',
-                                'Can\'t downgrade migrations {migration} for {module}.',
-                                array(
-                                    '{module}' => $module,
-                                    '{migration}' => $migration['version'],
+
+                            $this->formating(
+                                Yii::t(
+                                    'YupeModule.yupe',
+                                    'Can\'t downgrade migrations {migration} for {module}.',
+                                    array(
+                                        '{module}' => $module,
+                                        '{migration}' => $migration['version'],
+                                    )
                                 )
-                            ) . '<br />';
+                            );
+
                             return false;
                         }
                     } catch (ErrorException $e) {
@@ -172,12 +192,14 @@ class Migrator extends \CApplicationComponent
                                 )
                             )
                         );
-                        echo Yii::t(
-                            'YupeModule.yupe',
-                            'There is an error: {error}',
-                            array(
-                                '{error}' => $e
-                            )
+                        $this->formating(
+                            Yii::t(
+                                'YupeModule.yupe',
+                                'There is an error: {error}',
+                                array(
+                                    '{error}' => $e
+                                )
+                            ), null
                         );
                     }
                 }
@@ -190,11 +212,14 @@ class Migrator extends \CApplicationComponent
                     array('{module}' => $module)
                 )
             );
-            echo Yii::t(
-                'YupeModule.yupe',
-                'No need to downgrade migrations for {module}',
-                array('{module}' => $module)
-            ) . '<br />';
+
+            $this->formating(
+                Yii::t(
+                    'YupeModule.yupe',
+                    'No need to downgrade migrations for {module}',
+                    array('{module}' => $module)
+                )
+            );
         }
         return true;
     }
@@ -214,7 +239,11 @@ class Migrator extends \CApplicationComponent
         ob_start();
         ob_implicit_flush(false);
 
-        echo Yii::t('YupeModule.yupe', "Checking migration {class}", array('{class}' => $class));
+        $this->formating(
+            Yii::t('YupeModule.yupe', "Checking migration {class}", array('{class}' => $class)),
+            null
+        );
+
         Yii::app()->cache->clear('getMigrationHistory');
 
         $start = microtime(true);
@@ -358,7 +387,6 @@ class Migrator extends \CApplicationComponent
      */
     protected function getDbConnection()
     {
-        
         if ($this->_db !== null) {
             return $this->_db;
         } else {
@@ -379,35 +407,54 @@ class Migrator extends \CApplicationComponent
      *
      * @return mixed version and apply time
      */
-    public function getMigrationHistory($module, $limit = 20)
+    public function getMigrationHistory($module, $limit = 20, $all = false)
     {
         $db = $this->getDbConnection();
 
-        $allData = Yii::app()->cache->get('getMigrationHistory');
+        $data = Yii::app()->cache->get('getMigrationHistory' . '-limit-' . $limit);
 
-        if ($allData === false || !isset($allData[$module])) {
+        if ($data === false) {
+            $data = array();
 
             Yii::app()->cache->clear('getMigrationHistory');
 
-            $data = $db->cache(
+            $items = $db->cache(
                     3600, new CDbCacheDependency('select count(id) from ' . $db->tablePrefix . $this->migrationTable)
                 )->createCommand()
-                ->select('version, apply_time')
+                ->select('version, apply_time, module')
                 ->from($db->tablePrefix . $this->migrationTable)
                 ->order('version DESC')
-                ->where('module = :module', array(':module' => $module))
                 ->limit($limit)
                 ->queryAll();
 
-            $allData[$module] = $data;
+            foreach ($items as $item) {
+                $mod = $item['module'] ?: 'all';
+                array_pop($item);
+                
+                $data[$mod][] = $item;
+            }
 
-            Yii::app()->cache->set('getMigrationHistory', $allData, 3600, new TagsCache('yupe', 'installedModules', 'getModulesDisabled', 'getMigrationHistory', $module));
-
-        } else {
-            $data = $allData[$module];
+            Yii::app()->cache->set('getMigrationHistory', $data, 3600, new TagsCache('yupe', 'installedModules', 'getModulesDisabled', 'getMigrationHistory'));
         }
 
-        return CHtml::listData($data, 'version', 'apply_time');
+        if ($module !== null && isset($data[$module])) {
+            $return = $data[$module];
+        } else {
+            if ($all === false) {
+                foreach ($data as $module => $items) {
+                    foreach ($items as $item) {
+                        $return[] = array_merge(
+                            array('module' => $module),
+                            $item
+                        );
+                    }
+                }
+            } else {
+                return $data;
+            }
+        }
+
+        return CHtml::listData($return, 'version', 'apply_time');
     }
 
     /**

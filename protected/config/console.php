@@ -3,20 +3,29 @@ Yii::setPathOfAlias('application', dirname(__FILE__) . '/../');
 Yii::setPathOfAlias('yupe', dirname(__FILE__) . '/../modules/yupe/');
 Yii::setPathOfAlias('vendor', dirname(__FILE__) . '/../../vendor/');
 
-    return array(
+return array(
     // У вас этот путь может отличаться. Можно подсмотреть в config/main.php.
     'basePath'          => dirname(__FILE__) . DIRECTORY_SEPARATOR . '..',
     'name'              => 'Cron',
     'preload'           => array('log'),
     'commandMap'        => array(
-
+        'migrate'=>array(
+            'class'=>'yupe.components.migrator.commands.MigratorCommand',
+        ),
     ),
-    'import' => array(
+    'import'  => array(
         'application.commands.*',
         'application.components.*',
         'application.models.*',
         'application.modules.queue.models.*',
         'application.modules.yupe.extensions.tagcache.*',
+    ),
+    'modules'    => array(
+        'yupe'  => array(
+            'class'        => 'application.modules.yupe.YupeModule',
+            'brandUrl'     => 'http://yupe.ru?from=engine',
+            'cache'        => true,
+        ),
     ),
     // Перенаправляем журнал для cron-а в отдельные файлы
     'components' => array(
@@ -25,7 +34,7 @@ Yii::setPathOfAlias('vendor', dirname(__FILE__) . '/../../vendor/');
             'class' => 'application.modules.yupe.components.YMail',
         ),
         'migrator'=>array(
-            'class'=>'yupe\components\Migrator',
+            'class'=>'yupe\components\migrator\MigratorConsole',
         ),
         'log' => array(
             'class' => 'CLogRouter',

@@ -9,7 +9,9 @@ return array(
     'name'              => 'Cron',
     'preload'           => array('log'),
     'commandMap'        => array(
-
+        'migrate'=>array(
+            'class'=>'yupe.components.migrator.commands.MigratorCommand',
+        ),
     ),
     'import' => array(
         'application.commands.*',
@@ -29,7 +31,7 @@ return array(
             'class' => 'application.modules.yupe.components.YMail',
         ),
         'migrator'=>array(
-            'class'=>'yupe\components\Migrator',
+            'class'=>'yupe\components\migrator\MigratorConsole',
         ),
         'log' => array(
             'class' => 'CLogRouter',

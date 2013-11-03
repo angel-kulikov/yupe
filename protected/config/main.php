@@ -39,6 +39,7 @@ return array(
                              ? array('debug') : array(),
     'aliases' => array(
         'bootstrap' => realpath(Yii::getPathOfAlias('vendor') . '/clevertech/yii-booster/src'),
+        'yupe'      => realpath(Yii::getPathOfAlias('yupe')),
     ),
     'import' => array(
         // подключение основых путей
@@ -90,7 +91,7 @@ return array(
         ),
         // Работа с миграциями, обновление БД модулей
         'migrator'=>array(
-            'class'=>'yupe\components\Migrator',
+            'class'=>'yupe\components\migrator\MigratorWeb',
         ),
         // DAO simple wrapper:
         'dao' => array(
