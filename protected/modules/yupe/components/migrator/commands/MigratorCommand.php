@@ -61,6 +61,11 @@ class MigratorCommand extends CConsoleCommand
         echo $before . $message . $after;
     }
 
+    /**
+     * Превьюшка:
+     * 
+     * @return void
+     */
     public function notice()
     {
         $yupeVersion = Yii::app()->getModule('yupe')->getVersion();
@@ -74,6 +79,21 @@ class MigratorCommand extends CConsoleCommand
         );
     }
 
+    /**
+     * Существует ли модуль:
+     * 
+     * @param mixed  $module - модуль
+     * @return mixed, string - имя модуля, null - не найден
+     */
+    public function getModule($module)
+    {
+        $path = Yii::getPathOfAlias('application.modules.' . $module);
+
+        return is_dir($path)
+            ? $module
+            : null;
+    }
+
     public function beforeAction($action, $params)
     {
         $path = Yii::getPathOfAlias($this->migrationPath);
@@ -82,13 +102,11 @@ class MigratorCommand extends CConsoleCommand
             
             $this->formating(
                 Yii(
-                    'YupeModule.yupe', 'Error: The migration directory does not exist: :path', array(
+                    'YupeModule.yupe', 'Warning: The migration directory does not exist: :path', array(
                         ':path' => $this->migrationPath
                     )
                 )
             );
-            
-            exit(1);
         }
 
         $this->migrationPath = $path;
@@ -144,7 +162,7 @@ class MigratorCommand extends CConsoleCommand
             return 1;
         }
 
-        if(($migrations=$this->getMigrationHistory($step))===array())
+        if(($migrations=Yii::app()->migrator->getMigrationHistory(null, $step))===array())
         {
             echo "No migration has been done before.\n";
             return 0;
@@ -180,7 +198,7 @@ class MigratorCommand extends CConsoleCommand
             return 1;
         }
 
-        if(($migrations=$this->getMigrationHistory($step))===array())
+        if(($migrations=Yii::app()->migrator->getMigrationHistory(null, $step))===array())
         {
             echo "No migration has been done before.\n";
             return 0;
@@ -240,7 +258,7 @@ class MigratorCommand extends CConsoleCommand
         }
 
         // try migrate down
-        $migrations=array_keys($this->getMigrationHistory(-1));
+        $migrations=array_keys(Yii::app()->migrator->getMigrationHistory(null, -1));
         foreach($migrations as $i=>$migration)
         {
             if(strpos($migration,$version.'_')===0)
@@ -298,7 +316,7 @@ class MigratorCommand extends CConsoleCommand
         }
 
         // try mark down
-        $migrations=array_keys($this->getMigrationHistory(-1));
+        $migrations=array_keys(Yii::app()->migrator->getMigrationHistory(null, -1));
         foreach($migrations as $i=>$migration)
         {
             if(strpos($migration,$version.'_')===0)
@@ -321,21 +339,6 @@ class MigratorCommand extends CConsoleCommand
 
         echo "Error: Unable to find the version '$originalVersion'.\n";
         return 1;
-    }
-
-    /**
-     * Существует ли модуль:
-     * 
-     * @param mixed  $module - модуль
-     * @return mixed, string - имя модуля, null - не найден
-     */
-    public function getModule($module)
-    {
-        $path = Yii::getPathOfAlias('application.modules.' . $module);
-
-        return is_dir($path)
-            ? $module
-            : null;
     }
 
     public function actionHistory($args)
@@ -571,22 +574,29 @@ class MigratorCommand extends CConsoleCommand
 
     protected function getNewMigrations()
     {
-        $applied=array();
-        foreach($this->getMigrationHistory(-1) as $version=>$time)
-            $applied[substr($version,1,13)]=true;
+        $applied = array();
+        $history = Yii::app()->migrator->getMigrationHistory(null, -1);
+        foreach($history as $version => $time) {
+            $applied[substr($version,1,13)] = true;
+        }
 
-        $migrations=array();
-        $handle=opendir($this->migrationPath);
-        while(($file=readdir($handle))!==false)
-        {
-            if($file==='.' || $file==='..')
+        $migrations = array();
+        $handle     = opendir($this->migrationPath);
+        while(($file = readdir($handle)) !== false) {
+            if($file === '.' || $file === '..') {
                 continue;
-            $path=$this->migrationPath.DIRECTORY_SEPARATOR.$file;
-            if(preg_match('/^(m(\d{6}_\d{6})_.*?)\.php$/',$file,$matches) && is_file($path) && !isset($applied[$matches[2]]))
-                $migrations[]=$matches[1];
+            }
+            $path = $this->migrationPath . DIRECTORY_SEPARATOR . $file;
+            if (preg_match('/^(m(\d{6}_\d{6})_.*?)\.php$/', $file, $matches) && is_file($path) && !isset($applied[$matches[2]])) {
+                $migrations[] = $matches[1];
+            }
         }
         closedir($handle);
+
+        $this->getModulesNewMigrations();
+
         sort($migrations);
+        
         return $migrations;
     }
 
