@@ -13,10 +13,12 @@
  * @property integer $gender
  * @property string  $avatar
  * @property string  $password
- * @property string  $salt
  * @property integer $status
  * @property integer $access_level
  * @property string  $last_visit
+ * @property bollean $email_confirm
+ * @property string  $registration_date
+ *
  */
 
 use yupe\widgets\CustomGridView;
@@ -76,13 +78,15 @@ class User extends YModel
             array('about', 'length', 'max' => 300),
             array('location', 'length', 'max' => 150),
             array('gender, status, access_level', 'numerical', 'integerOnly' => true),
-            array('use_gravatar', 'numerical', 'integerOnly' => true, 'allowEmpty' => true),
             array('nick_name', 'match', 'pattern' => '/^[A-Za-z0-9_-]{2,50}$/', 'message' => Yii::t('UserModule.user', 'Bad field format for "{attribute}". You can use only letters and digits from 2 to 20 symbols')),
             array('site', 'url', 'allowEmpty' => true),
             array('email', 'email'),
             array('email', 'unique', 'message' => Yii::t('UserModule.user', 'This email already use by another user')),
             array('nick_name', 'unique', 'message' => Yii::t('UserModule.user', 'This nickname already use by another user')),
             array('avatar', 'file', 'types' => implode(',', $module->avatarExtensions), 'maxSize' => $module->avatarMaxSize, 'allowEmpty' => true),
+            array('email_confirm', 'in', 'range' => array_keys($this->getEmailConfirmStatusList())),
+            array('status', 'in', 'range' => array_keys($this->getStatusList())),
+            array('registration_date', 'length', 'max' => 50),
             array('id, change_date, middle_name, first_name, last_name, nick_name, email, gender, avatar, status, access_level, last_visit', 'safe', 'on' => 'search'),
         );
     }
@@ -205,23 +209,9 @@ class User extends YModel
      */
     public function getIsVerifyEmail()
     {
-        return $this->verify instanceof UserToken
-            && (int) $this->verify->status === UserToken::STATUS_ACTIVATE;
+        return $this->email_confirm;
     }
-
-    public function getVerifyIcon()
-    {
-        return $this->getIsVerifyEmail()
-                ? '<i class="icon icon-ok-sign" title=""></i>'
-                : CHtml::link(
-                    '<i class="icon icon-repeat" title=""></i>',
-                    array('verifySend', 'id' => $this->id),
-                    array(
-                        'class'  => 'verify-email',
-                        'title'  => Yii::t('UserModule.user', 'Send a letter to verify email'),
-                    )
-                );
-    }
+   
 
     /**
      * Строковое значение верификации почты пользователя:
@@ -244,45 +234,19 @@ class User extends YModel
     {
         $criteria = new CDbCriteria;
 
-        $ips = array();
-
-        empty($this->activation_ip) || array_push($ips, $this->activation_ip);
-        empty($this->registration_ip) || array_push($ips, $this->registration_ip);
-
-        $criteria->with = array('reg', 'verify');
-        $criteria->together = true;
-
-        if (($data = Yii::app()->getRequest()->getParam('UserToken')) !== null || !empty($ips)) {
-            $reg = new UserToken;
-            $reg->setAttributes($data);
-
-            if (!empty($reg->created) && strlen($reg->created) == 10) {
-                $criteria->addBetweenCondition('created', $reg->created . ' 00:00:00', $reg->created . ' 23:59:59');
-            }
-
-            if (!empty($reg->updated) && strlen($reg->updated) == 10) {
-                $criteria->addBetweenCondition('updated', $reg->updated . ' 00:00:00', $reg->updated . ' 23:59:59');
-            }
-
-            $criteria->addInCondition('reg.ip', $ips);
-        }
-
         $criteria->compare('t.id', $this->id);
         $criteria->compare('t.change_date', $this->change_date, true);
+        $criteria->compare('t.registration_date', $this->registration_date, true);
         $criteria->compare('t.first_name', $this->first_name, true);
         $criteria->compare('t.middle_name', $this->first_name, true);
         $criteria->compare('t.last_name', $this->last_name, true);
         $criteria->compare('t.nick_name', $this->nick_name, true);
         $criteria->compare('t.email', $this->email, true);
-        $criteria->compare('t.gender', $this->gender);
-        
-        if ((int) $this->status === self::STATUS_NOT_ACTIVE) {
-            $criteria->compare('reg.status', UserToken::STATUS_NULL);
-        } else {
-            $criteria->compare('t.status', $this->status);
-        }
+        $criteria->compare('t.gender', $this->gender);       
+        $criteria->compare('t.status', $this->status);        
         $criteria->compare('t.access_level', $this->access_level);
         $criteria->compare('t.last_visit', $this->last_visit, true);
+        $criteria->compare('t.email_confirm', $this->email_confirm);        
 
         return new CActiveDataProvider(get_class($this), array('criteria' => $criteria));
     }
@@ -373,7 +337,6 @@ class User extends YModel
     public function beforeValidate()
     {
         $this->gender       = $this->gender ?: self::GENDER_THING;
-        $this->status       = $this->status ?: self::STATUS_NOT_ACTIVE;
         $this->use_gravatar = $this->use_gravatar ?: 0;
 
         return parent::beforeValidate();
@@ -407,30 +370,6 @@ class User extends YModel
 
                 return false;
             }
-
-            // Если есть токен регистрации,
-            // изменён статус и статус != заблокирован:
-            if (
-                $this->reg instanceof UserToken
-                && (int) $this->status !== $this->_oldStatus
-                && (int) $this->status !== self::STATUS_BLOCK
-            ) {
-                $this->reg->status = (int) $this->status === self::STATUS_ACTIVE
-                    ? UserToken::STATUS_ACTIVATE
-                    : null;
-
-                $this->reg->save();
-            } elseif (($this->reg instanceof UserToken) === false) {
-                UserToken::newActivate(
-                    $this, (int) $this->status === self::STATUS_ACTIVE
-                                ? UserToken::STATUS_ACTIVATE
-                                : null
-                );
-            }
-        }
-
-        if ($this->birth_date === '') {
-            unset($this->birth_date);
         }
 
         // Если используется граватар - удаляем текущие аватарки:
@@ -439,24 +378,6 @@ class User extends YModel
         return parent::beforeSave();
     }
 
-    /**
-     * Метод после сохранения:
-     * - если новый пользователь, то создаём токен активации.
-     * 
-     * @return void
-     */
-    public function afterSave()
-    {
-        if ($this->getIsNewRecord() === true) {
-            UserToken::newActivate(
-                $this, (int) $this->status === self::STATUS_ACTIVE
-                            ? UserToken::STATUS_ACTIVATE
-                            : null
-            );
-        }
-
-        return parent::afterSave();
-    }
 
     /**
      * Метод перед удалением:
@@ -473,29 +394,6 @@ class User extends YModel
             
             return false;
         }
-
-        $transaction = Yii::app()->getDb()->beginTransaction();
-
-        foreach ($this->tokens as $token) {
-            // Если нельзя удалить какой-то токен
-            // делаем rollBack и сообщаем о проблеме:
-            if (false === $token->delete()) {
-
-                $transaction->rollBack();
-
-                $errors = array();
-
-                foreach ((array) $token->getErrors() as $value) {
-                    $errors[] = implode("\n", $value);
-                }
-                
-                throw new Exception(
-                    implode("\n", $errors)
-                );
-            }
-        }
-
-        $transaction->commit();
 
         return parent::beforeDelete();
     }
@@ -523,7 +421,7 @@ class User extends YModel
             'notActivated'  => array(
                 'with'      => 'reg',
                 'condition' => 'reg.status = :notActivated_status',
-                'params'    => array(':notActivated_status' => UserToken::STATUS_NULL),
+                'params'    => array(':notActivated_status' => UserToken::STATUS_NEW),
             ),
             'admin'         => array(
                 'condition' => 'access_level = :access_level',
@@ -589,6 +487,20 @@ class User extends YModel
                 : Yii::t('UserModule.user', 'status is not set');
     }
 
+    public function getEmailConfirmStatusList()
+    {
+         return array(
+             self::EMAIL_CONFIRM_YES => Yii::t('UserModule.user', 'Yes'),
+             self::EMAIL_CONFIRM_NO  => Yii::t('UserModule.user', 'No'),
+         );
+    }
+
+    public function getEmailConfirmStatus()
+    {
+        $data = $this->getEmailConfirmStatusList();
+        return isset($data[$this->email_confirm]) ? $data[$this->email_confirm] : Yii::t('UserModule.user', '*unknown*');
+    }
+
     /**
      * Список статусов половой принадлежности:
      * 
@@ -617,32 +529,7 @@ class User extends YModel
                 : $data[self::GENDER_THING];
     }
 
-    /**
-     * Проверка валидации пароля:
-     * 
-     * @param string $password - введённый пароль
-     * 
-     * @return boolean
-     */
-    public function validatePassword($password)
-    {
-        return CPasswordHelper::verifyPassword(
-            $password,
-            $this->hash
-        );
-    }
-
-    /**
-     * Хеширование пароля:
-     * 
-     * @param string $password - пароль
-     * 
-     * @return string
-     */
-    public static function hashPassword($password)
-    {
-        return CPasswordHelper::hashPassword($password);
-    }
+    
 
     /**
      * Генерируем случайный пароль:
@@ -765,63 +652,7 @@ class User extends YModel
         return ($this->first_name || $this->last_name)
             ? $this->last_name . $separator . $this->first_name . ($this->middle_name ? ($separator . $this->middle_name) : "")
             : $this->nick_name;
-    }
-
-    /**
-     * Создание пользователя:
-     *
-     * @todo Переписать на работу с формой регистрации,
-     *       незачем передавать туеву хучу параметров (ИМХО, angel-kulikov)
-     * 
-     * @param string  $nick_name    - Ник пользователя
-     * @param string  $email        - почта пользователя
-     * @param string  $password     - пароль
-     * @param string  $salt         - "соль" для пароля
-     * @param integer $status       - статус пользователя
-     * @param integer $emailConfirm - статус активации пользователя
-     * @param string  $first_name   - Имя пользователя
-     * @param string  $last_name    - Фамилия пользователя
-     * 
-     * @return void
-     */
-    public function createAccount(
-        $nick_name,
-        $email,
-        $password     = null,
-        $salt         = null,
-        $status       = self::STATUS_NOT_ACTIVE,
-        $emailConfirm = self::EMAIL_CONFIRM_NO,
-        $first_name   = '',
-        $last_name    = ''
-    )
-    {
-        $salt = ($salt === NULL) ? $this->generateSalt() : $salt;
-        $password = ($password === NULL) ? $this->generateRandomPassword() : $password;
-
-        $this->setAttributes(array(
-            'nick_name'         => $nick_name,
-            'first_name'        => $first_name,
-            'last_name'         => $last_name,
-            'hash'              => $this->hashPassword($password),
-            'registration_date' => new CDbExpression('NOW()'),
-            'registration_ip'   => Yii::app()->getRequest()->userHostAddress,
-            'activation_ip'     => Yii::app()->getRequest()->userHostAddress,
-            'status'            => $status,
-            'email_confirm'     => $emailConfirm,
-        ));
-
-        // если не определен емэйл то генерим уникальный
-        $setemail = empty($email);
-        $this->email = $setemail ? 'user-' . $this->generateRandomPassword() . '@' . $_SERVER['HTTP_HOST'] : $email;
-
-        $this->save(false);
-
-        // для красоты
-        if ($setemail) {
-            $this->email = "user-{$this->id}@{$_SERVER['HTTP_HOST']}";
-            $this->update(array('email'));
-        }
-    }
+    }    
 
     /**
      * Смена пароля:

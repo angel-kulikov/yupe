@@ -52,9 +52,9 @@ class FeedBackCest
         $I = new WebGuy\UserSteps($scenario);
         $I->loginAsAdminAndGoToThePanel(\CommonPage::TEST_USER_NAME,\CommonPage::TEST_PASSWORD);
 
-        $I->amOnPage('/feedback/default/index');
+        $I->amOnPage('/backend/feedback/feedback');
         $I->see('test_name');
-        $I->click('#yw6');
+        $I->amOnPage('/backend/feedback/feedback/update/1');
         $I->selectOption('FeedBack[status]','Ответ отправлен');
         $I->dontSeeCheckboxIsChecked('FeedBack[is_faq]');
         $I->checkOption('FeedBack[is_faq]');
@@ -62,7 +62,7 @@ class FeedBackCest
         $I->fillField('FeedBack[answer]','test_answer');
         $I->click('Сохранить сообщение и закрыть');
         $I->see('Сообщение обновлено!', \CommonPage::SUCCESS_CSS_CLASS);
-        $I->seeInCurrentUrl('/feedback/default/index');
+        $I->seeInCurrentUrl('/backend/feedback/feedback');
         $I->seeInDatabase('yupe_feedback_feedback', array(
             'name'   => 'test_name',
             'email'  => 'test@yupe.ru',
@@ -83,7 +83,7 @@ class FeedBackCest
         $I->seeLink('Подробнее...', \FeedBackPage::routeFaq(1));
         $I->click('Подробнее...');
 
-        $I->see('test_theme','h1');
+        $I->see('test_theme #1','h1');
         $I->see('Задайте вопрос ?!','.btn');
 
         $check = array('test_name','test_theme','test_text','test_answer','yupe');

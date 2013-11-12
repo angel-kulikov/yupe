@@ -13,13 +13,31 @@ return array(
         'application.modules.user.forms.*',
         'application.modules.user.components.*',
     ),
+
     'component' => array(
         // компонент Yii::app()->user, подробнее http://www.yiiframework.ru/doc/guide/ru/topics.auth
         'user' => array(
             'class'    => 'application.modules.user.components.YWebUser',
             'loginUrl' => '/user/account/login/',
         ),
+
+        'userManager' => array(
+            'class' => 'application.modules.user.components.UserManager',
+            'hasher' => array(
+                'class' => 'application.modules.user.components.Hasher'
+            ),
+            'tokenManager' => array(
+                'class' => 'application.modules.user.components.TokenManager',
+                'storage' => array(
+                    'class' => 'application.modules.user.components.DbTokenStorage',
+                )
+            )
+        ),
+        'authManager' => array(
+            'class' => 'application.modules.user.components.AuthManager'
+        )
     ),
+
     'rules'     => array(
         '/login'                 => 'user/account/login',
         '/backend/login'         => 'user/account/backendlogin',
