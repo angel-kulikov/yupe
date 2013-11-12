@@ -341,7 +341,14 @@ class MigratorCommand extends CConsoleCommand
         return 1;
     }
 
-    public function actionHistory($args)
+    /**
+     * Получение аргументов:
+     * 
+     * @param array $args - аргументы
+     * 
+     * @return array
+     */
+    public function getArgs($args)
     {
         $module = $this->getModule(
             isset($args[0]) ? $args[0] : -1
@@ -350,6 +357,13 @@ class MigratorCommand extends CConsoleCommand
         $limit = $module !== null
             ? (isset($args[1]) ? (int) $args[1] : -1)
             : (isset($args[0]) ? (int) $args[0] : -1);
+
+        return array($module, $limit);
+    }
+
+    public function actionHistory($args)
+    {
+        list($module, $limit) = $this->getArgs($args);
 
         $migrations = Yii::app()->migrator->getMigrationHistory($module, $limit, true);
 
