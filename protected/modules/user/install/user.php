@@ -26,15 +26,12 @@ return array(
             'hasher' => array(
                 'class' => 'application.modules.user.components.Hasher'
             ),
-            'tokenManager' => array(
-                'class' => 'application.modules.user.components.TokenManager',
-                'storage' => array(
-                    'class' => 'application.modules.user.components.DbTokenStorage',
-                )
+            'tokenStorage' => array(
+                'class' => 'application.modules.user.components.DbTokenStorage',
             )
         ),
-        'authManager' => array(
-            'class' => 'application.modules.user.components.AuthManager'
+        'authenticationManager' => array(
+            'class' => 'application.modules.user.components.AuthenticationManager'
         )
     ),
 
@@ -49,6 +46,7 @@ return array(
         '/users/<username:\w+>/' => 'user/people/userInfo',
         '/activate/<token>'      => 'user/account/activate',
         '/confirm/<token>'       => 'user/account/confirm',
-        '/recovery/<token>'      => 'user/account/restore'
+        '/recovery/<token>'      => 'user/account/restore',
+        '/user/account/captcha/<v>' => '/user/account/captcha/'
     ),
 );
