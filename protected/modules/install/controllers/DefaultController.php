@@ -314,6 +314,13 @@ class DefaultController extends yupe\components\controllers\BackController
                 Yii::t('InstallModule.install', 'Need PHP version 5.3 and above.'),
             ),
             array(
+                Yii::t('InstallModule.install', 'Расширение json'),
+                true,
+                extension_loaded("json"),
+                'php_json',
+                Yii::t('InstallModule.install', 'Функции для работы с json')
+            ),
+            array(
                 Yii::t('InstallModule.install', 'Zend OPcache'),
                 false,
                 extension_loaded('Zend OPcache'),
@@ -1031,22 +1038,20 @@ class DefaultController extends yupe\components\controllers\BackController
                         'gender'            => 0,
                         'access_level'      => User::ACCESS_LEVEL_ADMIN,
                         'status'            => User::STATUS_ACTIVE,
-                        'hash'              => User::hashPassword(
+                        'email_confirm'     => User::EMAIL_CONFIRM_YES,
+                        'hash'              => Yii::app()->userManager->hasher->hashPassword(
                             $model->userPassword
                         ),
                     )
                 );
 
                 if ($user->save()) {
-                    UserToken::newVerifyEmail(
-                        $user, UserToken::STATUS_ACTIVATE
-                    );
-                    
+
                     $login           = new LoginForm;
                     $login->email    = $model->userEmail;
                     $login->password = $model->userPassword;
 
-                    $login->authenticate();
+                    Yii::app()->authenticationManager->login($login, Yii::app()->user, Yii::app()->request);
 
                     Yii::app()->user->setFlash(
                         YFlashMessages::SUCCESS_MESSAGE,

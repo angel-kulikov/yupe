@@ -25,6 +25,11 @@ class DbTokenStorage extends CApplicationComponent
         return $this->create($user, $expire, UserToken::TYPE_CHANGE_PASSWORD);
     }
 
+    public function createEmailVerifyToken(User $user, $expire=86400)
+    {
+        return $this->create($user, $expire, UserToken::TYPE_EMAIL_VERIFY);
+    }
+
 
     public function get($token, $type, $status = UserToken::STATUS_NEW)
     {
@@ -41,9 +46,10 @@ class DbTokenStorage extends CApplicationComponent
 
         if($token->save()) {
             if($invalidate) {
-                UserToken::model()->updateAll(array('status' => UserToken::STATUS_FAIL),'user_id = :user_id AND type = :type', array(
+                UserToken::model()->updateAll(array('status' => UserToken::STATUS_FAIL),'id != :id AND user_id = :user_id AND type = :type', array(
                     ':user_id' => $token->user_id,
-                    ':type' => $token->type
+                    ':type' => $token->type,
+                    ':id' => $token->id
                 ));
             }
 
@@ -52,5 +58,4 @@ class DbTokenStorage extends CApplicationComponent
 
         throw new CDbException(Yii::t('UserModule.user','Error activate token!'));
     }
-
 }
