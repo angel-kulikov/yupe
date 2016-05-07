@@ -1,11 +1,9 @@
 *.log
 composer.phar
-composer.lock
 *.bin
 *.settings
 .project
 *db.php
-uploads/
 *.komodoproject
 /nbproject/private/
 /.komodotools/
@@ -18,4 +16,7 @@ protected/config/db.php
 /tests/tests/_log/
 *.*~
 *.yml
+!.teatro.yml
 !*.dist.yml
+/.vagrant/
+Vagrantfile

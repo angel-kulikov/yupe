@@ -1,97 +1,100 @@
 <div class="page-header">
-    <h1><?php echo Yii::t('YupeModule.yupe', 'Control panel "{app}"', array('{app}' => CHtml::encode(Yii::t('YupeModule.yupe', Yii::app()->name)))); ?><br/></h1>
+    <h1><?= Yii::t(
+            'YupeModule.yupe',
+            'Control panel "{app}"',
+            ['{app}' => CHtml::encode(Yii::t('YupeModule.yupe', Yii::app()->name))]
+        ); ?>
+    </h1>
 </div>
 
-<?php foreach ($modules as $module): ?>
-    <?php
-    if ($module instanceof yupe\components\WebModule === false) {
-        continue;
-    } ?>
-    <?php if ($module->getIsActive()): ?>
+<?php $box = $this->beginWidget(
+    'bootstrap.widgets.TbPanel',
+    [
+        'title'      => Yii::t('YupeModule.yupe', 'Notify'),
+        'headerIcon' => 'fa fa-fw fa-exclamation-circle'
+    ]
+);?>
+
+<?php foreach ($modules as $module): { ?>
+    <?php if ($module instanceof yupe\components\WebModule === false): { ?>
+        <?php continue; ?>
+    <?php } endif; ?>
+    <?php if ($module->getIsActive()): { ?>
         <?php $messages = $module->checkSelf(); ?>
-        <?php if (is_array($messages)): ?>
-            <?php foreach ($messages as $key => $value): ?>
-                <?php if (!is_array($value)) continue; ?>
-                <div class="accordion" id="accordion<?php echo $module->getId(); ?>">
-                    <div class="accordion-group">
-                        <div class="accordion-heading">
-                            <a  class="accordion-toggle"
-                                data-toggle="collapse"
-                                data-parent="#accordion<?php echo $module->getId(); ?>"
-                                href="#collapse<?php echo $module->getId(); ?>"
+        <?php if (is_array($messages)): { ?>
+            <?php foreach ($messages as $key => $value): { ?>
+                <?php if (!is_array($value)) {
+                    continue;
+                } ?>
+                <div class="panel-group" id="accordion<?= $module->getId(); ?>">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <a class="panel-title"
+                               data-toggle="collapse"
+                               data-parent="#accordion<?= $module->getId(); ?>"
+                               href="#collapse<?= $module->getId(); ?>"
                                 >
-                                <?php echo Yii::t('YupeModule.yupe', 'Module {icon} "{module}", messages: {count}', array(
-                                        '{icon}'   => $module->icon ? "<i class='icon-" . $module->icon . "'>&nbsp;</i> " : "",
+                                <?= Yii::t(
+                                    'YupeModule.yupe',
+                                    'Module {icon} "{module}", messages: {count}',
+                                    [
+                                        '{icon}'   => $module->icon ? "<i class='" . $module->icon . "'></i> " : "",
                                         '{module}' => $module->getName(),
-                                        '{count}'  => '<small class="label label-warning">' . count($value) . '</small>',
-                                    )); ?>
+                                        '{count}'  => '<span class="badge alert-danger">' . count($value) . '</span>',
+                                    ]
+                                ); ?>
                             </a>
                         </div>
-                        <div id="collapse<?php echo $module->getId(); ?>" class="accordion-body collapse">
-                            <?php foreach ($value as $error): ?>
-                                <div class="accordion-inner">
-                                    <div class="alert alert-<?php echo $error['type']; ?>">
+                        <div id="collapse<?= $module->getId(); ?>" class="panel-collapse collapse">
+                            <div class="panel-body">
+                                <?php foreach ($value as $error): { ?>
+                                    <div class="alert alert-<?= $error['type']; ?>">
                                         <h4 class="alert-heading">
-                                            <?php echo Yii::t('YupeModule.yupe', 'Module "{module} ({id})"', array(
-                                                    '{module}' => $module->name,
+                                            <?= Yii::t(
+                                                'YupeModule.yupe',
+                                                'Module "{module} ({id})"',
+                                                [
+                                                    '{module}' => $module->getName(),
                                                     '{id}'     => $module->getId(),
-                                                )); ?>
+                                                ]
+                                            ); ?>
                                         </h4>
-                                        <?php echo $error['message']; ?>
+                                        <?= $error['message']; ?>
                                     </div>
-                                </div>
-                            <?php endforeach; ?>
+                                <?php } endforeach; ?>
+                            </div>
                         </div>
                     </div>
                 </div>
-            <?php endforeach; ?>
-        <?php endif; ?>
-    <?php endif; ?>
-<?php endforeach; ?>
+            <?php } endforeach; ?>
+        <?php } endif; ?>
+    <?php } endif; ?>
+<?php } endforeach; ?>
+
+<?php $this->endWidget(); ?>
 
 
-<div class="alert">
-    <p>
-        <?php
-        $yiiCount    = count($yiiModules);
-        $yupeCount   = count($modules);
-        $allCount    = $yupeCount + $yiiCount;
-        $enableCount = 0;
-        foreach ($modules as $module) {
-            if ($module instanceof yupe\components\WebModule === false) {
-                continue;
-            }
-            
-            if ($module->getIsActive() || $module->getIsNoDisable())
-                $enableCount++;
-        }
-        ?>
-        <?php echo Yii::t('YupeModule.yupe', 'Installed'); ?>
-        <small class="label label-info"><?php echo $allCount; ?></small>
-        <?php echo Yii::t('YupeModule.yupe', 'module|module|modules', $allCount); ?>,
-        <?php echo Yii::t('YupeModule.yupe', 'enabled'); ?>
-        <small class="label label-info"><?php echo $enableCount + $yiiCount; ?></small>
-        <?php echo Yii::t('YupeModule.yupe', 'module|module|modules', $enableCount + $yiiCount); ?>,
-        <?php echo Yii::t('YupeModule.yupe', 'disabled|disabled',$yupeCount - $enableCount); ?>
-        <small class="label label-info"><?php echo $yupeCount - $enableCount; ?></small>
-        <?php echo Yii::t('YupeModule.yupe', 'module|module|modules', $yupeCount - $enableCount); ?>
-        <br>
-        <small>
-            <?php echo Yii::t('YupeModule.yupe', '( You always can find another modules on {link} or {order_link} )', array(
-                '{link}'       => CHtml::link(Yii::t('YupeModule.yupe', 'official site'), 'http://yupe.ru/?from=mlist', array('target' => '_blank')),
-                '{order_link}' => CHtml::link(Yii::t('YupeModule.yupe', 'order to develop them'), 'http://yupe.ru/contacts/?from=mlist', array('target' => '_blank')),
-            )); ?>
-        </small>
-    </p>
-</div>
 
-<legend><?php echo Yii::t('YupeModule.yupe', 'Fast access to modules'); ?></legend>
+<?php foreach ($modules as $module): { ?>
+    <?php if ($module instanceof yupe\components\WebModule === false): { ?>
+        <?php continue; ?>
+    <?php } endif; ?>
+    <?php if ($module->getIsActive()): { ?>
+        <?php foreach ($module->getPanelWidgets() as $widget => $params): { ?>
+            <?php $this->widget($widget, $params); ?>
+        <?php } endforeach; ?>
+    <?php } endif; ?>
+
+<?php } endforeach; ?>
+
+
+<legend><?= Yii::t('YupeModule.yupe', 'Fast access to modules'); ?> </legend>
+
 <?php
 $this->widget(
-    'yupe.widgets.YShortCuts', array(
-        'shortcuts' => $modulesNavigation,
-        'modules'   => $modules,
-        'updates'   => Yii::app()->migrator->checkForUpdates($modules),
-    )
+    'yupe\widgets\YShortCuts',
+    [
+        'modules' => $modules
+    ]
 ); ?>
 <?php $this->menu = $modulesNavigation; ?>

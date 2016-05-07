@@ -1,15 +1,25 @@
 <?php Yii::import('application.modules.blog.BlogModule'); ?>
-<?php if(count($posts)):?>
-    <div class="alert alert-notice">
-        <h4><?php echo Yii::t('BlogModule.blog', 'read also:');?></h4>
-        <ul>
-            <?php foreach ($posts as $post):?>
-                <li><?php echo CHtml::link($post->title, array('/blog/post/show/','slug' => $post->slug));?></li>
-            <?php endforeach;?>
-        </ul>
+
+<?php if (count($posts)): ?>
+    <div class=" alert alert-warning">
+        <h4><?= Yii::t('BlogModule.blog', 'It will be interesting'); ?>:</h4>
+
+        <div>
+            <ul class="list-unstyled">
+                <?php foreach ($posts as $post): ?>
+                    <li><?= CHtml::link(
+                            CHtml::encode($post->title),
+                            ['/blog/post/view', 'slug' => $post->slug]
+                        ); ?></li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
     </div>
-<?php else:?>
-    <div class="alert alert-notice">
-        <?php $this->controller->widget('blog.widgets.LastPostsOfBlogWidget', array('blogId' => $this->post->blog_id, 'view' => 'in-post')); ?>
+<?php else: ?>
+    <div class="alert alert-warning">
+        <?php $this->controller->widget(
+            'blog.widgets.LastPostsOfBlogWidget',
+            ['blogId' => $this->post->blog_id, 'postId' => $this->post->id, 'view' => 'in-post']
+        ); ?>
     </div>
-<?php endif;?>
+<?php endif; ?>

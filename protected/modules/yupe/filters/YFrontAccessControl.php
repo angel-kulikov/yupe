@@ -9,14 +9,29 @@
  * @since 0.1
  *
  */
+namespace yupe\filters;
+
+use CAccessControlFilter;
+use Yii;
+
+/**
+ * Class YFrontAccessControl
+ * @package yupe\filters
+ */
 class YFrontAccessControl extends CAccessControlFilter
 {
+    /**
+     * @param \CFilterChain $filterChain
+     * @return bool
+     */
     public function preFilter($filterChain)
     {
-        if (Yii::app()->user->isAuthenticated()) {
+        if (Yii::app()->getUser()->isAuthenticated()) {
             return true;
         }
 
-        $this->accessDenied(Yii::app()->user, Yii::t('yii', 'You are not authorized to perform this action.'));
+        Yii::app()->getUser()->setReturnUrl(Yii::app()->getRequest()->getUrl());
+
+        $filterChain->controller->redirect(['/user/account/login']);
     }
 }

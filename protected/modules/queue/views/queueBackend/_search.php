@@ -1,26 +1,126 @@
 <?php
-$form = $this->beginWidget('bootstrap.widgets.TbActiveForm', array(
-    'action'      => Yii::app()->createUrl($this->route),
-    'method'      => 'get',
-    'type'        => 'vertical',
-    'htmlOptions' => array('class' => 'well form-vertical'),
-)); ?>
-    <fieldset class="inline"> 
-        <?php echo $form->textFieldRow($model, 'id', array('class' => 'span5', 'maxlength'=> 10)); ?>
-        <?php echo $form->textFieldRow($model, 'worker', array('class' => 'span5', 'maxlength'=> 300)); ?>
-        <?php echo $form->textFieldRow($model, 'create_time', array('class'=> 'span5')); ?>
-        <?php echo $form->textAreaRow($model, 'task', array('rows' => 6, 'cols' => 50, 'class'=> 'span8')); ?>
-        <?php echo $form->textFieldRow($model, 'start_time', array('class'=> 'span5')); ?>
-        <?php echo $form->textFieldRow($model, 'complete_time', array('class'=> 'span5')); ?>
-        <?php echo $form->textFieldRow($model, 'status', array('class'=> 'span5')); ?>
-        <?php echo $form->textFieldRow($model, 'notice', array('class' => 'span5', 'maxlength'=> 300)); ?>
-    </fieldset>
+$form = $this->beginWidget(
+    'bootstrap.widgets.TbActiveForm',
+    [
+        'action'      => Yii::app()->createUrl($this->route),
+        'method'      => 'get',
+        'type'        => 'vertical',
+        'htmlOptions' => ['class' => 'well'],
+    ]
+); ?>
+<fieldset>
+    <div class="row">
+        <div class="col-sm-3">
+            <?=  $form->dropDownListGroup(
+                $model,
+                'worker',
+                [
+                    'widgetOptions' => [
+                        'data'        => Yii::app()->getModule('queue')->getWorkerNamesMap(),
+                        'htmlOptions' => ['empty' => '---'],
+                    ],
+                ]
+            ); ?>
+        </div>
+        <div class="col-sm-3">
+            <?=  $form->dropDownListGroup(
+                $model,
+                'priority',
+                [
+                    'widgetOptions' => [
+                        'data'        => $model->getPriorityList(),
+                        'htmlOptions' => ['empty' => '---'],
+                    ],
+                ]
+            ); ?>
+        </div>
+        <div class="col-sm-3">
+            <?=  $form->dropDownListGroup(
+                $model,
+                'status',
+                [
+                    'widgetOptions' => [
+                        'data'        => $model->getStatusList(),
+                        'htmlOptions' => ['empty' => '---'],
+                    ],
+                ]
+            ); ?>
+        </div>
+    </div>
 
-    <?php $this->widget('bootstrap.widgets.TbButton', array(
-        'type'        => 'primary',
+    <div class="row">
+        <div class="col-sm-3">
+            <?=  $form->datePickerGroup(
+                $model,
+                'create_time',
+                [
+                    'widgetOptions' => [
+                        'options' => [
+                            'format'    => 'dd-mm-yyyy',
+                            'weekStart' => 1,
+                            'autoclose' => true,
+                        ],
+                    ],
+                    'prepend'       => '<i class="fa fa-calendar"></i>',
+                ]
+            );
+            ?>
+        </div>
+        <div class="col-sm-3">
+            <?=  $form->datePickerGroup(
+                $model,
+                'start_time',
+                [
+                    'widgetOptions' => [
+                        'options' => [
+                            'format'    => 'dd-mm-yyyy',
+                            'weekStart' => 1,
+                            'autoclose' => true,
+                        ],
+                    ],
+                    'prepend'       => '<i class="fa fa-calendar"></i>',
+                ]
+            );
+            ?>
+        </div>
+        <div class="col-sm-3">
+            <?=  $form->datePickerGroup(
+                $model,
+                'complete_time',
+                [
+                    'widgetOptions' => [
+                        'options' => [
+                            'format'    => 'dd-mm-yyyy',
+                            'weekStart' => 1,
+                            'autoclose' => true,
+                        ],
+                    ],
+                    'prepend'       => '<i class="fa fa-calendar"></i>',
+                ]
+            );
+            ?>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-3">
+            <?=  $form->textFieldGroup($model, 'task'); ?>
+        </div>
+        <div class="col-sm-3">
+            <?=  $form->textFieldGroup($model, 'notice'); ?>
+        </div>
+    </div>
+
+</fieldset>
+
+<?php $this->widget(
+    'bootstrap.widgets.TbButton',
+    [
+        'context'     => 'primary',
         'encodeLabel' => false,
         'buttonType'  => 'submit',
-        'label'       => '<i class="icon-search icon-white">&nbsp;</i> ' . Yii::t('QueueModule.queue', 'Find task'),
-    )); ?>
+        'label'       => '<i class="fa fa-search">&nbsp;</i> ' . Yii::t('QueueModule.queue', 'Find task'),
+    ]
+); ?>
 
 <?php $this->endWidget(); ?>

@@ -1,34 +1,34 @@
 <?php
-return array(
-    'module' => array(
-        'class' => 'application.modules.zendsearch.ZendSearchModule',
+
+return [
+    'module'    => [
+        'class'        => 'application.modules.zendsearch.ZendSearchModule',
         // Указание здесь layout'a портит отображение на фронтенде:
         //'layout' => '//layouts/column2',
-        'searchModels' => array(
-            'News' => array(
+        'searchModels' => [
+            'News' => [
                 'path'        => 'application.modules.news.models.News',
                 'module'      => 'news',
                 'titleColumn' => 'title',
-                'linkColumn'  => 'alias',
-                'linkPattern' => '/news/news/show?title={alias}',
+                'linkColumn'  => 'slug',
+                'linkPattern' => '/news/news/view?title={slug}',
                 'textColumns' => 'full_text,short_text,keywords,description',
-            ),
-            'Page' => array(
+            ],
+            'Page' => [
                 'module'      => 'page',
                 'path'        => 'application.modules.page.models.Page',
                 'titleColumn' => 'title',
                 'linkColumn'  => 'slug',
-                'linkPattern' => '/page/page/show?slug={slug}',
+                'linkPattern' => '/page/page/view?slug={slug}',
                 'textColumns' => 'body,title_short,keywords,description',
-            ),
-        ),
-    ),
-    'import' => array(
+            ],
+        ],
+    ],
+    'import'    => [
         'application.modules.zendsearch.models.*',
-    ),
-    'component' => array(),
-    'rules' => array(
+    ],
+    'component' => [],
+    'rules'     => [
         '/search' => 'zendsearch/search/search',
-    ),
-);
-?>
+    ],
+];

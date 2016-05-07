@@ -1,5 +1,8 @@
 <?php
+namespace tests\acceptance\user;
+
 use \WebGuy;
+use tests\acceptance\pages\EditProfilePage;
 
 class UserPublicProfileCest
 {
@@ -9,6 +12,8 @@ class UserPublicProfileCest
         $I->amOnPage(EditProfilePage::getPublicProfileUrl($user));
         $I->seeInCurrentUrl($user);
         $I->seeInTitle($user);
-        $I->see('Мнений пока нет, станьте первым!');
+        $I->seeLink('yupe');
+        $I->seeLink('Первая публичная запись в опубликованном блоге');
+        $I->seeElement('div.avatar > img');
     }
 }

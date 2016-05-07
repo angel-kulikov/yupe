@@ -1,16 +1,55 @@
-<?php $this->pageTitle = Yii::t('BlogModule.blog', 'Post list'); ?>
+<?php
+/**
+ * @var $this PostController
+ */
+$this->title = Yii::t('BlogModule.blog', 'Latest posts');
+$this->description = Yii::t('BlogModule.blog', 'Latest post');
+$this->keywords = Yii::t('BlogModule.blog', 'Latest post');
+?>
 
-<?php $this->breadcrumbs = array(
-    Yii::t('BlogModule.blog', 'Blogs') => array('/blog/blog/index/'),
-    Yii::t('BlogModule.blog', 'Post list'),
-); ?>
+<?php $this->breadcrumbs = [
+    Yii::t('BlogModule.blog', 'Blogs') => ['/blog/blog/index/'],
+    Yii::t('BlogModule.blog', 'Latest posts'),
+]; ?>
 
-<h1><?php echo Yii::t('BlogModule.blog', 'All posts'); ?>:</h1>
+<div class="posts">
 
-<?php $this->widget(
-	'bootstrap.widgets.TbListView', array(
-	    'dataProvider' => $model->allPosts(),
-	    'itemView'     => '_view_all',
-	    'template'     => "{items}\n{pager}",
-	)
-); ?>
+    <h1>
+        <small>
+            <?= Yii::t('BlogModule.blog', 'Latest posts'); ?> <a
+                href="<?= Yii::app()->createUrl('/blog/blogRss/feed/'); ?>">
+                <img src="<?= Yii::app()->getTheme()->getAssetsUrl() . "/images/rss.png"; ?>"
+                     alt="<?= Yii::t('BlogModule.blog', 'Subscribe for updates') ?>"
+                     title="<?= Yii::t('BlogModule.blog', 'Subscribe for updates') ?>"></a>
+        </small>
+        <?php if (Yii::app()->getUser()->isAuthenticated()): ?>
+            <a class="btn btn-warning pull-right"
+               href="<?= Yii::app()->createUrl('/blog/publisher/write'); ?>"><?= Yii::t(
+                    'BlogModule.blog',
+                    'Write post!'
+                ); ?></a>
+        <?php else: ?>
+            <a class="btn btn-warning pull-right"
+               href="<?= Yii::app()->createUrl('/user/account/login'); ?>"><?= Yii::t(
+                    'BlogModule.blog',
+                    'Write post!'
+                ); ?></a>
+        <?php endif; ?>
+    </h1>
+
+    <br/>
+
+    <?php $this->widget(
+        'bootstrap.widgets.TbListView',
+        [
+            'id'           => 'posts-list',
+            'dataProvider' => $model->allPosts(),
+            'itemView'     => '_item',
+            'template'     => "{items}\n{pager}",
+            'ajaxUpdate'   => false,
+            'htmlOptions'  => [
+                'class' => 'posts-list'
+            ]
+        ]
+    ); ?>
+</div>

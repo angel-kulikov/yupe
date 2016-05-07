@@ -1,14 +1,18 @@
 body {
     background: #a2a2a2;
+    -moz-background-size: 100%; /* Firefox 3.6+ */
+    -webkit-background-size: 100%; /* Safari 3.1+ и Chrome 4.0+ */
+    -o-background-size: 100%; /* Opera 9.6+ */
+    background-size: 100%; /* Современные браузеры */
 }
 
 .wrapper {
-    padding-top: 10%;
+
 }
 
 .wrapper .login-form {
     width: 350px;
-    margin: 0 auto;
+    margin: 10% auto
 }
 
 form {
@@ -25,13 +29,12 @@ form .help-block {
 }
 
 body.admin-panel #footer-guard {
-	height: 40px;
+    height: 40px;
 }
 
 body.admin-panel > footer {
-	position: fixed;
-    height: 30px;
+    position: fixed;
+    height: 43px;
     bottom: 0;
     width: 100%;
-    left: 0;
 }

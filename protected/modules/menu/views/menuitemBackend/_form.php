@@ -1,127 +1,339 @@
 <?php
-$form = $this->beginWidget('bootstrap.widgets.TbActiveForm', array(
-    'id'                     => 'menu-item-form',
-    'enableAjaxValidation'   => false,
-    'enableClientValidation' => true,
-    'type'                   => 'vertical',
-    'htmlOptions'            => array('class' => 'well'),
-    'inlineErrors'           => true,
-)); ?>
-    <div class="alert alert-info">
-        <?php echo Yii::t('MenuModule.menu', 'Fields with'); ?>
-        <span class="required">*</span>
-        <?php echo Yii::t('MenuModule.menu', 'are required.'); ?>
-    </div>
+$form = $this->beginWidget(
+    'bootstrap.widgets.TbActiveForm',
+    [
+        'id'                     => 'menu-item-form',
+        'enableAjaxValidation'   => false,
+        'enableClientValidation' => true,
+        'type'                   => 'vertical',
+        'htmlOptions'            => ['class' => 'well'],
+    ]
+); ?>
+<div class="alert alert-info">
+    <?=  Yii::t('MenuModule.menu', 'Fields with'); ?>
+    <span class="required">*</span>
+    <?=  Yii::t('MenuModule.menu', 'are required.'); ?>
+</div>
 
-    <?php echo $form->errorSummary($model); ?>
+<?=  $form->errorSummary($model); ?>
 
-<div class="wide row-fluid control-group <?php echo ($model->hasErrors('menu_id') || $model->hasErrors('parent_id')) ? 'error' : ''; ?>">
+<div class="row">
     <?php
-    $menu_id   = '#' . CHtml::activeId($model, 'menu_id');
+    $menu_id = '#' . CHtml::activeId($model, 'menu_id');
     $parent_id = '#' . CHtml::activeId($model, 'parent_id');
     ?>
-    <div class="span3">
-        <?php echo $form->dropDownListRow($model, 'menu_id', CHtml::listData(Menu::model()->findAll(), 'id', 'name'), array(
-            'empty'               => Yii::t('MenuModule.menu', '--choose menu--'),
-            'class'               => 'popover-help',
-            'data-original-title' => $model->getAttributeLabel('menu_id'),
-            'data-content'        => $model->getAttributeDescription('menu_id'),
-            'ajax' => array(
-                'type'       => 'POST',
-                'url'        => $this->createUrl('/menu/menuitemBackend/dynamicparent', (!$model->isNewRecord ? array('id' => $model->id) : array())),
-                'update'     => $parent_id,
-                'beforeSend' => "function() {
+    <div class="col-sm-3">
+        <?=  $form->dropDownListGroup(
+            $model,
+            'menu_id',
+            [
+                'widgetOptions' => [
+                    'data'        => CHtml::listData(Menu::model()->findAll(), 'id', 'name'),
+                    'htmlOptions' => [
+                        'class'               => 'popover-help',
+                        'data-original-title' => $model->getAttributeLabel('menu_id'),
+                        'data-content'        => $model->getAttributeDescription('menu_id'),
+                        'empty'               => Yii::t('MenuModule.menu', '--choose menu--'),
+                        'ajax'                => [
+                            'type'       => 'POST',
+                            'url'        => $this->createUrl(
+                                    '/menu/menuitemBackend/dynamicparent',
+                                    (!$model->isNewRecord ? ['id' => $model->id] : [])
+                                ),
+                            'update'     => $parent_id,
+                            'beforeSend' => "function () {
                             $('" . $parent_id . "').attr('disabled', true);
                             if ($('" . $menu_id . " option:selected').val() == '')
                                 return false;
                         }",
-                'complete'   => "function() {
+                            'complete'   => "function () {
                             $('" . $parent_id . "').attr('disabled', false);
                         }",
-            ),
-        )); ?>
+                        ],
+                    ],
+                ],
+            ]
+        ); ?>
     </div>
-    <div class="span4">
-        <?php echo $form->dropDownListRow($model, 'parent_id', $model->parentTree, array('disabled' => ($model->menu_id) ? false : true) + array('encode' => false, 'class' => 'popover-help', 'data-original-title' => $model->getAttributeLabel('parent_id'), 'data-content' => $model->getAttributeDescription('parent_id'))); ?>
+    <div class="col-sm-4">
+        <?=  $form->dropDownListGroup(
+            $model,
+            'parent_id',
+            [
+                'widgetOptions' => [
+                    'data'        => $model->getParentTree(),
+                    'htmlOptions' => [
+                        'disabled'            => ($model->menu_id) ? false : true,
+                        'encode'              => false,
+                        'class'               => 'popover-help',
+                        'data-original-title' => $model->getAttributeLabel('parent_id'),
+                        'data-content'        => $model->getAttributeDescription('parent_id'),
+                    ],
+                ],
+            ]
+        ); ?>
     </div>
 </div>
 
-    <div class="row-fluid control-group <?php echo $model->hasErrors("title") ? "error" : ""; ?>">
-        <?php echo $form->textFieldRow($model, 'title', array('class' => 'popover-help span7', 'maxlength' => 255, 'data-original-title' => $model->getAttributeLabel('title'), 'data-content' => $model->getAttributeDescription('title'))); ?>
+<div class="row">
+    <div class="col-sm-7">
+        <?=  $form->textFieldGroup(
+            $model,
+            'title',
+            [
+                'widgetOptions' => [
+                    'htmlOptions' => [
+                        'class'               => 'popover-help',
+                        'data-original-title' => $model->getAttributeLabel('title'),
+                        'data-content'        => $model->getAttributeDescription('title'),
+                    ],
+                ],
+            ]
+        ); ?>
     </div>
+</div>
 
-    <div class="row-fluid control-group <?php echo $model->hasErrors("href") ? "error" : ""; ?>">
-        <?php echo $form->textFieldRow($model, 'href', array('class' => 'popover-help span7', 'maxlength' => 255, 'data-original-title' => $model->getAttributeLabel('href'), 'data-content' => $model->getAttributeDescription('href'))); ?>
+<div class="row">
+    <div class="col-sm-7">
+        <?=  $form->checkBoxGroup(
+            $model,
+            'regular_link',
+            [
+                'widgetOptions' => [
+                    'htmlOptions' => [
+                        'class'               => 'popover-help',
+                        'data-original-title' => $model->getAttributeLabel('regular_link'),
+                        'data-content'        => $model->getAttributeDescription('regular_link'),
+                    ],
+                ],
+            ]
+        ); ?>
     </div>
+</div>
 
-    <div class="row-fluid control-group <?php echo $model->hasErrors("sort") ? "error" : ""; ?>">
-        <?php echo $form->textFieldRow($model, 'sort', array('class' => 'popover-help span7', 'maxlength' => 255, 'data-original-title' => $model->getAttributeLabel('sort'), 'data-content' => $model->getAttributeDescription('sort'))); ?>
+<div class="row">
+    <div class="col-sm-7">
+        <?=  $form->textFieldGroup(
+            $model,
+            'href',
+            [
+                'widgetOptions' => [
+                    'htmlOptions' => [
+                        'class'               => 'popover-help',
+                        'data-original-title' => $model->getAttributeLabel('href'),
+                        'data-content'        => $model->getAttributeDescription('href'),
+                    ],
+                ],
+            ]
+        ); ?>
     </div>
+</div>
 
-    <div class="row-fluid control-group <?php echo $model->hasErrors('status') ? 'error' : ''; ?>">
-        <?php echo $form->dropDownListRow($model, 'status', $model->statusList, array('class' => 'span7 popover-help', 'data-original-title' => $model->getAttributeLabel('status'), 'data-content' => $model->getAttributeDescription('status'))); ?>
+<div class="row hidden">
+    <div class="col-sm-7">
+        <?=  $form->textFieldGroup($model, 'sort'); ?>
     </div>
+</div>
 
-     <div class="row-fluid control-group <?php echo $model->hasErrors("regular_link") ? "error" : ""; ?>">
-         <?php echo $form->checkBoxRow($model, 'regular_link', array('class' => 'popover-help', 'data-original-title' => $model->getAttributeLabel('regular_link'), 'data-content' => $model->getAttributeDescription('regular_link'))); ?>
+<div class="row">
+    <div class="col-sm-2">
+        <?=  $form->dropDownListGroup(
+            $model,
+            'status',
+            [
+                'widgetOptions' => [
+                    'data'        => $model->getStatusList(),
+                    'htmlOptions' => [
+                        'class'               => 'popover-help',
+                        'data-original-title' => $model->getAttributeLabel('status'),
+                        'data-content'        => $model->getAttributeDescription('status'),
+                    ],
+                ],
+            ]
+        ); ?>
     </div>
+</div>
 
-    <?php $collapse = $this->beginWidget('bootstrap.widgets.TbCollapse');?>
-    <div class="accordion-group">
-        <div class="accordion-heading">
-            <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseOne">
-                <?php echo Yii::t('MenuModule.menu','Extended settings');?>
-            </a>
+<?php $collapse = $this->beginWidget('booster.widgets.TbCollapse'); ?>
+<div class="panel-group" id="accordion">
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h4 class="panel-title">
+                <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne">
+                    <?=  Yii::t('MenuModule.menu', 'Extended settings'); ?>
+                </a>
+            </h4>
         </div>
-        <div id="collapseOne" class="accordion-body collapse">
-            <div class="accordion-inner">
-                <div class="row-fluid control-group <?php echo $model->hasErrors("title_attr") ? "error" : ""; ?>">
-                    <?php echo $form->textFieldRow($model, 'title_attr', array('class' => 'popover-help span7', 'maxlength' => 255, 'data-original-title' => $model->getAttributeLabel('title_attr'), 'data-content' => $model->getAttributeDescription('title_attr'))); ?>
-                </div>
-                <div class="row-fluid control-group <?php echo $model->hasErrors("class") ? "error" : ""; ?>">
-                    <?php echo $form->textFieldRow($model, 'class', array('class' => 'popover-help span7', 'maxlength' => 50, 'data-original-title' => $model->getAttributeLabel('class'), 'data-content' => $model->getAttributeDescription('class'))); ?>
-                </div>
-                <div class="wide row-fluid control-group <?php echo ($model->hasErrors('before_link') || $model->hasErrors('after_link')) ? 'error' : ''; ?>">
-                    <div class="span3">
-                        <?php echo $form->textFieldRow($model, 'before_link', array('class' => 'popover-help span7', 'maxlength' => 255, 'data-original-title' => $model->getAttributeLabel('before_link'), 'data-content' => $model->getAttributeDescription('before_link'))); ?>
+        <div id="collapseOne" class="panel-collapse collapse">
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-sm-7">
+                        <?=  $form->textFieldGroup(
+                            $model,
+                            'title_attr',
+                            [
+                                'widgetOptions' => [
+                                    'data'        => $model->getStatusList(),
+                                    'htmlOptions' => [
+                                        'class'               => 'popover-help',
+                                        'data-original-title' => $model->getAttributeLabel('title_attr'),
+                                        'data-content'        => $model->getAttributeDescription('title_attr'),
+                                    ],
+                                ],
+                            ]
+                        ); ?>
                     </div>
-                    <div class="span4">
-                        <?php echo $form->textFieldRow($model, 'after_link', array('class' => 'popover-help span7', 'maxlength' => 255, 'data-original-title' => $model->getAttributeLabel('after_link'), 'data-content' => $model->getAttributeDescription('after_link'))); ?>
-                    </div>
-                </div>
-                <div class="wide row-fluid control-group <?php echo ($model->hasErrors('target') || $model->hasErrors('rel')) ? 'error' : ''; ?>">
-                    <div class="span3">
-                        <?php echo $form->textFieldRow($model, 'target', array('class' => 'popover-help span7', 'maxlength' => 10, 'data-original-title' => $model->getAttributeLabel('target'), 'data-content' => $model->getAttributeDescription('target'))); ?>
-                    </div>
-                    <div class="span4">
-                        <?php echo $form->textFieldRow($model, 'rel', array('class' => 'popover-help span7', 'maxlength' => 10, 'data-original-title' => $model->getAttributeLabel('rel'), 'data-content' => $model->getAttributeDescription('rel'))); ?>
-                    </div>
-                </div>
-                <div class="wide row-fluid control-group <?php echo ($model->hasErrors('condition_name') || $model->hasErrors('condition_denial')) ? 'error' : ''; ?>">
-                    <div class="span4">
-                        <?php echo $form->dropDownListRow($model, 'condition_name', $model->conditionList, array('empty' => '', 'class' => 'popover-help', 'data-original-title' => $model->getAttributeLabel('condition_name'), 'data-content' => $model->getAttributeDescription('condition_name'))); ?>
-                    </div>
-                    <div class="span3">
-                        <?php echo $form->dropDownListRow($model, 'condition_denial', $model->conditionDenialList, array('class' => 'popover-help', 'data-original-title' => $model->getAttributeLabel('condition_denial'), 'data-content' => $model->getAttributeDescription('condition_denial'))); ?>
-                    </div>
-                </div>
 
+                </div>
+                <div class="row">
+                    <div class="col-sm-7">
+                        <?=  $form->textFieldGroup(
+                            $model,
+                            'class',
+                            [
+                                'widgetOptions' => [
+                                    'data'        => $model->getStatusList(),
+                                    'htmlOptions' => [
+                                        'class'               => 'popover-help',
+                                        'data-original-title' => $model->getAttributeLabel('class'),
+                                        'data-content'        => $model->getAttributeDescription('class'),
+                                    ],
+                                ],
+                            ]
+                        ); ?>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-3">
+                        <?=  $form->textFieldGroup(
+                            $model,
+                            'before_link',
+                            [
+                                'widgetOptions' => [
+                                    'data'        => $model->getStatusList(),
+                                    'htmlOptions' => [
+                                        'class'               => 'popover-help',
+                                        'data-original-title' => $model->getAttributeLabel('before_link'),
+                                        'data-content'        => $model->getAttributeDescription('before_link'),
+                                    ],
+                                ],
+                            ]
+                        ); ?>
+                    </div>
+                    <div class="col-sm-4">
+                        <?=  $form->textFieldGroup(
+                            $model,
+                            'after_link',
+                            [
+                                'widgetOptions' => [
+                                    'data'        => $model->getStatusList(),
+                                    'htmlOptions' => [
+                                        'class'               => 'popover-help',
+                                        'data-original-title' => $model->getAttributeLabel('after_link'),
+                                        'data-content'        => $model->getAttributeDescription('after_link'),
+                                    ],
+                                ],
+                            ]
+                        ); ?>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-3">
+                        <?=  $form->textFieldGroup(
+                            $model,
+                            'target',
+                            [
+                                'widgetOptions' => [
+                                    'data'        => $model->getStatusList(),
+                                    'htmlOptions' => [
+                                        'class'               => 'popover-help',
+                                        'data-original-title' => $model->getAttributeLabel('target'),
+                                        'data-content'        => $model->getAttributeDescription('target'),
+                                    ],
+                                ],
+                            ]
+                        ); ?>
+                    </div>
+                    <div class="col-sm-4">
+                        <?=  $form->textFieldGroup(
+                            $model,
+                            'rel',
+                            [
+                                'widgetOptions' => [
+                                    'data'        => $model->getStatusList(),
+                                    'htmlOptions' => [
+                                        'class'               => 'popover-help',
+                                        'data-original-title' => $model->getAttributeLabel('rel'),
+                                        'data-content'        => $model->getAttributeDescription('rel'),
+                                    ],
+                                ],
+                            ]
+                        ); ?>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-4">
+                        <?=  $form->dropDownListGroup(
+                            $model,
+                            'condition_name',
+                            [
+                                'widgetOptions' => [
+                                    'data'        => $model->getConditionList(),
+                                    'htmlOptions' => [
+                                        'class'               => 'popover-help',
+                                        'data-original-title' => $model->getAttributeLabel('condition_name'),
+                                        'data-content'        => $model->getAttributeDescription('condition_name'),
+                                        'empty'               => '',
+                                    ],
+                                ],
+                            ]
+                        ); ?>
+                    </div>
+                    <div class="col-sm-3">
+                        <?=  $form->dropDownListGroup(
+                            $model,
+                            'condition_denial',
+                            [
+                                'widgetOptions' => [
+                                    'data'        => $model->getConditionDenialList(),
+                                    'htmlOptions' => [
+                                        'class'               => 'popover-help',
+                                        'data-original-title' => $model->getAttributeLabel('condition_denial'),
+                                        'data-content'        => $model->getAttributeDescription('condition_denial'),
+                                    ],
+                                ],
+                            ]
+                        ); ?>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <?php $this->endWidget();?>
+</div>
+<?php $this->endWidget(); ?>
 
-    <br/>
-
-    <?php $this->widget('bootstrap.widgets.TbButton', array(
+<?php $this->widget(
+    'bootstrap.widgets.TbButton',
+    [
         'buttonType' => 'submit',
-        'type'       => 'primary',
-        'label'      => $model->isNewRecord ? Yii::t('MenuModule.menu', 'Create menu item and continue') : Yii::t('MenuModule.menu', 'Save menu item and continue'),
-    )); ?>
-    <?php $this->widget('bootstrap.widgets.TbButton', array(
+        'context'    => 'primary',
+        'label'      => $model->isNewRecord ? Yii::t('MenuModule.menu', 'Create menu item and continue') : Yii::t(
+                'MenuModule.menu',
+                'Save menu item and continue'
+            ),
+    ]
+); ?>
+
+<?php $this->widget(
+    'bootstrap.widgets.TbButton',
+    [
         'buttonType'  => 'submit',
-        'htmlOptions' => array('name' => 'submit-type', 'value' => 'index'),
-        'label'       => $model->isNewRecord ? Yii::t('MenuModule.menu', 'Create menu item and close') : Yii::t('MenuModule.menu', 'Save menu item and close'),
-    )); ?>
+        'htmlOptions' => ['name' => 'submit-type', 'value' => 'index'],
+        'label'       => $model->isNewRecord ? Yii::t('MenuModule.menu', 'Create menu item and close') : Yii::t(
+                'MenuModule.menu',
+                'Save menu item and close'
+            ),
+    ]
+); ?>
 
 <?php $this->endWidget(); ?>

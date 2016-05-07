@@ -1,13 +1,17 @@
-<button class="btn btn-small dropdown-toggle" data-toggle="collapse" data-target="#search-toggle">
-    <i class="icon-search">&nbsp;</i>
-    <?php echo CHtml::link(Yii::t('UserModule.user', 'Find tokens'), '#', array('class' => 'search-button')); ?>
-    <span class="caret">&nbsp;</span>
-</button>
+<p>
+    <a class="btn btn-default btn-sm" data-toggle="collapse" data-target="#search-toggle">
+        <i class="fa fa-search">&nbsp;</i>
+        <?=  Yii::t('UserModule.user', 'Find tokens'); ?>
+        <span class="caret">&nbsp;</span>
+    </a>
+</p>
 
 <div id="search-toggle" class="collapse out search-form">
-    <?php Yii::app()->clientScript->registerScript('search', "
-        $(document).on('submit', '.search-form form', function(event) {
-            
+    <?php Yii::app()->clientScript->registerScript(
+        'search',
+        "
+        $(document).on('submit', '.search-form form', function (event) {
+
             event.preventDefault();
 
             var form = $(this);
@@ -16,73 +20,102 @@
                 data: form.serializeObject()
             });
         });
-    "); ?>
-
+    "
+    ); ?>
 
     <?php $form = $this->beginWidget(
-        'bootstrap.widgets.TbActiveForm', array(
+        'bootstrap.widgets.TbActiveForm',
+        [
             'action'      => Yii::app()->createUrl($this->route),
             'method'      => 'POST',
             'type'        => 'vertical',
-            'htmlOptions' => array('class' => 'well'),
-        )
+            'htmlOptions' => ['class' => 'well'],
+        ]
     ); ?>
-        <div class="row-fluid">
-            <div class="form-controls span6">
-                <?php echo $form->dropDownListRow(
-                    $model, 'user_id', $model->getUserList(), array(
-                        'empty' => '---', 'class' => 'span12'
-                    )
-                ); ?>
-            </div>
-
-            <div class="form-controls span6">
-                <?php echo $form->dropDownListRow(
-                    $model, 'status', $model->getStatusList(), array(
-                        'empty' => '---', 'class' => 'span12'
-                    )
-                ); ?>
-            </div>
-        </div>
-
-        <div class="row-fluid">
-            <div class="form-controls span6">
-                <?php echo $form->dropDownListRow(
-                    $model, 'type', $model->getTypeList(), array(
-                        'empty' => '---', 'class' => 'span12'
-                    )
-                ); ?>
-            </div>
-
-            <div class="form-controls span6">
-                <?php echo $form->dropDownListRow(
-                    $model, 'created', $model->getDateList(), array(
-                        'empty' => '---', 'class' => 'span12'
-                    )
-                ); ?>
-            </div>
-        </div>
-
-        <div class="form-actions">
-            <?php $this->widget(
-                'bootstrap.widgets.TbButton', array(
-                    'buttonType'  => 'submit',
-                    'type'        => 'primary',
-                    'icon'        => 'white search',
-                    'label'       => Yii::t('UserModule.user', 'Find user'),
-                )
-            ); ?>
-
-            <?php $this->widget(
-                'bootstrap.widgets.TbButton', array(
-                    'buttonType'  => 'reset',
-                    'type'        => 'danger',
-                    'icon'        => 'white remove',
-                    'label'       => Yii::t('UserModule.user', 'Reset'),
-                )
+    <div class="row">
+        <div class="col-sm-6">
+            <?=  $form->dropDownListGroup(
+                $model,
+                'user_id',
+                [
+                    'widgetOptions' => [
+                        'data'        => $model->getUserList(),
+                        'htmlOptions' => [
+                            'empty' => '---',
+                        ],
+                    ],
+                ]
             ); ?>
         </div>
+
+        <div class="col-sm-6">
+            <?=  $form->dropDownListGroup(
+                $model,
+                'status',
+                [
+                    'widgetOptions' => [
+                        'data'        => $model->getStatusList(),
+                        'htmlOptions' => [
+                            'empty' => '---',
+                        ],
+                    ],
+                ]
+            ); ?>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-6">
+            <?=  $form->dropDownListGroup(
+                $model,
+                'type',
+                [
+                    'widgetOptions' => [
+                        'data'        => $model->getTypeList(),
+                        'htmlOptions' => [
+                            'empty' => '---',
+                        ],
+                    ],
+                ]
+            ); ?>
+        </div>
+
+        <div class="col-sm-6">
+            <?=  $form->dropDownListGroup(
+                $model,
+                'create_time',
+                [
+                    'widgetOptions' => [
+                        'data'        => $model->getDateList(),
+                        'htmlOptions' => [
+                            'empty' => '---',
+                        ],
+                    ],
+                ]
+            ); ?>
+        </div>
+    </div>
+
+    <div class="form-actions">
+        <?php $this->widget(
+            'bootstrap.widgets.TbButton',
+            [
+                'buttonType' => 'submit',
+                'context'    => 'primary',
+                'icon'       => 'fa fa-search',
+                'label'      => Yii::t('UserModule.user', 'Find tokens'),
+            ]
+        ); ?>
+
+        <?php $this->widget(
+            'bootstrap.widgets.TbButton',
+            [
+                'buttonType' => 'reset',
+                'context'    => 'danger',
+                'icon'       => 'fa fa-times',
+                'label'      => Yii::t('UserModule.user', 'Reset'),
+            ]
+        ); ?>
+    </div>
     <?php $this->endWidget(); ?>
 </div>
-
-<hr />

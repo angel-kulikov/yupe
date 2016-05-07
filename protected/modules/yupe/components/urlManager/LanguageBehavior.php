@@ -8,182 +8,130 @@
  * @license  BSD http://ru.wikipedia.org/wiki/%D0%9B%D0%B8%D1%86%D0%B5%D0%BD%D0%B7%D0%B8%D1%8F_BSD
  * @link     http://yupe.ru
  */
+namespace yupe\components\urlManager;
+
+use CBehavior;
+use Yii;
+use CException;
+use CHttpCookie;
+
+/**
+ * Class LanguageBehavior
+ * @package yupe\components\urlManager
+ */
 class LanguageBehavior extends CBehavior
 {
+    /**
+     * @var bool
+     */
     public $lang = false;
+    /**
+     * @var bool
+     */
+    private $_lang = false;
+    /**
+     * @var bool
+     */
+    private $_langFromUrl = false;
 
     /**
-     * Подключение события:
-     * 
-     * @param Component $owner - 'хозяин' события
-     * 
+     * @var LangUrlManager
+     */
+    private $lm;
+
+    /**
+     * Подключение события
+     * @param CComponent $owner - 'хозяин' события
      * @return void
      */
     public function attach($owner)
     {
-        if (count(Yii::app()->urlManager->languages) > 1 && is_array(Yii::app()->urlManager->languages)) {
-            $owner->attachEventHandler('onBeginRequest', array($this, 'handleLanguageBehavior'));
+        $this->lm = $owner->getUrlManager();
+        if (is_array($this->lm->languages) && count($this->lm->languages) > 1) {
+            $owner->attachEventHandler('onBeginRequest', [$this, 'handleLanguageBehavior']);
         }
     }
 
     /**
-     * Обработка запросов, предназначена для корректной
-     * обработки запросов определения текущего языка:
+     * Язык
      *
-     * @param mixed $event - парметры события
+     * @return string
+     */
+    public function getLang()
+    {
+        if (false === $this->_lang) {
+            $lang = $this->getUrlLang() ?: ($this->getCookieLang() ?: $this->lm->getAppLang());
+            $this->_lang = in_array($lang, $this->lm->languages) ? $lang : null;
+        }
+
+        return $this->_lang;
+    }
+
+    /**
+     * Язык из url
+     * @return bool|null
+     * @throws CException
+     */
+    public function getUrlLang()
+    {
+        if ($this->_langFromUrl === false) {
+            $path = explode('/', Yii::app()->getRequest()->getPathInfo());
+            $lang = !empty($path[0]) ? $path[0] : null;
+            if ($lang === null) {
+                $lang = isset($_GET[$this->lm->langParam]) ? $_GET[$this->lm->langParam] : null;
+            }
+            $lang = in_array($lang, $this->lm->languages) ? $lang : null;
+            $this->_langFromUrl = $lang;
+        }
+
+        return $this->_langFromUrl;
+    }
+
+    /**
+     * Получаем язык из кукисов
      *
+     * @return string
+     */
+    public function getCookieLang()
+    {
+        return isset(Yii::app()->getRequest()->cookies[$this->lm->langParam]) ? Yii::app()->getRequest(
+        )->cookies[$this->lm->langParam]->value : null;
+    }
+
+    /**
+     * Обработка запроса
+     *
+     * @param mixed $event
      * @return void
      */
     public function handleLanguageBehavior($event)
     {
-        // Получаем инстанс urlManager'а
-        $lm = Yii::app()->urlManager;
+        $this->setLanguage($this->getLang());
 
-        // Получаем homeUrl с добавлением "/"
-        // если он не указа в конце Yii::app()->homeUrl
-        $home = Yii::app()->homeUrl
-                . (Yii::app()->homeUrl[strlen(Yii::app()->homeUrl) - 1] != "/"
-                    ? '/'
-                    : ''
-                );
-        
-        // Получаем текущий url:
-        $path = Yii::app()->getRequest()->getPathInfo();
+        $this->lang = ($this->lm->getAppLang() === $this->getLang() ? false : $this->getLang());
 
-        // Получаем язык из GET-массива или из $path
-        $this->lang = isset($_GET[$lm->langParam])
-            ? $_GET[$lm->langParam]
-            : substr($path, 0, 2);
+        // язык передан в url, но он равен дефолтному языку
+        if ($this->getUrlLang() !== null && $this->lang === false) {
 
-        // Проверяем переданный язык:
-        $langIsset = (
-            isset($_GET[$lm->langParam]) || $path == $this->lang || substr($path, 2, 1) == '/'
-        );
-
-
-
-        // Проверяем нативность языка и указан ли он в параметрах/пути:
-        // 1) Если использован нативный для приложения язык
-        // 2) Язык установлен на вывод в GET-парамметре,
-        //    но обращение было через путь
-        // 3) Язык установлен на вывод в пути, но обращение
-        //    было через GET-парамметр
-        $langNative = $this->lang == Yii::app()->sourceLanguage
-            && (!isset($_GET[$lm->langParam]) || ($lm->languageInPath && substr($path, 0, 2) != $this->lang));
-
-        // Если указан язык, который известен нам:
-        if (in_array($this->lang, $lm->languages) && $langIsset) {
-            // Если текущий язык у нас не тот же, что указан - поставим куку и все дела
-            if (Yii::app()->language != $this->lang || $this->lang == Yii::app()->sourceLanguage) {
-                $this->setLanguage($this->lang);
-            }
-
-            // 1) Если использован нативный для приложения язык
-            // 2) Язык установлен на вывод в GET-парамметре,
-            //    но обращение было через путь
-            // 3) Язык установлен на вывод в пути, но обращение
-            //    было через GET-парамметр
-            if ($langNative && !Yii::app()->getRequest()->getIsAjaxRequest()) {
-                // Редирект на URL без указания языка
-                Yii::app()->getRequest()->redirect($home . $lm->getCleanUrl(Yii::app()->getRequest()->url));
-            }
-        } else {
-
-            try {
-                // Пробуем получить код языка из кук
-                $cookiesLang = Yii::app()->getModule('yupe')->cache
-                            && isset(Yii::app()->getRequest()->cookies[$lm->langParam])
-                            && in_array(Yii::app()->getRequest()->cookies[$lm->langParam]->value, $lm->languages)
-                        ? Yii::app()->getRequest()->cookies[$lm->langParam]->value
-                        : (
-                            $lm->preferredLanguage && Yii::app()->getRequest()->getPreferredLanguage()
-                            ? Yii::app()->locale->getLanguageID($this->lang)
-                            : false
-                        );
-            } catch (CException $e) {
-                $cookiesLang = Yii::app()->sourceLanguage;
-
-                Yii::app()->user->setFlash(
-                    YFlashMessages::ERROR_MESSAGE,
-                    $e->getMessage()
-                );
-            }
-            
-            $oldLang = $this->lang;
-
-            // Устанавливаем из сессии или заданный в кукисах:
-            $this->lang = Yii::app()->user->getState(
-                $lm->langParam, $cookiesLang
+            Yii::app()->getRequest()->redirect(
+                Yii::app()->getHomeUrl().$this->lm->getCleanUrl(Yii::app()->getRequest()->url)
             );
-
-            // Если язык не получен, и не найден в списке возможных
-            if (!$this->lang || !in_array($this->lang, $lm->languages)) {
-                $this->lang = Yii::app()->language = Yii::app()->sourceLanguage;
-            }
-
-            if ($oldLang != $this->lang
-                && !empty($oldLang)
-                && ($path == $this->lang || substr($path, 2, 1) == '/')
-            ) {
-                Yii::app()->urlManager->languages[] = $oldLang;
-                Yii::app()->user->setFlash(
-                    YFlashMessages::SUCCESS_MESSAGE,
-                    Yii::t(
-                        'YupeModule.yupe', 'Language "{lang}" is not found!', array(
-                            '{lang}' => $oldLang
-                        )
-                    )
-                );
-                $undefinedLang = $oldLang;
-            }
-
-            // Сделаем редирект на нужный url с указанием языка, если он не нативен
-            if ($this->lang != Yii::app()->sourceLanguage || isset($undefinedLang)) {
-                $this->setLanguage($this->lang);
-                if (!Yii::app()->getRequest()->getIsAjaxRequest())
-                    Yii::app()->getRequest()->redirect(
-                        $home . $lm->replaceLangUrl(
-                            $lm->getCleanUrl(Yii::app()->getRequest()->url), $this->lang
-                        )
-                    );
-            } else {
-                // Иначе просто установим язык:
-                Yii::app()->language = $this->lang;
-            }
         }
     }
 
     /**
-     * Устанавливаем язык приложения:
-     * 
-     * @param string $language - требуемый язык
+     * Устанавливаем язык приложения
      *
-     * @return void
+     * @param string $language - требуемый язык
      */
     protected function setLanguage($language)
     {
         // Устанавливаем состояние языка:
-        Yii::app()->user->setState(Yii::app()->urlManager->langParam, $language);
-        
-        try {
-            if (Yii::app()->getModule('yupe')->cache) {
-                Yii::app()->getRequest()->cookies->add(
-                    Yii::app()->urlManager->langParam, new CHttpCookie(
-                        Yii::app()->urlManager->langParam,
-                        $language, array(
-                            'expire' => time() + (60 * 60 * 24 * 365)
-                        )
-                    )
-                );
-            }
-        } catch (CException $e) {
-            Yii::app()->user->setFlash(
-                YFlashMessages::ERROR_MESSAGE,
-                $e->getMessage()
-            );
-        }
+        Yii::app()->getUser()->setState($this->lm->langParam, $language);
+
+        Yii::app()->getRequest()->cookies[$this->lm->langParam] = new CHttpCookie($this->lm->langParam, $language);
 
         // И наконец, выставляем язык приложения:
-        Yii::app()->language = $language;
+        Yii::app()->setLanguage($language);
     }
 }

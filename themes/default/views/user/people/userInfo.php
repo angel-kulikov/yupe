@@ -1,66 +1,88 @@
 <?php
-    $this->pageTitle = CHtml::encode($user->nick_name);
-    $this->breadcrumbs = array(
-        Yii::t('UserModule.user','Users') => array('/user/people/index/'),
-        CHtml::encode($user->getfullName()),
-    );
+$this->title = CHtml::encode($user->nick_name);
+$this->breadcrumbs = [
+    Yii::t('UserModule.user', 'Users') => ['/user/people/index/'],
+    CHtml::encode($user->getfullName()),
+];
 ?>
+<div class="row">
+    <div class='col-xs-3'>
+        <?php $this->widget('AvatarWidget', ['user' => $user, 'imageHtmlOptions' => ['width' => 100, 'height' => 100]]); ?>
+    </div>
 
- <div class="row-fluid">
-     <div class='span3'>
-         <?php $this->widget('AvatarWidget', array('user' => $user)); ?>
-     </div>
-     <div class='span6'>
+    <div class='col-xs-6'>
+        <i class="glyphicon glyphicon-user"></i> <?= CHtml::link(CHtml::encode($user->getFullName()), ['/user/people/userInfo/', 'username' => CHtml::encode($user->nick_name)]); ?>
+        <br/>
+        <?php if ($user->visit_time): ?>
+            <i class="glyphicon glyphicon-time"></i> <?= Yii::t(
+                'UserModule.user',
+                'Last visit {visit_time}',
+                [
+                    "{visit_time}" => Yii::app()->dateFormatter->formatDateTime($user->visit_time, 'long', null)
+                ]
+            ); ?><br/>
+        <?php endif; ?>
 
-         <i class="icon-user"></i> <?php echo CHtml::link($user->getFullName(), array('/user/people/userInfo/', 'username' => $user->nick_name)); ?><br/>
+        <?php if ($user->location): ?>
+            <i class="glyphicon glyphicon-map-marker"></i> <?= CHtml::encode($user->location); ?><br/>
+        <?php endif; ?>
 
-         <?php if($user->last_visit):?>
-            <i class="icon-time"></i> <?php echo Yii::t('UserModule.user', 'Last visit {last_visit}', array(
-               "{last_visit}" => Yii::app()->dateFormatter->formatDateTime($user->last_visit, 'long', null)
-            ));?><br/>
-         <?php endif;?>   
-
-         <?php if($user->location):?>
-            <i class="icon-map-marker"></i> <?php echo $user->location;?><br/>
-         <?php endif;?>   
-
-         <?php if($user->site):?>
-            <i class="icon-globe"></i> <?php echo CHtml::link($user->site,$user->site, array('rel' => 'nofollow'));?><br/>
-         <?php endif;?>
-
-     </div>     
- </div>
-
-<?php if($user->about):?>            
-     <div class="row-fluid">
-         <div class="well">
-            <?php echo $user->about; ?>
-         </div>
-     </div>
-<?php endif;?>     
-
-<hr/>
-
-<?php $this->widget('application.modules.comment.widgets.CommentsListWidget', array(
-    'label' => Yii::t('UserModule.user', 'Opinions'),
-    'model' => $user,
-    'modelId' => $user->id,
-)); ?>
+        <?php if ($user->site): ?>
+            <i class="glyphicon glyphicon-globe"></i> <?= CHtml::link(
+                $user->site,
+                $user->site,
+                ['rel' => 'nofollow', 'target' => '_blank']
+            ); ?><br/>
+        <?php endif; ?>
+    </div>
+</div>
 
 <br/>
 
-<h3><?php echo Yii::t('UserModule.user', 'You can write something on my wall'); ?></h3>
-
-<?php if(Yii::app()->user->isAuthenticated()): ?>
-    <?php $this->widget('application.modules.comment.widgets.CommentFormWidget', array(
-        'redirectTo' => $this->createUrl('/user/people/userInfo/', array('username' => $user->nick_name)),
-        'model' => $user,
-        'modelId' => $user->id,
-    )); ?>
-<?php else: ?>
-    <div class="alert alert-notice">
-        <?php echo Yii::t('UserModule.user', 'Please,').' '; echo CHtml::link(Yii::t('UserModule.user', 'sign in'), array('/user/account/login/')); echo ' '.Yii::t('UserModule.user', 'or').' '; ?>
-        <?php echo CHtml::link(Yii::t('UserModule.user', 'sign up'), array('/user/account/registration/')); ?>
-        <?php echo ' '.Yii::t('UserModule.user', '- only authorized users can write on my wall =)'); ?>
+<div class="row">
+    <div class="col-xs-12">
+        <?php if ($user->about): { ?>
+            <blockquote>
+                <p><?= $user->about; ?></p>
+            </blockquote>
+        <?php } endif; ?>
     </div>
-<?php endif; ?>
+</div>
+
+<?php if (Yii::app()->hasModule('blog')): { ?>
+    <div class="row">
+        <div class="col-xs-12">
+            <?php $this->widget('application.modules.blog.widgets.UserBlogsWidget', ['userId' => $user->id]); ?>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xs-12">
+            <br/>
+            <ul class="nav nav-tabs" role="tablist">
+                <li class="active"><a href="#posts" role="tab" data-toggle="tab"><?= Yii::t('BlogModule.blog', 'Last posts'); ?></a></li>
+                <li><a href="#comments" role="tab" data-toggle="tab"><?= Yii::t('BlogModule.blog', 'Comments'); ?></a></li>
+            </ul>
+
+            <div class="tab-content">
+                <div class="tab-pane active" id="posts">
+                    <?php $this->widget(
+                        'application.modules.blog.widgets.LastPostsWidget',
+                        [
+                            'view'     => 'lastuserposts',
+                            'criteria' => [
+                                'condition' => 't.create_user_id = :user_id',
+                                'params'    => [
+                                    ':user_id' => $user->id
+                                ]
+                            ]
+                        ]
+                    ); ?>
+                </div>
+                <div class="tab-pane" id="comments">
+                    <?php $this->widget('application.modules.blog.widgets.UserPostCommentsWidget', ['userId' => $user->id]); ?>
+                </div>
+            </div>
+        </div>
+    </div>
+<?php } endif; ?>

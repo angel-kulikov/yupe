@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Форма авторизации
  *
@@ -10,81 +11,96 @@
  * @link     http://yupe.ru
  *
  **/
-class LoginForm extends YFormModel
+class LoginForm extends yupe\models\YFormModel
 {
-    public $email;
-    public $password;
-    public $remember_me;
-    public $verifyCode;
-    private $_identity;
+    /**
+     *
+     */
+    const LOGIN_LIMIT_SCENARIO = 'loginLimit';
 
+    /**
+     * @var
+     */
+    public $email;
+    /**
+     * @var
+     */
+    public $password;
+    /**
+     * @var
+     */
+    public $remember_me;
+    /**
+     * @var
+     */
+    public $verifyCode;
+
+    /**
+     * @return array
+     */
     public function rules()
     {
         $module = Yii::app()->getModule('user');
 
-        return array(
-            array('email, password', 'required'),
-            array('email', 'email'),
-            array('remember_me','boolean'),
-            array('verifyCode', 'YRequiredValidator', 'allowEmpty' => !$module->showCaptcha || !CCaptcha::checkRequirements(), 'message' => Yii::t('UserModule.user', 'Check code incorrect'), 'on' => 'loginLimit'),
-            array('verifyCode', 'captcha', 'allowEmpty' => !$module->showCaptcha || !CCaptcha::checkRequirements(), 'on' => 'loginLimit'),
-            array('verifyCode', 'emptyOnInvalid'),
-            array('password', 'authenticate'),
-        );
+        return [
+            ['email, password', 'required'],
+            ['verifyCode', 'required', 'on' => self::LOGIN_LIMIT_SCENARIO],
+            ['remember_me', 'boolean'],
+            [
+                'verifyCode',
+                'yupe\components\validators\YRequiredValidator',
+                'allowEmpty' => !$module->showCaptcha || !CCaptcha::checkRequirements(),
+                'message' => Yii::t('UserModule.user', 'Check code incorrect'),
+                'on' => self::LOGIN_LIMIT_SCENARIO,
+            ],
+            [
+                'verifyCode',
+                'captcha',
+                'allowEmpty' => !$module->showCaptcha || !CCaptcha::checkRequirements(),
+                'on' => self::LOGIN_LIMIT_SCENARIO,
+            ],
+            ['verifyCode', 'emptyOnInvalid'],
+        ];
     }
 
+    /**
+     * @return array
+     */
     public function attributeLabels()
     {
-        return array(
-            'email'      => Yii::t('UserModule.user', 'Email'),
-            'password'   => Yii::t('UserModule.user', 'Password'),
-            'remember_me'=> Yii::t('UserModule.user', 'Remember me'),
+        return [
+            'email' => Yii::t('UserModule.user', 'Email/Login'),
+            'password' => Yii::t('UserModule.user', 'Password'),
+            'remember_me' => Yii::t('UserModule.user', 'Remember me'),
             'verifyCode' => Yii::t('UserModule.user', 'Check code'),
-        );
+        ];
     }
 
+    /**
+     * @return array
+     */
     public function attributeDescriptions()
     {
-        return array(
-            'email'      => Yii::t('UserModule.user', 'Email'),
-            'password'   => Yii::t('UserModule.user', 'Password'),
-            'remember_me'=> Yii::t('UserModule.user', 'Remember me'),
+        return [
+            'email' => Yii::t('UserModule.user', 'Email/Login'),
+            'password' => Yii::t('UserModule.user', 'Password'),
+            'remember_me' => Yii::t('UserModule.user', 'Remember me'),
             'verifyCode' => Yii::t('UserModule.user', 'Check code'),
-        );
-    }
-
-    public function authenticate()
-    {
-        if (!$this->hasErrors()) {
-            $this->_identity = new UserIdentity($this->email, $this->password);
-
-            $duration = 0;
-
-            if ($this->remember_me) {
-                $sessionTimeInWeeks = (int)Yii::app()->getModule('user')->sessionLifeTime;
-                $duration = $sessionTimeInWeeks*24*60*60;
-            }
-
-            if (!$this->_identity->authenticate())
-                $this->addError('password', Yii::t('UserModule.user', 'Email or password was typed wrong!'));
-            else
-                Yii::app()->user->login($this->_identity, $duration);
-
-            $this->verifyCode = null;
-        }
+        ];
     }
 
     /**
      * Обнуляем введённое значение капчи, если оно введено неверно:
      *
      * @param string $attribute - имя атрибута
-     * @param mixed  $params    - параметры
+     * @param mixed $params - параметры
      *
      * @return void
      **/
     public function emptyOnInvalid($attribute, $params)
     {
-        if ($this->hasErrors())
+        if ($this->hasErrors()) {
             $this->verifyCode = null;
+        }
     }
 }

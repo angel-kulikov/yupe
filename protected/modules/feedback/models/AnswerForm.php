@@ -1,4 +1,5 @@
 <?php
+
 /**
  * AnswerForm форма для ответа на сообщение из панели управления
  *
@@ -11,23 +12,38 @@
  **/
 class AnswerForm extends CFormModel
 {
+    /**
+     * @var
+     */
     public $answer;
+    /**
+     * @var
+     */
     public $is_faq;
+    /**
+     * @var
+     */
     public $email;
 
+    /**
+     * @return array
+     */
     public function rules()
     {
-        return array(
-            array('answer', 'required'),
-            array('is_faq', 'in', 'range' => array(0, 1)),
-        );
+        return [
+            ['answer', 'required'],
+            ['is_faq', 'in', 'range' => [0, 1]],
+        ];
     }
 
+    /**
+     * @return array
+     */
     public function attributeLabels()
     {
-        return array(
+        return [
             'answer' => Yii::t('FeedbackModule.feedback', 'Reply'),
             'is_faq' => Yii::t('FeedbackModule.feedback', 'In FAQ'),
-        );
+        ];
     }
 }

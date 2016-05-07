@@ -1,38 +1,70 @@
 <?php
-$this->breadcrumbs = array(
-    Yii::app()->getModule('user')->getCategory() => array(),
-    Yii::t('UserModule.user', 'Users') => array('/user/userBackend/index'),
-    Yii::t('UserModule.user', 'Tokens') => array('/user/tokensBackend/index'),
+$this->breadcrumbs = [
+    Yii::t('UserModule.user', 'Users')  => ['/user/userBackend/index'],
+    Yii::t('UserModule.user', 'Tokens') => ['/user/tokensBackend/index'],
     Yii::t('UserModule.user', 'Update token') . ' #' . $model->id,
-);
+];
 
 $this->pageTitle = Yii::t('UserModule.user', 'Update token') . ' #' . $model->id;
 
-$this->menu = array(
-    array('label' => Yii::t('UserModule.user', 'Users'), 'items' => array(
-        array('icon' => 'list-alt', 'label' => Yii::t('UserModule.user', 'Manage users'), 'url' => array('/user/userBackend/index')),
-        array('icon' => 'plus-sign', 'label' => Yii::t('UserModule.user', 'Create user'), 'url' => array('/user/userBackend/create')),
-    )),
-    array('label' => Yii::t('UserModule.user', 'Tokens'), 'items' => array(
-        array('icon' => 'list-alt', 'label' => Yii::t('UserModule.user', 'Token list'), 'url' => array('/user/tokensBackend/index')),
-    )),
-    array('label' => Yii::t('UserModule.user', 'Token') . ' #' . $model->id, 'items' => array(
-    	array('icon' => 'eye-open', 'label' => Yii::t('UserModule.user', 'View'), 'url' => array('/user/tokensBackend/view', 'id' => $model->id)),
-        array('icon' => 'pencil', 'label' => Yii::t('UserModule.user', 'Update'), 'url' => array('/user/tokensBackend/update', 'id' => $model->id)),
-        array(
-        	'icon' => 'trash', 'label' => Yii::t('UserModule.user', 'Delete'), 'url' => array(
-        		'/user/tokensBackend/delete', 'id' => $model->id
-        	), 'linkOptions' => array(
-        		'ajax'       => $this->getDeleteLink($model),
-        	)
-        ),
-    )),
-); ?>
+$this->menu = [
+    [
+        'label' => Yii::t('UserModule.user', 'Users'),
+        'items' => [
+            [
+                'icon'  => 'fa fa-fw fa-list-alt',
+                'label' => Yii::t('UserModule.user', 'Manage users'),
+                'url'   => ['/user/userBackend/index']
+            ],
+            [
+                'icon'  => 'fa fa-fw fa-plus-square',
+                'label' => Yii::t('UserModule.user', 'Create user'),
+                'url'   => ['/user/userBackend/create']
+            ],
+        ]
+    ],
+    [
+        'label' => Yii::t('UserModule.user', 'Tokens'),
+        'items' => [
+            [
+                'icon'  => 'fa fa-fw fa-list-alt',
+                'label' => Yii::t('UserModule.user', 'Token list'),
+                'url'   => ['/user/tokensBackend/index']
+            ],
+        ]
+    ],
+    [
+        'label' => Yii::t('UserModule.user', 'Token') . ' #' . $model->id,
+        'items' => [
+            [
+                'icon'  => 'fa fa-fw fa-eye',
+                'label' => Yii::t('UserModule.user', 'View'),
+                'url'   => ['/user/tokensBackend/view', 'id' => $model->id]
+            ],
+            [
+                'icon'  => 'fa fa-fw fa-pencil',
+                'label' => Yii::t('UserModule.user', 'Update'),
+                'url'   => ['/user/tokensBackend/update', 'id' => $model->id]
+            ],
+            [
+                'icon'        => 'fa fa-fw fa-trash-o',
+                'label'       => Yii::t('UserModule.user', 'Delete'),
+                'url'         => [
+                    '/user/tokensBackend/delete',
+                    'id' => $model->id
+                ],
+                'linkOptions' => [
+                    'ajax' => $this->getDeleteLink($model),
+                ]
+            ],
+        ]
+    ],
+]; ?>
 <div class="page-header">
     <h1>
-        <?php echo Yii::t('UserModule.user', 'Tokens'); ?>
-        <small><?php echo Yii::t('UserModule.user', 'update token')  . ' #' . $model->id; ?></small>
+        <?=  Yii::t('UserModule.user', 'Tokens'); ?>
+        <small><?=  Yii::t('UserModule.user', 'update token') . ' #' . $model->id; ?></small>
     </h1>
 </div>
 
-<?php echo $this->renderPartial('_form', array('model' => $model)); ?>
+<?=  $this->renderPartial('_form', ['model' => $model]); ?>

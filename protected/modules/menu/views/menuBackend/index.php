@@ -10,102 +10,155 @@
  * @link     http://yupe.ru
  *
  **/
-$this->breadcrumbs = array(
-    Yii::app()->getModule('menu')->getCategory() => array(),
-    Yii::t('MenuModule.menu', 'Menu') => array('/menu/menuBackend/index'),
+$this->breadcrumbs = [
+    Yii::t('MenuModule.menu', 'Menu') => ['/menu/menuBackend/index'],
     Yii::t('MenuModule.menu', 'Manage')
-);
+];
 
 $this->pageTitle = Yii::t('MenuModule.menu', 'Menu - manage');
 
-$this->menu = array(
-    array(
-        'label' => Yii::t('MenuModule.menu', 'Menu'), 'items' => array(
-            array('icon' => 'plus-sign', 'label' => Yii::t('MenuModule.menu', 'Create menu'), 'url' => array('/menu/menuBackend/create')),
-            array('icon' => 'list-alt', 'label' => Yii::t('MenuModule.menu', 'Manage menu'), 'url' => array('/menu/menuBackend/index')),
-        )
-    ),
-    array(
-        'label' => Yii::t('MenuModule.menu', 'Menu items'), 'items' => array(
-            array('icon' => 'plus-sign', 'label' => Yii::t('MenuModule.menu', 'Create menu item'), 'url' => array('/menu/menuitemBackend/create')),
-            array('icon' => 'list-alt', 'label' => Yii::t('MenuModule.menu', 'Manage menu items'), 'url' => array('/menu/menuitemBackend/index')),
-        )
-    ),
-);
+$this->menu = [
+    [
+        'label' => Yii::t('MenuModule.menu', 'Menu'),
+        'items' => [
+            [
+                'icon'  => 'fa fa-fw fa-list-alt',
+                'label' => Yii::t('MenuModule.menu', 'Manage menu'),
+                'url'   => ['/menu/menuBackend/index']
+            ],
+            [
+                'icon'  => 'fa fa-fw fa-plus-square',
+                'label' => Yii::t('MenuModule.menu', 'Create menu'),
+                'url'   => ['/menu/menuBackend/create']
+            ],
+        ]
+    ],
+    [
+        'label' => Yii::t('MenuModule.menu', 'Menu items'),
+        'items' => [
+            [
+                'icon'  => 'fa fa-fw fa-list-alt',
+                'label' => Yii::t('MenuModule.menu', 'Manage menu items'),
+                'url'   => ['/menu/menuitemBackend/index']
+            ],
+            [
+                'icon'  => 'fa fa-fw fa-plus-square',
+                'label' => Yii::t('MenuModule.menu', 'Create menu item'),
+                'url'   => ['/menu/menuitemBackend/create']
+            ],
+        ]
+    ],
+];
 ?>
 <div class="page-header">
     <h1>
-        <?php echo Yii::t('MenuModule.menu', 'Menu'); ?>
-        <small><?php echo Yii::t('MenuModule.menu', 'manage'); ?></small>
+        <?=  Yii::t('MenuModule.menu', 'Menu'); ?>
+        <small><?=  Yii::t('MenuModule.menu', 'manage'); ?></small>
     </h1>
 </div>
 
-<button class="btn btn-small dropdown-toggle" data-toggle="collapse" data-target="#search-toggle">
-    <i class="icon-search">&nbsp;</i>
-    <?php echo CHtml::link(Yii::t('MenuModule.menu', 'Find menu'), '#', array('class' => 'search-button')); ?>
-    <span class="caret">&nbsp;</span>
-</button>
+<p>
+    <a class="btn btn-default btn-sm dropdown-toggle" data-toggle="collapse" data-target="#search-toggle">
+        <i class="fa fa-search">&nbsp;</i>
+        <?=  Yii::t('MenuModule.menu', 'Find menu'); ?>
+        <span class="caret">&nbsp;</span>
+    </a>
+</p>
 
 <div id="search-toggle" class="collapse out search-form">
-<?php
-Yii::app()->clientScript->registerScript(
-    'search', "
-    $('.search-form form').submit(function() {
+    <?php
+    Yii::app()->clientScript->registerScript(
+        'search',
+        "
+    $('.search-form form').submit(function () {
         $.fn.yiiGridView.update('menu-grid', {
             data: $(this).serialize()
         });
+
         return false;
     });"
-);
-$this->renderPartial('_search', array('model' => $model));
-?>
+    );
+    $this->renderPartial('_search', ['model' => $model]);
+    ?>
 </div>
 
-</br>
-
-<p><?php echo Yii::t('MenuModule.menu', 'This section describes Menu Management'); ?></p>
-
 <?php $this->widget(
-    'yupe\widgets\CustomGridView', array(
+    'yupe\widgets\CustomGridView',
+    [
         'id'           => 'menu-grid',
-        'type'         => 'condensed',
         'dataProvider' => $model->search(),
         'filter'       => $model,
-        'columns'      => array(
-            array(
-                'name'        => 'id',
-                'htmlOptions' => array('style' => 'width:50px'),
-            ),
-            'name',
-            'code',
-            'description',
-            array(
+        'columns'      => [
+            [
+                'class'    => 'bootstrap.widgets.TbEditableColumn',
+                'name'     => 'name',
+                'editable' => [
+                    'url'    => $this->createUrl('/menu/menuBackend/inline'),
+                    'mode'   => 'inline',
+                    'params' => [
+                        Yii::app()->request->csrfTokenName => Yii::app()->request->csrfToken
+                    ]
+                ],
+                'filter'   => CHtml::activeTextField($model, 'name', ['class' => 'form-control']),
+            ],
+            [
+                'class'    => 'bootstrap.widgets.TbEditableColumn',
+                'name'     => 'code',
+                'editable' => [
+                    'url'    => $this->createUrl('/menu/menuBackend/inline'),
+                    'mode'   => 'inline',
+                    'params' => [
+                        Yii::app()->request->csrfTokenName => Yii::app()->request->csrfToken
+                    ]
+                ],
+                'filter'   => CHtml::activeTextField($model, 'code', ['class' => 'form-control']),
+            ],
+            [
+                'class'    => 'bootstrap.widgets.TbEditableColumn',
+                'name'     => 'description',
+                'editable' => [
+                    'url'        => $this->createUrl('/menu/menuBackend/inline'),
+                    'mode'       => 'popup',
+                    'type'       => 'textarea',
+                    'inputclass' => 'input-large',
+                    'title'      => Yii::t(
+                        'MenuModule.menu',
+                        'Select {field}',
+                        ['{field}' => mb_strtolower($model->getAttributeLabel('description'))]
+                    ),
+                    'params'     => [
+                        Yii::app()->request->csrfTokenName => Yii::app()->request->csrfToken
+                    ]
+                ],
+                'filter'   => CHtml::activeTextField($model, 'description', ['class' => 'form-control']),
+            ],
+            [
+                'class'   => 'yupe\widgets\EditableStatusColumn',
+                'name'    => 'status',
+                'url'     => $this->createUrl('/menu/menuBackend/inline'),
+                'source'  => $model->getStatusList(),
+                'options' => [
+                    Menu::STATUS_ACTIVE   => ['class' => 'label-success'],
+                    Menu::STATUS_DISABLED => ['class' => 'label-default'],
+                ],
+            ],
+            [
                 'header' => Yii::t('MenuModule.menu', 'Items'),
                 'type'   => 'raw',
                 'value'  => 'CHtml::link(count($data->menuItems), Yii::app()->createUrl("/menu/menuitemBackend/index", array("MenuItem[menu_id]" => $data->id)))',
-            ),
-            array(
-                'name'        => 'status',
-                'type'        => 'raw',
-                'value'       => '$this->grid->returnBootstrapStatusHtml($data, "status", "Status", array("lock", "ok-sign"))',
-                'filter'      => $model->statusList,
-                'htmlOptions' => array('style' => 'width:110px'),
-            ),
-            array(
-                'class'       => 'bootstrap.widgets.TbButtonColumn',
-                'template'    => '{view}{update}{delete}{add}',
-                'htmlOptions' => array('style' => 'width:60px'),
-                'buttons'  => array(
-                    'add' => array(
-                        'label'   => false,
-                        'url'     => 'Yii::app()->createUrl("/menu/menuitemBackend/create", array("mid" => $data->id))',
-                        'options' => array(
-                            'class' => 'icon-plus-sign',
-                            'title' => Yii::t('MenuModule.menu', 'Create menu item'),
-                        ),
-                    ),
-                ),
-            ),
-        ),
-    )
+            ],
+            [
+                'class'    => 'yupe\widgets\CustomButtonColumn',
+                'template' => '{view}{update}{delete}{add}',
+                'buttons'  => [
+                    'add' => [
+                        'icon'  => 'fa fa-fw fa-plus-square',
+                        'label' => Yii::t('MenuModule.menu', 'Create menu item'),
+                        'url'   => 'Yii::app()->createUrl("/menu/menuitemBackend/create", array("mid" => $data->id))',
+                        'options' => ['class' => 'btn btn-sm btn-default']
+                    ],
+                ],
+            ],
+        ],
+    ]
 ); ?>

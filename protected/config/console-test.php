@@ -3,60 +3,56 @@ Yii::setPathOfAlias('application', dirname(__FILE__) . '/../');
 Yii::setPathOfAlias('yupe', dirname(__FILE__) . '/../modules/yupe/');
 Yii::setPathOfAlias('vendor', dirname(__FILE__) . '/../../vendor/');
 
-return array(
+return [
     // У вас этот путь может отличаться. Можно подсмотреть в config/main.php.
-    'basePath'          => dirname(__FILE__) . DIRECTORY_SEPARATOR . '..',
-    'name'              => 'Cron',
-    'preload'           => array('log'),
-    'commandMap'        => array(
-
-    ),
-    'import' => array(
+    'basePath'   => dirname(__FILE__) . DIRECTORY_SEPARATOR . '..',
+    'name'       => 'Cron',
+    'preload'    => ['log'],
+    'commandMap' => [],
+    'import'     => [
         'application.commands.*',
         'application.components.*',
         'application.models.*',
         'application.modules.queue.models.*',
         'application.modules.yupe.extensions.tagcache.*',
-    ),
-    'modules' => array(
-        'comment' => array('class' => 'application.modules.comment.CommentModule',),
-        'yupe' => array('class' => 'application.modules.yupe.YupeModule',)
-    ),
+    ],
+    'modules'    => [
+        'comment' => ['class' => 'application.modules.comment.CommentModule',],
+        'yupe'    => ['class' => 'application.modules.yupe.YupeModule',]
+    ],
     // Перенаправляем журнал для cron-а в отдельные файлы
-    'components' => array(
+    'components' => [
         // компонент для отправки почты
-        'mail' => array(
-            'class' => 'application.modules.yupe.components.YMail',
-        ),
-        'migrator'=>array(
-            'class'=>'yupe\components\Migrator',
-        ),
-        'log' => array(
-            'class' => 'CLogRouter',
-            'routes' => array(
-                array(
-                    'class' => 'CFileLogRoute',
+        'mail'     => [
+            'class' => 'yupe\components\Mail',
+        ],
+        'migrator' => [
+            'class' => 'yupe\components\Migrator',
+        ],
+        'log'      => [
+            'class'  => 'CLogRouter',
+            'routes' => [
+                [
+                    'class'   => 'CFileLogRoute',
                     'logFile' => 'cron.log',
-                    'levels' => 'error, warning, info',
-                ),
-                array(
-                    'class' => 'CFileLogRoute',
+                    'levels'  => 'error, warning, info',
+                ],
+                [
+                    'class'   => 'CFileLogRoute',
                     'logFile' => 'cron_trace.log',
-                    'levels' => 'trace',
-                ),
-            ),
-        ),
-
-        'cache' => array(
-            'class' => 'CDummyCache',
-            'behaviors' => array(
-                'clear' => array(
+                    'levels'  => 'trace',
+                ],
+            ],
+        ],
+        'cache'    => [
+            'class'     => 'CDummyCache',
+            'behaviors' => [
+                'clear' => [
                     'class' => 'TaggingCacheBehavior',
-                ),
-            ),
-        ),
-
+                ],
+            ],
+        ],
         // параметры подключения к базе данных, подробнее http://www.yiiframework.ru/doc/guide/ru/database.overview
-        'db' => file_exists(__DIR__ . '/db-test.php') ? require_once __DIR__ . '/db-test.php' : array(),
-    ),
-);
+        'db'       => file_exists(__DIR__ . '/db-test.php') ? require_once __DIR__ . '/db-test.php' : [],
+    ],
+];

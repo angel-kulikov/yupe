@@ -20,10 +20,8 @@
  * @version    $Id: OpenXml.php 24593 2012-01-05 20:35:02Z matthew $
  */
 
-
 /** Zend_Search_Lucene_Document */
 require_once 'Zend/Search/Lucene/Document.php';
-
 
 /**
  * OpenXML document.
@@ -74,13 +72,13 @@ abstract class Zend_Search_Lucene_Document_OpenXml extends Zend_Search_Lucene_Do
     /**
      * Extract metadata from document
      *
-     * @param ZipArchive $package    ZipArchive OpenXML package
-     * @return array    Key-value pairs containing document meta data
+     * @param  ZipArchive $package ZipArchive OpenXML package
+     * @return array      Key-value pairs containing document meta data
      */
     protected function extractMetaData(ZipArchive $package)
     {
         // Data holders
-        $coreProperties = array();
+        $coreProperties = [];
 
         // Read relations and search for core properties
         $relations = simplexml_load_string($package->getFromName("_rels/.rels"));
@@ -109,22 +107,25 @@ abstract class Zend_Search_Lucene_Document_OpenXml extends Zend_Search_Lucene_Do
     /**
      * Determine absolute zip path
      *
-     * @param string $path
+     * @param  string $path
      * @return string
      */
     protected function absoluteZipPath($path)
     {
-        $path = str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, $path);
+        $path = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path);
         $parts = array_filter(explode(DIRECTORY_SEPARATOR, $path), 'strlen');
-        $absolutes = array();
+        $absolutes = [];
         foreach ($parts as $part) {
-            if ('.' == $part) continue;
+            if ('.' == $part) {
+                continue;
+            }
             if ('..' == $part) {
                 array_pop($absolutes);
             } else {
                 $absolutes[] = $part;
             }
         }
+
         return implode('/', $absolutes);
     }
 }

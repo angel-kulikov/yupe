@@ -1,92 +1,135 @@
 <?php
-    $this->breadcrumbs = array(
-        Yii::app()->getModule('news')->getCategory() => array(),
-        Yii::t('NewsModule.news', 'News') => array('/news/newsBackend/index'),
-        Yii::t('NewsModule.news', 'Management'),
-    );
 
-    $this->pageTitle = Yii::t('NewsModule.news', 'News - management');
+/**
+ * @var $model News
+ * @var $this NewsBackendController
+ */
 
-    $this->menu = array(
-        array('icon' => 'list-alt', 'label' => Yii::t('NewsModule.news', 'News management'), 'url' => array('/news/newsBackend/index')),
-        array('icon' => 'plus-sign', 'label' => Yii::t('NewsModule.news', 'Create article'), 'url' => array('/news/newsBackend/create')),
-    );
+$this->breadcrumbs = [
+    Yii::t('NewsModule.news', 'News') => ['/news/newsBackend/index'],
+    Yii::t('NewsModule.news', 'Management'),
+];
+
+$this->pageTitle = Yii::t('NewsModule.news', 'News - management');
+
+$this->menu = [
+    [
+        'icon' => 'fa fa-fw fa-list-alt',
+        'label' => Yii::t('NewsModule.news', 'News management'),
+        'url' => ['/news/newsBackend/index'],
+    ],
+    [
+        'icon' => 'fa fa-fw fa-plus-square',
+        'label' => Yii::t('NewsModule.news', 'Create news'),
+        'url' => ['/news/newsBackend/create'],
+    ],
+];
 ?>
 <div class="page-header">
     <h1>
-        <?php echo Yii::t('NewsModule.news', 'News'); ?>
-        <small><?php echo Yii::t('NewsModule.news', 'management'); ?></small>
+        <?= Yii::t('NewsModule.news', 'News'); ?>
+        <small><?= Yii::t('NewsModule.news', 'management'); ?></small>
     </h1>
 </div>
 
-<button class="btn btn-small dropdown-toggle" data-toggle="collapse" data-target="#search-toggle">
-    <i class="icon-search">&nbsp;</i>
-    <?php echo CHtml::link(Yii::t('NewsModule.news', 'Find news'), '#', array('class' => 'search-button')); ?>
-    <span class="caret">&nbsp;</span>
-</button>
+<p>
+    <a class="btn btn-default btn-sm dropdown-toggle" data-toggle="collapse" data-target="#search-toggle">
+        <i class="fa fa-search">&nbsp;</i>
+        <?= Yii::t('NewsModule.news', 'Find news'); ?>
+        <span class="caret">&nbsp;</span>
+    </a>
+</p>
 
 <div id="search-toggle" class="collapse out search-form">
-<?php
-Yii::app()->clientScript->registerScript('search', "
-    $('.search-form form').submit(function() {
+    <?php
+    Yii::app()->clientScript->registerScript(
+        'search',
+        "
+    $('.search-form form').submit(function () {
         $.fn.yiiGridView.update('news-grid', {
             data: $(this).serialize()
         });
+
         return false;
     });
-");
-$this->renderPartial('_search', array('model' => $model));
-?>
+"
+    );
+    $this->renderPartial('_search', ['model' => $model]);
+    ?>
 </div>
 
-<br/>
-
-<p><?php echo Yii::t('NewsModule.news', 'This section describes News Management'); ?></p>
-
-<?php $this->widget('yupe\widgets\CustomGridView', array(
-    'id'           => 'news-grid',
-    'type'         => 'condensed',
-    'dataProvider' => $model->search(),
-    'filter'       => $model,
-    'columns'      => array(
-        array(
-            'name'        => 'id',
-            'htmlOptions' => array('style' => 'width:20px'),
-            'type'  => 'raw',
-            'value' => 'CHtml::link($data->id, array("/news/newsBackend/update", "id" => $data->id))',
-        ),
-        array(
-            'name'  => 'title',
-            'type'  => 'raw',
-            'value' => 'CHtml::link($data->title, array("/news/newsBackend/update", "id" => $data->id))',
-        ),
-        array(
-            'name'  => 'alias',
-            'type'  => 'raw',
-            'value' => 'CHtml::link($data->alias, array("/news/newsBackend/update", "id" => $data->id))',
-        ),
-        array(
-            'name'        => 'date',
-            'htmlOptions' => array('style' => 'width:80px'),
-        ),
-        array(
-           'name'   => 'category_id',
-           'value'  => '$data->getCategoryName()',
-           'filter' => CHtml::listData($this->module->getCategoryList(),'id','name')
-        ),
-        array(
-            'name'   => 'status',
-            'type'   => 'raw',
-            'value'  => '$this->grid->returnBootstrapStatusHtml($data, "status", "Status", array("pencil", "ok-sign", "time"))',
-            'filter' => $model->getStatusList()
-        ),
-        array(
-            'name'  => 'lang',
-            'value'  => '$data->lang',
-            'filter' => $this->yupe->getLanguagesList()
-        ),
-        array(
-            'class'   => 'bootstrap.widgets.TbButtonColumn'
-        ),
-    ),
-)); ?>
+<?php $this->widget(
+    'yupe\widgets\CustomGridView',
+    [
+        'id' => 'news-grid',
+        'dataProvider' => $model->search(),
+        'filter' => $model,
+        'columns' => [
+            [
+                'class' => 'bootstrap.widgets.TbEditableColumn',
+                'name' => 'title',
+                'editable' => [
+                    'url' => $this->createUrl('/news/newsBackend/inline'),
+                    'mode' => 'inline',
+                    'params' => [
+                        Yii::app()->request->csrfTokenName => Yii::app()->request->csrfToken,
+                    ],
+                ],
+                'filter' => CHtml::activeTextField($model, 'title', ['class' => 'form-control']),
+            ],
+            [
+                'class' => 'bootstrap.widgets.TbEditableColumn',
+                'name' => 'slug',
+                'editable' => [
+                    'url' => $this->createUrl('/news/newsBackend/inline'),
+                    'mode' => 'inline',
+                    'params' => [
+                        Yii::app()->request->csrfTokenName => Yii::app()->request->csrfToken,
+                    ],
+                ],
+                'filter' => CHtml::activeTextField($model, 'slug', ['class' => 'form-control']),
+            ],
+            'date',
+            [
+                'name' => 'category_id',
+                'value' => '$data->getCategoryName()',
+                'filter' => CHtml::activeDropDownList(
+                    $model,
+                    'category_id',
+                    Category::model()->getFormattedList(Yii::app()->getModule('news')->mainCategory),
+                    ['class' => 'form-control', 'encode' => false, 'empty' => '']
+                ),
+            ],
+            [
+                'class' => 'yupe\widgets\EditableStatusColumn',
+                'name' => 'status',
+                'url' => $this->createUrl('/news/newsBackend/inline'),
+                'source' => $model->getStatusList(),
+                'options' => [
+                    News::STATUS_PUBLISHED => ['class' => 'label-success'],
+                    News::STATUS_MODERATION => ['class' => 'label-warning'],
+                    News::STATUS_DRAFT => ['class' => 'label-default'],
+                ],
+            ],
+            [
+                'name' => 'lang',
+                'value' => '$data->getFlag()',
+                'filter' => $this->yupe->getLanguagesList(),
+                'type' => 'html',
+            ],
+            [
+                'class' => 'yupe\widgets\CustomButtonColumn',
+                'frontViewButtonUrl' => function($data){
+                    return Yii::app()->createUrl('/news/news/view', ['slug' => $data->slug]);
+                },
+                'buttons' => [
+                    'front_view' => [
+                        'visible' => function ($row, $data) {
+                            return $data->status == News::STATUS_PUBLISHED;
+                        }
+                    ]
+                ]
+            ],
+        ],
+    ]
+); ?>

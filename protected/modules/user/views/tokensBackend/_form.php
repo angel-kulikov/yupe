@@ -1,105 +1,143 @@
 <?php
 $form = $this->beginWidget(
-	'bootstrap.widgets.TbActiveForm', array(
-	    'id'                     => 'user-tokens-form',
-	    'enableAjaxValidation'   => false,
-	    'enableClientValidation' => true,
-	    'type'                   => 'vertical',
-	    'htmlOptions'            => array('class' => 'well'),
-	    'inlineErrors'           => true,
-	)
+    'bootstrap.widgets.TbActiveForm',
+    [
+        'id'                     => 'user-tokens-form',
+        'enableAjaxValidation'   => false,
+        'enableClientValidation' => true,
+        'type'                   => 'vertical',
+        'htmlOptions'            => ['class' => 'well'],
+    ]
 ); ?>
- 
-    <div class="alert alert-info">
-        <?php echo Yii::t('UserModule.user', 'Fields with'); ?>
-        <span class="required">*</span>
-        <?php echo Yii::t('UserModule.user', 'are required'); ?>
+
+<div class="alert alert-info">
+    <?=  Yii::t('UserModule.user', 'Fields with'); ?>
+    <span class="required">*</span>
+    <?=  Yii::t('UserModule.user', 'are required'); ?>
+</div>
+
+<?=  $form->errorSummary($model); ?>
+
+<div class="row">
+    <div class="col-sm-6">
+        <?=  $form->dropDownListGroup(
+            $model,
+            'user_id',
+            [
+                'widgetOptions' => [
+                    'data'        => $model->getUserList(),
+                    'htmlOptions' => [
+                        'empty' => '---',
+                    ],
+                ],
+            ]
+        ); ?>
     </div>
 
-    <?php echo $form->errorSummary($model); ?>
+    <div class="col-sm-6">
+        <?=  $form->dropDownListGroup(
+            $model,
+            'status',
+            [
+                'widgetOptions' => [
+                    'data'        => $model->getStatusList(),
+                    'htmlOptions' => [
+                        'empty' => '---',
+                    ],
+                ],
+            ]
+        ); ?>
+    </div>
+</div>
 
-    <div class="row-fluid">
-    	<div class="span6">
-    		<?php echo $form->dropDownListRow($model, 'user_id', $model->getUserList(), array('class' => 'span12', 'empty' => '---')); ?>
-    	</div>
-
-    	<div class="span6">
-    		<?php echo $form->dropDownListRow($model, 'status', $model->getStatusList(), array('class' => 'span12')); ?>
-    	</div>
+<div class="row">
+    <div class="col-sm-6">
+        <?=  $form->dropDownListGroup(
+            $model,
+            'type',
+            [
+                'widgetOptions' => [
+                    'data'        => $model->getTypeList(),
+                    'htmlOptions' => [
+                        'empty' => '---',
+                    ],
+                ],
+            ]
+        ); ?>
     </div>
 
-    <div class="row-fluid">
-    	<div class="span6">
-    		<?php echo $form->dropDownListRow($model, 'type', $model->getTypeList(), array('class' => 'span12', 'empty' => '---')); ?>
-    	</div>
+    <div class="col-sm-6">
+        <?=  $form->textFieldGroup($model, 'token'); ?>
+    </div>
+</div>
 
-    	<div class="span6">
-    		<div class="span8">
-    			<?php echo $form->textFieldRow($model, 'token',  array('class' => 'span12', 'readonly' => true)); ?>
-    		</div>
-			<div class="span4" style="padding-top: 30px;">
-    			<?php echo $form->checkBoxRow($model, 'new_token'); ?>
-    		</div>
-    	</div>
+<div class="row">
+    <div class="col-sm-6">
+        <?=  $form->labelEx($model, 'create_time'); ?>
+        <div class="input-prepend">
+            <span class="add-on"><i class="icon-calendar"></i></span>
+            <?php $this->widget(
+                'bootstrap.widgets.TbDateTimePicker',
+                [
+                    'model'       => $model,
+                    'attribute'   => 'create_time',
+                    'htmlOptions' => [
+                        'class' => 'span11',
+                        'value' => !empty($model->create_time)
+                                ? $model->beautifyDate($model->create_time, 'yyyy-MM-dd HH:mm')
+                                : date('Y-m-d H:i')
+                    ],
+                ]
+            ); ?>
+        </div>
     </div>
 
-    <div class="row-fluid">
-    	<div class="span6">
-	    	<?php echo $form->labelEx($model, 'created'); ?>
-	    	<div class="input-prepend row-fluid">
-	    		<span class="add-on"><i class="icon-calendar"></i></span>
-		    	<?php $this->widget(
-		    		'bootstrap.widgets.TbDateTimePicker', array(
-						'model'       => $model,
-						'attribute'   => 'created',
-						'htmlOptions' => array(
-							'readonly' => true,
-							'class' => 'span11',
-							'value' => !empty($model->created)
-										? $model->beautifyDate($model->created, 'yyyy-MM-dd HH:mm')
-										: date('Y-m-d H:i')
-						),
-		    		)
-		    	); ?>
-		    </div>
-    	</div>
-
-    	<div class="span6">
-    		<?php echo $form->labelEx($model, 'updated'); ?>
-	    	<div class="input-prepend row-fluid">
-	    		<span class="add-on"><i class="icon-calendar"></i></span>
-		    	<?php $this->widget(
-		    		'bootstrap.widgets.TbDateTimePicker', array(
-						'model'       => $model,
-						'attribute'   => 'updated',
-						'htmlOptions' => array(
-							'readonly' => true,
-							'class' => 'span11',
-							'value' => !empty($model->updated)
-										? $model->beautifyDate($model->updated, 'yyyy-MM-dd HH:mm')
-										: date('Y-m-d H:i')
-						),
-		    		)
-		    	); ?>
-		    </div>
-    	</div>
+    <div class="col-sm-6">
+        <?=  $form->labelEx($model, 'update_time'); ?>
+        <div class="input-prepend">
+            <span class="add-on"><i class="icon-calendar"></i></span>
+            <?php $this->widget(
+                'bootstrap.widgets.TbDateTimePicker',
+                [
+                    'model'       => $model,
+                    'attribute'   => 'update_time',
+                    'htmlOptions' => [
+                        'class' => 'span11',
+                        'value' => !empty($model->update_time)
+                                ? $model->beautifyDate($model->update_time, 'yyyy-MM-dd HH:mm')
+                                : date('Y-m-d H:i')
+                    ],
+                ]
+            ); ?>
+        </div>
     </div>
-
-	<div class="form-actions">
-		<?php $this->widget(
-			'bootstrap.widgets.TbButton', array(
-		        'buttonType' => 'submit',
-		        'type'       => 'primary',
-		        'label'      => $model->isNewRecord ? Yii::t('UserModule.user', 'Create token and continue') : Yii::t('UserModule.user', 'Save token and continue'),
-		    )
-		); ?>
-	    <?php $this->widget(
-	    	'bootstrap.widgets.TbButton', array(
-		        'buttonType'  => 'submit',
-		        'htmlOptions' => array('name' => 'submit-type', 'value' => 'index'),
-		        'label'       => $model->isNewRecord ? Yii::t('UserModule.user', 'Create token and close') : Yii::t('UserModule.user', 'Save token and close'),
-		    )
-		); ?>
-	</div>
+</div>
+<br/>
+<div class="row">
+    <div class="col-xs-12">
+        <?php $this->widget(
+            'bootstrap.widgets.TbButton',
+            [
+                'buttonType' => 'submit',
+                'context'    => 'primary',
+                'label'      => $model->isNewRecord ? Yii::t('UserModule.user', 'Create token and continue') : Yii::t(
+                        'UserModule.user',
+                        'Save token and continue'
+                    ),
+            ]
+        ); ?>
+        <?php $this->widget(
+            'bootstrap.widgets.TbButton',
+            [
+                'buttonType'  => 'submit',
+                'htmlOptions' => ['name' => 'submit-type', 'value' => 'index'],
+                'label'       => $model->isNewRecord ? Yii::t('UserModule.user', 'Create token and close') : Yii::t(
+                        'UserModule.user',
+                        'Save token and close'
+                    ),
+            ]
+        ); ?>
+    </div>
+</div>
 
 <?php $this->endWidget(); ?>

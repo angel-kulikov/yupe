@@ -9,7 +9,10 @@
  * @link     http://yupe.ru
  *
  **/
-class ContentBlockWidget extends YWidget
+Yii::import('application.modules.contentblock.models.ContentBlock');
+Yii::import('application.modules.contentblock.ContentBlockModule');
+
+class ContentBlockWidget extends yupe\widgets\YWidget
 {
     public $code;
     public $silent = false;
@@ -17,9 +20,15 @@ class ContentBlockWidget extends YWidget
 
     public function init()
     {
-        if (empty($this->code))
-            throw new CException(Yii::t('ContentBlockModule.contentblock', 'Insert content block title for ContentBlockWidget!'));
-        
+        if (empty($this->code)) {
+            throw new CException(
+                Yii::t(
+                    'ContentBlockModule.contentblock',
+                    'Insert content block title for ContentBlockWidget!'
+                )
+            );
+        }
+
         $this->silent = (bool)$this->silent;
     }
 
@@ -31,15 +40,17 @@ class ContentBlockWidget extends YWidget
 
         if ($output === false) {
 
-            $block = ContentBlock::model()->find('code = :code', array(':code' => $this->code));
+            $block = ContentBlock::model()->findByAttributes(['code' => $this->code]);
 
             if (null === $block) {
                 if ($this->silent === false) {
                     throw new CException(
                         Yii::t(
-                            'ContentBlockModule.contentblock', 'Content block "{code}" was not found !', array(
+                            'ContentBlockModule.contentblock',
+                            'Content block "{code}" was not found !',
+                            [
                                 '{code}' => $this->code
-                            )
+                            ]
                         )
                     );
                 }
@@ -47,24 +58,16 @@ class ContentBlockWidget extends YWidget
                 $output = '';
 
             } else {
-
-                switch ($block->type) {
-
-                case ContentBlock::PHP_CODE:
-                    $output = eval($block->content);
-                    break;
-                case ContentBlock::SIMPLE_TEXT:
-                    $output = CHtml::encode($block->content);
-                    break;
-                case ContentBlock::HTML_TEXT:
-                    $output = $block->content;
-                    break;
+                if ($block->status == ContentBlock::STATUS_ACTIVE) {
+                    $output = $block->getContent();
+                } else {
+                    $output = '';
                 }
             }
 
             Yii::app()->cache->set($cacheName, $output);
         }
 
-        $this->render($this->view, array('output' => $output));
+        $this->render($this->view, ['output' => $output]);
     }
 }

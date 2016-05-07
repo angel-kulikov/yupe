@@ -12,13 +12,13 @@
  *
  */
 
-Yii::import('application.modules.gallery.models.ImageToGallery');
+Yii::import('application.modules.gallery.models.*');
 
-class GalleryWidget extends YWidget
+class GalleryWidget extends yupe\widgets\YWidget
 {
     // сколько изображений выводить на одной странице
     public $limit = 10;
-    
+
     // ID-галереи
     public $galleryId;
 
@@ -29,7 +29,7 @@ class GalleryWidget extends YWidget
 
     /**
      * Запускаем отрисовку виджета
-     * 
+     *
      * @return void
      */
     public function run()
@@ -40,24 +40,24 @@ class GalleryWidget extends YWidget
             )
         );
         $dataProvider = new CActiveDataProvider(
-            'ImageToGallery', array(
-                'criteria' => array(
+            'ImageToGallery', [
+                'criteria'   => [
                     'condition' => 't.gallery_id = :gallery_id',
-                    'params' => array(':gallery_id' => $this->galleryId),
-                    'limit' => $this->limit,
-                    'order' => 't.creation_date DESC',
-                    'with' => 'image',
-                ),
-                'pagination' => array('pageSize' => $this->limit),
-            )
+                    'params'    => [':gallery_id' => $this->galleryId],
+                    'limit'     => $this->limit,
+                    'order'     => 'image.sort',
+                    'with'      => 'image',
+                ],
+                'pagination' => ['pageSize' => $this->limit],
+            ]
         );
 
         $this->render(
             $this->view,
-            array(
+            [
                 'dataProvider' => $dataProvider,
                 'gallery'      => $this->gallery,
-            )
+            ]
         );
     }
 }

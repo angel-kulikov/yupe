@@ -1,36 +1,38 @@
 <?php
 /**
- * Файл отображения для YShortCuts/shortcuts:
- *
- * @category YupeViews
- * @package  yupe
- * @author   AKulikov <tuxuls@gmail.com>
- * @license  BSD http://ru.wikipedia.org/wiki/%D0%9B%D0%B8%D1%86%D0%B5%D0%BD%D0%B7%D0%B8%D1%8F_BSD
- * @version  0.5.3
- * @link     http://yupe.ru
- *
- **/
-$mainAssets = Yii::app()->assetManager->publish(Yii::getPathOfAlias('application.modules.yupe.views.assets'));
-Yii::app()->clientScript->registerCssFile($mainAssets . '/css/shortcuts.css'); ?>
+ * @var $this \yupe\widgets\YShortCuts
+ * @var $modules \yupe\components\WebModule[]
+ * @var $updates array
+ */
+?>
 <div class="shortcuts">
-<?php
-if (count($this->shortcuts) > 0) {
-    foreach ($this->shortcuts as $name => $shortcut) {
-        if (isset($shortcut['items'])) {
-            foreach ($shortcut['items'] as $module => $item) {
-                echo CHtml::link(
-                    '<div class="cn">' . $this->getLabel($item) . $this->getUpdates($item, $module) . "</div>",
-                    $item['url'],
-                    $this->getHtmlOptions($item)
-                );
-            }
-        } else {
-            echo CHtml::link(
-                '<div class="cn">' . $this->getLabel($item) . $this->getUpdates($item, $name) . "</div>",
-                $item['url'],
-                $this->getHtmlOptions($item)
-            );
-        }
-    }
-} ?>
+    <?php foreach ($modules as $module): ?>
+        <?php if (!$module->getIsShowInAdminMenu() && !$module->getExtendedNavigation()): ?>
+            <?php continue; ?>
+        <?php endif; ?>
+        <?=  CHtml::link($this->render('_view', ['module' => $module, 'updates' => $updates], true), is_string($module->getAdminPageLink()) ? [$module->getAdminPageLink()] : $module->getAdminPageLink(), ['class' => 'shortcut']); ?>
+    <?php endforeach; ?>
 </div>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('.config-update').on('click', function (event) {
+            var $this = $(this);
+            event.preventDefault();
+            $.post('<?=  Yii::app()->createUrl('/yupe/modulesBackend/configUpdate/')?>', {
+                '<?=  Yii::app()->getRequest()->csrfTokenName;?>': '<?=  Yii::app()->getRequest()->csrfToken;?>',
+                'module': $(this).data('module')
+            }, function (response) {
+
+                if (response.result) {
+                    $this.fadeOut();
+                    $('#notifications').notify({
+                        message: {text: '<?=  Yii::t('YupeModule.yupe','Successful');?>'},
+                        type: 'success'
+                    }).show();
+                }
+
+            }, 'json');
+        });
+    });
+</script>

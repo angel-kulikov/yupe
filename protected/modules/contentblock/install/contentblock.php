@@ -8,13 +8,11 @@
  * @license  BSD https://raw.github.com/yupe/yupe/master/LICENSE
  * @link     http://yupe.ru
  **/
-return array(
-    'module'   => array(
+return [
+    'module'    => [
         'class' => 'application.modules.contentblock.ContentBlockModule',
-    ),
-    'import'    => array(
-        'application.modules.contentblock.models.*',
-    ),
-    'component' => array(),
-    'rules'     => array(),
-);
+    ],
+    'import'    => [],
+    'component' => [],
+    'rules'     => [],
+];

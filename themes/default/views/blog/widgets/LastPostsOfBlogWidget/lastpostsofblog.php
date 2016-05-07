@@ -1,20 +1,91 @@
 <?php Yii::import('application.modules.blog.BlogModule'); ?>
-<h3><small><?php echo Yii::t('BlogModule.blog','Last blog posts'); ?></small></h3>
 
-<?php foreach($posts as $data):?>
-    <div class="row">
-        <div class="span6">
-            <h4><strong><?php echo CHtml::link(CHtml::encode($data->title), array('/blog/post/show/', 'slug' => $data->slug)); ?></strong></h4>
-        </div>
+<div class="posts">
+
+    <p class="posts-header">
+        <span class="posts-header-text"><?= Yii::t('BlogModule.blog', 'Last blog posts'); ?></span>
+    </p>
+
+    <div class="posts-list">
+        <?php foreach ($posts as $post): ?>
+            <div class="posts-list-block">
+                <div class="posts-list-block-header">
+                    <?= CHtml::link(
+                        CHtml::encode($post->title),
+                        ['/blog/post/view', 'slug' => $post->slug]
+                    ); ?>
+                </div>
+
+                <div class="posts-list-block-meta">
+                    <span>
+                        <i class="glyphicon glyphicon-user"></i>
+
+                        <?php $this->widget(
+                            'application.modules.user.widgets.UserPopupInfoWidget',
+                            [
+                                'model' => $post->createUser
+                            ]
+                        ); ?>
+                    </span>
+
+                    <span>
+                        <i class="glyphicon glyphicon-pencil"></i>
+
+                        <?= CHtml::link(
+                            CHtml::encode($post->blog->name),
+                            [
+                                '/blog/blog/view/',
+                                'slug' => CHtml::encode($post->blog->slug)
+                            ]
+                        ); ?>
+                    </span>
+
+                    <span>
+                        <i class="glyphicon glyphicon-calendar"></i>
+
+                        <?= Yii::app()->getDateFormatter()->formatDateTime(
+                            $post->publish_time,
+                            "long",
+                            "short"
+                        ); ?>
+                    </span>
+                </div>
+
+                <div class="posts-list-block-text">
+                    <p>
+                        <?= $post->getImageUrl() ? CHtml::image($post->getImageUrl(), CHtml::encode($post->title), ['class' => 'img-responsive']) : ''; ?>
+                    </p>
+                    <?= strip_tags($post->getQuote()); ?>
+                </div>
+
+                <div class="posts-list-block-tags">
+                    <div>
+                        <span class="posts-list-block-tags-block">
+                            <i class="glyphicon glyphicon-tags"></i>
+
+                            <?= Yii::t('BlogModule.blog', 'Tags'); ?>:
+
+                            <?php foreach ((array)$post->getTags() as $tag): ?>
+                                <span>
+                                    <?= CHtml::link(
+                                        CHtml::encode($tag),
+                                        ['/posts/', 'tag' => CHtml::encode($tag)]
+                                    ); ?>
+                                </span>
+                            <?php endforeach; ?>
+                        </span>
+
+                        <span class="posts-list-block-tags-comments">
+                            <i class="glyphicon glyphicon-comment"></i>
+
+                            <?= CHtml::link(
+                                $post->getCommentCount(),
+                                ['/blog/post/view', 'slug' => $post->slug]
+                            ); ?>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        <?php endforeach; ?>
     </div>
-    <div class="row">
-        <div class="span6">
-            <p> <?php echo $data->getQuote(); ?></p>
-            <!--<p><?php echo CHtml::link(Yii::t('BlogModule.blog','read...'), array('/blog/post/show/', 'slug' => $data->slug),array('class' => 'btn'));?></p>-->
-        </div>
-    </div>
-
-    <?php $this->widget('blog.widgets.PostMetaWidget', array('post' => $data));?>
-
-    <hr>
-<?php endforeach?>
+</div>

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * YFile хелпер, содержащий вспомогательные функции для работы с файловой системой
+ * yupe\helpers\YFile:: хелпер, содержащий вспомогательные функции для работы с файловой системой
  *
  * @package  yupe.modules.yupe.helpers
  * @subpackage helpers
@@ -12,34 +12,64 @@
  *
  */
 
+namespace yupe\helpers;
+
+use CFileHelper;
+
+/**
+ * Class YFile
+ * @package yupe\helpers
+ */
 class YFile extends CFileHelper
 {
+    /**
+     * @param $word
+     * @return mixed|string
+     */
     public static function getTranslatedName($word)
     {
         return YText::translit($word);
     }
 
+    /**
+     * @param $name
+     * @param $ext
+     * @param $path
+     * @return bool|string
+     */
     public static function pathIsWritable($name, $ext, $path)
     {
         if (self::checkPath($path)) {
-            return $path . self::getTranslatedName($name) . '.' . $ext;
-        }
-        else {
+            return $path.self::getTranslatedName($name).'.'.$ext;
+        } else {
             return false;
         }
     }
 
-    public static function checkPath($path)
+    /**
+     * @param $path
+     * @param  int $rights
+     * @param  bool $recursive
+     * @return bool
+     */
+    public static function checkPath($path, $rights = 0777, $recursive = true)
     {
-        if (!is_dir($path)) { // проверка на существование директории
-            return mkdir($path); // возвращаем результат создания директории
-        }
-        else if (!is_writable($path)) { // проверка директории на доступность записи
+        if(empty($path)) {
             return false;
         }
+
+        if (!is_dir($path)) { // проверка на существование директории
+
+            return mkdir($path, $rights, $recursive); // возвращаем результат создания директории
+        } else {
+            if (!is_writable($path)) { // проверка директории на доступность записи
+
+                return false;
+            }
+        }
+
         return true; // папка существует и доступна для записи
     }
-
 
     /**
      * Рекрусивное удаление директорий.
@@ -68,7 +98,7 @@ class YFile extends CFileHelper
             $dirHandle = opendir($path);
             while (false !== ($file = readdir($dirHandle))) {
                 if ($file != '.' && $file != '..') {
-                    $tmpPath = $path . '/' . $file;
+                    $tmpPath = $path.'/'.$file;
 
                     if (is_dir($tmpPath)) {
                         self::rmDir($tmpPath);
@@ -85,11 +115,51 @@ class YFile extends CFileHelper
             if ($doNotRemoveBaseDirectory === true && $baseDirectory == $path) {
                 return true;
             }
+
             return rmdir($path);
         } elseif (is_file($path) || is_link($path)) {
             return unlink($path);
         } else {
             return false;
         }
+    }
+
+    /**
+     * @param $file
+     * @since 0.8
+     * @return bool
+     */
+    public static function rmFile($file)
+    {
+        return @unlink($file);
+    }
+
+    /**
+     * @param $from
+     * @param $to
+     * @since 0.8
+     * @return bool
+     */
+    public static function cpFile($from, $to)
+    {
+        return copy($from, $to);
+    }
+
+
+    /**
+     * @param $file
+     * @return bool
+     */
+    public static function rmIfExists($file)
+    {
+        if (!file_exists($file)) {
+            return true;
+        }
+
+        if (is_dir($file)) {
+            return static::rmDir($file);
+        }
+
+        return static::rmFile($file);
     }
 }

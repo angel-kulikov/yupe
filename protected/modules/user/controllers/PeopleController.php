@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Контроллер, отвечающий за отображение списка пользователей и профиля пользователя в публичной части сайта
  *
@@ -10,29 +11,31 @@
  * @link     http://yupe.ru
  *
  **/
-class PeopleController extends yupe\components\controllers\FrontController
+class PeopleController extends \yupe\components\controllers\FrontController
 {
     // Вывод публичной страницы всех пользователей
     public function actionIndex()
     {
-        $dataProvider = new CActiveDataProvider('User', array('criteria' => array(
-            'condition' => 'status = :status',
-            'params'    => array(':status' => User::STATUS_ACTIVE),
-            'order'     => 'last_visit DESC',
-        )));
+        $users = new User('search');
+        $users->unsetAttributes();
+        $users->status = User::STATUS_ACTIVE;
 
-        $this->render('index', array('dataProvider' => $dataProvider));
+        if (isset($_GET['User']['nick_name'])) {
+            $users->nick_name = CHtml::encode($_GET['User']['nick_name']);
+        }
+
+        $this->render('index', ['users' => $users, 'provider' => $users->search((int)$this->module->usersPerPage)]);
     }
 
     // Вывод публичной страницы пользователя
     public function actionUserInfo($username)
     {
-        $user = User::model()->findByAttributes(array("nick_name" => $username));
+        $user = User::model()->active()->findByAttributes(["nick_name" => $username]);
 
-        if (!$user) {
+        if (null === $user) {
             throw new CHttpException(404, Yii::t('UserModule.user', 'User was not found'));
         }
 
-        $this->render('userInfo', array('user' => $user));
+        $this->render('userInfo', ['user' => $user]);
     }
 }

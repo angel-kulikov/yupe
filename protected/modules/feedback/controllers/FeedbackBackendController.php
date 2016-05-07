@@ -1,4 +1,5 @@
 <?php
+
 /**
  * FeedbackBackendController контроллер для работы с сообщениями обратной связи в панели управления
  *
@@ -9,10 +10,43 @@
  * @link     http://yupe.ru
  *
  **/
-
 class FeedbackBackendController extends yupe\components\controllers\BackController
 {
+    /**
+     * @return array
+     */
+    public function accessRules()
+    {
+        return [
+            ['allow', 'roles' => ['admin']],
+            ['allow', 'actions' => ['index'], 'roles' => ['Feedback.FeedbackBackend.Index']],
+            ['allow', 'actions' => ['view'], 'roles' => ['Feedback.FeedbackBackend.View']],
+            ['allow', 'actions' => ['create'], 'roles' => ['Feedback.FeedbackBackend.Create']],
+            ['allow', 'actions' => ['update', 'inline'], 'roles' => ['Feedback.FeedbackBackend.Update']],
+            ['allow', 'actions' => ['answer'], 'roles' => ['Feedback.FeedbackBackend.Answer']],
+            ['allow', 'actions' => ['delete', 'multiaction'], 'roles' => ['Feedback.FeedbackBackend.Delete']],
+            ['deny'],
+        ];
+    }
+
+    /**
+     * @return array
+     */
+    public function actions()
+    {
+        return [
+            'inline' => [
+                'class' => 'yupe\components\actions\YInLineEditAction',
+                'model' => 'FeedBack',
+                'validAttributes' => ['name', 'email', 'theme', 'type', 'status', 'is_faq'],
+            ],
+        ];
+    }
+
     // FeedBack $model
+    /**
+     * @var
+     */
     private $_model;
 
     /**
@@ -26,19 +60,21 @@ class FeedbackBackendController extends yupe\components\controllers\BackControll
     {
         // Обработка при Ajax-запросе:
         if (Yii::app()->getRequest()->getIsAjaxRequest()) {
-            
             return Yii::app()->ajax->success(
-                array(
+                [
                     'html' => $this->renderPartial(
-                        'view', array(
-                            'model' => $this->loadModel($id)
-                        ), true, false
-                    )
-                )
+                        'view',
+                        [
+                            'model' => $this->loadModel($id),
+                        ],
+                        true,
+                        false
+                    ),
+                ]
             );
         }
 
-        $this->render('view', array('model' => $this->loadModel()));
+        $this->render('view', ['model' => $this->loadModel()]);
     }
 
     /**
@@ -49,31 +85,35 @@ class FeedbackBackendController extends yupe\components\controllers\BackControll
      */
     public function actionCreate()
     {
-        $model = new FeedBack;
+        $model = new FeedBack();
+
+        $model->email = Yii::app()->getUser()->getProfileField('email');
+        $model->name = Yii::app()->getUser()->getProfileField('fullName');
 
         if (($data = Yii::app()->getRequest()->getPost('FeedBack')) !== null) {
-            
+
             $model->setAttributes($data);
 
             if ($model->status == FeedBack::STATUS_ANSWER_SENDED) {
-                $model->answer_user = Yii::app()->user->getId();
-                $model->answer_date = new CDbExpression('NOW()');
+                $model->answer_user = Yii::app()->getUser()->getId();
+                $model->answer_time = new CDbExpression('NOW()');
             }
 
             if ($model->save()) {
-                Yii::app()->user->setFlash(
-                    YFlashMessages::SUCCESS_MESSAGE,
+                Yii::app()->getUser()->setFlash(
+                    yupe\widgets\YFlashMessages::SUCCESS_MESSAGE,
                     Yii::t('FeedbackModule.feedback', 'Message saved!')
                 );
 
                 $this->redirect(
-                    (array) Yii::app()->getRequest()->getPost(
-                        'submit-type', array('create')
+                    (array)Yii::app()->getRequest()->getPost(
+                        'submit-type',
+                        ['create']
                     )
                 );
             }
         }
-        $this->render('create', array('model' => $model));
+        $this->render('create', ['model' => $model]);
     }
 
     /**
@@ -81,45 +121,46 @@ class FeedbackBackendController extends yupe\components\controllers\BackControll
      * If update is successful, the browser will be redirected to the 'view' page.
      *
      * @param int $id - record $id
-     * 
+     *
      * @return void
      */
     public function actionUpdate($id = null)
     {
         $model = $this->loadModel($id);
 
-        $status = $model->status; 
+        $status = $model->status;
 
         if (($data = Yii::app()->getRequest()->getPost('FeedBack')) !== null) {
             $model->setAttributes($data);
 
             if ($status != FeedBack::STATUS_ANSWER_SENDED && $model->status == FeedBack::STATUS_ANSWER_SENDED) {
-                $model->answer_user = Yii::app()->user->getId();
-                $model->answer_date = new CDbExpression('NOW()');
+                $model->answer_user = Yii::app()->getUser()->getId();
+                $model->answer_time = new CDbExpression('NOW()');
             }
 
             if ($model->save()) {
-                Yii::app()->user->setFlash(
-                    YFlashMessages::SUCCESS_MESSAGE,
+                Yii::app()->getUser()->setFlash(
+                    yupe\widgets\YFlashMessages::SUCCESS_MESSAGE,
                     Yii::t('FeedbackModule.feedback', 'Message was updated')
                 );
 
                 $this->redirect(
-                    (array) Yii::app()->getRequest()->getPost(
-                        'submit-type', array('update', 'id' => $model->id)
+                    (array)Yii::app()->getRequest()->getPost(
+                        'submit-type',
+                        ['update', 'id' => $model->id]
                     )
                 );
             }
         }
 
-        $this->render('update', array('model' => $model));
+        $this->render('update', ['model' => $model]);
     }
 
     /**
      * Экшен создания ответа на сообщение:
-     * 
+     *
      * @param int $id - ID сообщения
-     * 
+     *
      * @return void
      *
      * @throws CHttpException
@@ -128,18 +169,18 @@ class FeedbackBackendController extends yupe\components\controllers\BackControll
     {
         $model = $this->loadModel($id);
 
-        $form = new AnswerForm;
+        $form = new AnswerForm();
 
         $form->setAttributes(
-            array(
+            [
                 'answer' => $model->answer,
                 'is_faq' => $model->is_faq,
-            )
+            ]
         );
 
         // Обработка при Ajax-запросе:
         if (Yii::app()->getRequest()->getIsAjaxRequest()) {
-            
+
             if ($this->saveAnswer($form, $model) === true) {
                 return true;
             }
@@ -147,93 +188,104 @@ class FeedbackBackendController extends yupe\components\controllers\BackControll
             // Если уже отправили сообщение:
             if ($model->status == FeedBack::STATUS_ANSWER_SENDED) {
                 return Yii::app()->ajax->failure(
-                    array(
-                        'message' => Yii::t('FeedbackModule.feedback', 'Attention! Reply for this message already sent!')
-                    )
+                    [
+                        'message' => Yii::t(
+                            'FeedbackModule.feedback',
+                            'Attention! Reply for this message already sent!'
+                        ),
+                    ]
                 );
             }
 
             return Yii::app()->ajax->success(
-                array(
+                [
                     'html' => $this->renderPartial(
-                        '_ajax_answer', array(
-                            'model'      => $model,
-                            'answerForm' => $form
-                        ), true, false
-                    )
-                )
+                        '_ajax_answer',
+                        [
+                            'model' => $model,
+                            'answerForm' => $form,
+                        ],
+                        true,
+                        false
+                    ),
+                ]
             );
         }
 
         if ($model->status == FeedBack::STATUS_ANSWER_SENDED) {
-            Yii::app()->user->setFlash(
-                YFlashMessages::SUCCESS_MESSAGE,
+            Yii::app()->getUser()->setFlash(
+                yupe\widgets\YFlashMessages::SUCCESS_MESSAGE,
                 Yii::t('FeedbackModule.feedback', 'Attention! Reply for this message already sent!')
             );
         }
 
         list($form, $model) = $this->saveAnswer($form, $model);
 
-        $this->render('answer', array('model' => $model, 'answerForm' => $form));
+        $this->render('answer', ['model' => $model, 'answerForm' => $form]);
     }
 
     /**
      * Сохраняем данные в СУБД, при наявности POST-запросаЖ
-     * 
-     * @param AnswerForm $form  - форма ответа
-     * @param FeedBack   $model - модель
-     * 
+     *
+     * @param AnswerForm $form - форма ответа
+     * @param FeedBack $model - модель
+     *
      * @return mixed
      */
     public function saveAnswer(AnswerForm $form, FeedBack $model)
     {
-        if (Yii::app()->getRequest()->getIsPostRequest() && ($data = Yii::app()->getRequest()->getPost('AnswerForm')) !== null) {
+        if (Yii::app()->getRequest()->getIsPostRequest() && ($data = Yii::app()->getRequest()->getPost(
+                'AnswerForm'
+            )) !== null
+        ) {
             $form->setAttributes($data);
 
             if ($form->validate()) {
-                
-                $model->setAttributes(array(
-                    'answer'      => $form->answer,
-                    'is_faq'      => $form->is_faq,
-                    'answer_user' => Yii::app()->user->getId(),
-                    'answer_date' => new CDbExpression('NOW()'),
-                    'status'      => FeedBack::STATUS_ANSWER_SENDED,
-                 ));
+
+                $model->setAttributes(
+                    [
+                        'answer' => $form->answer,
+                        'is_faq' => $form->is_faq,
+                        'answer_user' => Yii::app()->getUser()->getId(),
+                        'answer_time' => new CDbExpression('NOW()'),
+                        'status' => FeedBack::STATUS_ANSWER_SENDED,
+                    ]
+                );
 
                 if ($model->save()) {
                     //отправка ответа
-                    $body = $this->renderPartial('answerEmail', array('model' => $model), true);
+                    $body = $this->renderPartial('answerEmail', ['model' => $model], true);
 
                     Yii::app()->mail->send(
                         Yii::app()->getModule('feedback')->notifyEmailFrom,
                         $model->email,
-                        'RE: ' . $model->theme,
+                        'RE: '.$model->theme,
                         $body
                     );
 
                     if (Yii::app()->getRequest()->getIsAjaxRequest() == false) {
-                        Yii::app()->user->setFlash(
-                            YFlashMessages::SUCCESS_MESSAGE,
+                        Yii::app()->getUser()->setFlash(
+                            yupe\widgets\YFlashMessages::SUCCESS_MESSAGE,
                             Yii::t('FeedbackModule.feedback', 'Reply on message was sent!')
                         );
 
-                        $this->redirect(array('/feedback/default/view/', 'id' => $model->id));
+                        $this->redirect(['/feedback/feedbackBackend/view/', 'id' => $model->id]);
                     } else {
                         Yii::app()->ajax->success(
-                            array(
+                            [
                                 'message' => Yii::t('FeedbackModule.feedback', 'Reply on message was sent!'),
-                            )
+                            ]
                         );
 
                         return true;
                     }
                 } else {
-                    return array($form, $model);
+                    return [$form, $model];
                 }
             }
         }
 
-        return array($form, $model);
+        return [$form, $model];
     }
 
     /**
@@ -252,7 +304,7 @@ class FeedbackBackendController extends yupe\components\controllers\BackControll
 
             // if AJAX request (triggered by deletion via admin grid view), we should not redirect the browser
             Yii::app()->getRequest()->getIsAjaxRequest() || $this->redirect(
-                (array) Yii::app()->getRequest()->getPost('returnUrl', 'index')
+                (array)Yii::app()->getRequest()->getPost('returnUrl', 'index')
             );
         } else {
             throw new CHttpException(
@@ -261,7 +313,7 @@ class FeedbackBackendController extends yupe\components\controllers\BackControll
             );
         }
     }
-    
+
     /**
      * Manages all models.
      *
@@ -270,14 +322,14 @@ class FeedbackBackendController extends yupe\components\controllers\BackControll
     public function actionIndex()
     {
         $model = new FeedBack('search');
-        
+
         $model->unsetAttributes(); // clear any default values
-        
+
         $model->setAttributes(
-            Yii::app()->getRequest()->getParam('FeedBack', array())
+            Yii::app()->getRequest()->getParam('FeedBack', [])
         );
 
-        $this->render('index', array('model' => $model));
+        $this->render('index', ['model' => $model]);
     }
 
     /**
@@ -305,20 +357,5 @@ class FeedbackBackendController extends yupe\components\controllers\BackControll
         }
 
         return $this->_model;
-    }
-
-    /**
-     * Performs the AJAX validation.
-     * 
-     * @param FeedBack $model - the model to be validated
-     *
-     * @return void
-     */
-    protected function performAjaxValidation(FeedBack $model)
-    {
-        if (Yii::app()->getRequest()->getIsAjaxRequest() && Yii::app()->getRequest()->getPost('ajax') === 'feed-back-form') {
-            echo CActiveForm::validate($model);
-            Yii::app()->end();
-        }
     }
 }

@@ -11,30 +11,54 @@
  *
  **/
 $form = $this->beginWidget(
-    'bootstrap.widgets.TbActiveForm', array(
+    'bootstrap.widgets.TbActiveForm',
+    [
         'action'      => Yii::app()->createUrl($this->route),
         'method'      => 'get',
         'type'        => 'vertical',
-        'htmlOptions' => array('class' => 'well'),
-    )
+        'htmlOptions' => ['class' => 'well'],
+    ]
 ); ?>
 
-    <fieldset>
-        <?php echo $form->textFieldRow($model, 'id'); ?>
-        <?php echo $form->textFieldRow($model, 'name'); ?>
-        <?php echo $form->textFieldRow($model, 'code'); ?>
-        <?php echo $form->textFieldRow($model, 'description'); ?>
-        <?php echo $form->dropDownListRow($model, 'status', $model->statusList); ?>
-    </fieldset>
+<fieldset>
+    <div class="row">
+        <div class="col-sm-3 col-xs-6">
+            <?=  $form->textFieldGroup($model, 'name'); ?>
+        </div>
+        <div class="col-sm-3 col-xs-6">
+            <?=  $form->textFieldGroup($model, 'code'); ?>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-3 col-xs-6">
+            <?=  $form->dropDownListGroup(
+                $model,
+                'status',
+                [
+                    'widgetOptions' => [
+                        'data'        => $model->getStatusList(),
+                        'htmlOptions' => [
+                            'empty' => '---',
+                        ],
+                    ],
+                ]
+            ); ?>
+        </div>
+        <div class="col-sm-3 col-xs-6">
+            <?=  $form->textFieldGroup($model, 'description'); ?>
+        </div>
+    </div>
+</fieldset>
 
-    <?php
-    $this->widget(
-        'bootstrap.widgets.TbButton', array(
-            'type'        => 'primary',
-            'encodeLabel' => false,
-            'buttonType'  => 'submit',
-            'label'       => '<i class="icon-search icon-white">&nbsp;</i> ' . Yii::t('MenuModule.menu', 'Find menu'),
-        )
-    ); ?>
+<?php
+$this->widget(
+    'bootstrap.widgets.TbButton',
+    [
+        'context'     => 'primary',
+        'encodeLabel' => false,
+        'buttonType'  => 'submit',
+        'label'       => '<i class="fa fa-search">&nbsp;</i> ' . Yii::t('MenuModule.menu', 'Find menu'),
+    ]
+); ?>
 
 <?php $this->endWidget(); ?>

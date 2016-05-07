@@ -10,8 +10,9 @@
  * @since 0.1
  *
  */
+Yii::import('application.modules.blog.models.*');
 
-class SimilarPostsWidget extends YWidget
+class SimilarPostsWidget extends yupe\widgets\YWidget
 {
     public $limit = 10;
 
@@ -21,20 +22,6 @@ class SimilarPostsWidget extends YWidget
 
     public function run()
     {
-        $criteria = new CDbCriteria;
-        $criteria->limit = $this->limit;
-        $criteria->order = 'publish_date DESC';
-
-        $criteria->addNotInCondition('t.id', array($this->post->id));
-
-        $criteria->mergeWith(
-            Post::model()->getFindByTagsCriteria($this->post->getTags())
-        );
-        
-        $posts = Post::model()->findAll(
-            $criteria
-        );
-
-        $this->render($this->view, array('posts' => $posts));
+        $this->render($this->view, ['posts' => Yii::app()->postManager->getSimilarPosts($this->post, $this->limit)]);
     }
 }

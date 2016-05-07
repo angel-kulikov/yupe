@@ -10,8 +10,7 @@
  * @since 0.1
  *
  */
-
-class ShareWidget extends YWidget
+class ShareWidget extends yupe\widgets\YWidget
 {
     public $view = 'share';
 

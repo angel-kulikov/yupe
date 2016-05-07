@@ -1,41 +1,77 @@
 <?php
-$form = $this->beginWidget('bootstrap.widgets.TbActiveForm', array(
-    'action' => Yii::app()->createUrl($this->route),
-    'method' => 'get',
-    'htmlOptions' => array('class' => 'well search-form'),
-        ));
+$form = $this->beginWidget(
+    'bootstrap.widgets.TbActiveForm',
+    [
+        'action'      => Yii::app()->createUrl($this->route),
+        'method'      => 'get',
+        'htmlOptions' => ['class' => 'well search-form'],
+    ]
+);
 ?>
-<fieldset class="inline">
-
-    <?php echo $form->textFieldRow($model, 'id', array('class' => 'span5', 'maxlength' => 10)); ?>
-
-    <?php echo $form->textFieldRow($model, 'code', array('class' => 'span5', 'maxlength' => 100)); ?>
-
-    <?php echo $form->textFieldRow($model, 'event_id', array('class' => 'span5', 'maxlength' => 10)); ?>
-
-    <?php echo $form->textFieldRow($model, 'name', array('class' => 'span5', 'maxlength' => 300)); ?>
-
-    <?php echo $form->textAreaRow($model, 'description', array('rows' => 2, 'cols' => 40, 'class' => 'span8')); ?>
-
-    <?php echo $form->textFieldRow($model, 'from', array('class' => 'span5', 'maxlength' => 300)); ?>
-
-    <?php echo $form->textFieldRow($model, 'to', array('class' => 'span5', 'maxlength' => 300)); ?>
-
-    <?php echo $form->textAreaRow($model, 'theme', array('rows' => 2, 'cols' => 20, 'class' => 'span8')); ?>
-
-    <?php echo $form->textAreaRow($model, 'body', array('rows' => 2, 'cols' => 20, 'class' => 'span8')); ?>
-
-    <?php echo $form->textFieldRow($model, 'status', array('class' => 'span5')); ?>
-    
+<fieldset>
+    <div class="row">
+        <div class="col-sm-3">
+            <?=  $form->textFieldGroup($model, 'name'); ?>
+        </div>
+        <div class="col-sm-3">
+            <?=  $form->textFieldGroup($model, 'code'); ?>
+        </div>
+        <div class="col-sm-3">
+            <?=  $form->dropDownListGroup(
+                $model,
+                'event_id',
+                [
+                    'widgetOptions' => [
+                        'data'        => CHtml::listData(MailEvent::model()->findAll(), 'id', 'name'),
+                        'htmlOptions' => ['empty' => '---'],
+                    ],
+                ]
+            ); ?>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-3">
+            <?=  $form->textFieldGroup($model, 'description'); ?>
+        </div>
+        <div class="col-sm-3">
+            <?=  $form->textFieldGroup($model, 'from'); ?>
+        </div>
+        <div class="col-sm-3">
+            <?=  $form->textFieldGroup($model, 'to'); ?>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-3">
+            <?=  $form->textFieldGroup($model, 'theme'); ?>
+        </div>
+        <div class="col-sm-3">
+            <?=  $form->textFieldGroup($model, 'body'); ?>
+        </div>
+        <div class="col-sm-3">
+            <?=  $form->dropDownListGroup(
+                $model,
+                'status',
+                [
+                    'widgetOptions' => [
+                        'data'        => $model->getStatusList(),
+                        'htmlOptions' => ['empty' => '---'],
+                    ],
+                ]
+            ); ?>
+        </div>
+    </div>
     <div class="form-actions">
-    <?php
-    $this->widget('bootstrap.widgets.TbButton', array(
-        'buttonType' => 'submit',
-        'type' => 'primary',
-        'encodeLabel' => false,
-        'label' => '<i class="icon-search icon-white"></i> ' . Yii::t('MailModule.mail', 'Find')
-    ));
-    ?>
+        <?php
+        $this->widget(
+            'bootstrap.widgets.TbButton',
+            [
+                'buttonType'  => 'submit',
+                'context'     => 'primary',
+                'encodeLabel' => false,
+                'label'       => '<i class="fa fa-search"></i> ' . Yii::t('MailModule.mail', 'Find')
+            ]
+        );
+        ?>
     </div>
 </fieldset>
 

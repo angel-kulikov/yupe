@@ -19,7 +19,6 @@
  * @version    $Id: Lucene.php 24593 2012-01-05 20:35:02Z matthew $
  */
 
-
 /** User land classes and interfaces turned on by Zend/Search/Lucene.php file inclusion. */
 /** @todo Section should be removed with ZF 2.0 release as obsolete */
 
@@ -71,7 +70,6 @@ require_once 'Zend/Search/Lucene/Search/Query/Empty.php';
 /** Zend_Search_Lucene_Search_Query_Insignificant */
 require_once 'Zend/Search/Lucene/Search/Query/Insignificant.php';
 
-
 /** Internally used classes */
 
 /** Zend_Search_Lucene_Interface */
@@ -82,7 +80,6 @@ require_once 'Zend/Search/Lucene/Index/SegmentInfo.php';
 
 /** Zend_Search_Lucene_LockManager */
 require_once 'Zend/Search/Lucene/LockManager.php';
-
 
 /**
  * @category   Zend
@@ -145,7 +142,7 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
      *
      * @var array Zend_Search_Lucene_Index_SegmentInfo
      */
-    private $_segmentInfos = array();
+    private $_segmentInfos = [];
 
     /**
      * Number of documents in this index.
@@ -160,7 +157,6 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
      * @var boolean
      */
     private $_hasChanges = false;
-
 
     /**
      * Signal, that index is already closed, changes are fixed and resources are cleaned up
@@ -187,7 +183,6 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
     const FORMAT_2_1 = 1;
     const FORMAT_2_3 = 2;
 
-
     /**
      * Index format version
      *
@@ -198,7 +193,7 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
     /**
      * Create index
      *
-     * @param mixed $directory
+     * @param  mixed $directory
      * @return Zend_Search_Lucene_Interface
      */
     public static function create($directory)
@@ -212,7 +207,7 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
     /**
      * Open index
      *
-     * @param mixed $directory
+     * @param  mixed $directory
      * @return Zend_Search_Lucene_Interface
      */
     public static function open($directory)
@@ -236,7 +231,7 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
      * 0 means pre-2.1 index format
      * -1 means there are no segments files.
      *
-     * @param Zend_Search_Lucene_Storage_Directory $directory
+     * @param  Zend_Search_Lucene_Storage_Directory $directory
      * @return integer
      * @throws Zend_Search_Lucene_Exception
      */
@@ -313,11 +308,10 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
         return $this->_generation;
     }
 
-
     /**
      * Get segments file name
      *
-     * @param integer $generation
+     * @param  integer $generation
      * @return string
      */
     public static function getSegmentFileName($generation)
@@ -343,7 +337,7 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
      * Set index format version.
      * Index is converted to this format at the nearest upfdate time
      *
-     * @param int $formatVersion
+     * @param  int $formatVersion
      * @throws Zend_Search_Lucene_Exception
      */
     public function setFormatVersion($formatVersion)
@@ -414,7 +408,7 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
 
         if ($format == (int)0xFFFFFFFC) {
             $this->_formatVersion = self::FORMAT_2_3;
-        } else if ($format == (int)0xFFFFFFFD) {
+        } elseif ($format == (int)0xFFFFFFFD) {
             $this->_formatVersion = self::FORMAT_2_1;
         } else {
             require_once 'Zend/Search/Lucene/Exception.php';
@@ -446,9 +440,11 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
                     $docStoreSegment = $segmentsFile->readString();
                     $docStoreIsCompoundFile = $segmentsFile->readByte();
 
-                    $docStoreOptions = array('offset' => $docStoreOffset,
-                        'segment' => $docStoreSegment,
-                        'isCompound' => ($docStoreIsCompoundFile == 1));
+                    $docStoreOptions = [
+                        'offset'     => $docStoreOffset,
+                        'segment'    => $docStoreSegment,
+                        'isCompound' => ($docStoreIsCompoundFile == 1)
+                    ];
                 } else {
                     $docStoreOptions = null;
                 }
@@ -459,7 +455,7 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
             $hasSingleNormFile = $segmentsFile->readByte();
             $numField = $segmentsFile->readInt();
 
-            $normGens = array();
+            $normGens = [];
             if ($numField != (int)0xFFFFFFFF) {
                 for ($count1 = 0; $count1 < $numField; $count1++) {
                     $normGens[] = $segmentsFile->readLong();
@@ -474,10 +470,10 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
             if ($isCompoundByte == 0xFF) {
                 // The segment is not a compound file
                 $isCompound = false;
-            } else if ($isCompoundByte == 0x00) {
+            } elseif ($isCompoundByte == 0x00) {
                 // The status is unknown
                 $isCompound = null;
-            } else if ($isCompoundByte == 0x01) {
+            } elseif ($isCompoundByte == 0x01) {
                 // The segment is a compound file
                 $isCompound = true;
             }
@@ -501,7 +497,7 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
      * IndexReader constructor needs Directory as a parameter. It should be
      * a string with a path to the index folder or a Directory object.
      *
-     * @param Zend_Search_Lucene_Storage_Directory_Filesystem|string $directory
+     * @param  Zend_Search_Lucene_Storage_Directory_Filesystem|string $directory
      * @throws Zend_Search_Lucene_Exception
      */
     public function __construct($directory = null, $create = false)
@@ -520,7 +516,7 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
             $this->_closeDirOnExit = false;
         }
 
-        $this->_segmentInfos = array();
+        $this->_segmentInfos = [];
 
         // Mark index as "under processing" to prevent other processes from premature index cleaning
         Zend_Search_Lucene_LockManager::obtainReadLock($this->_directory);
@@ -563,7 +559,7 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
         if ($this->_generation == -1) {
             require_once 'Zend/Search/Lucene/Exception.php';
             throw new Zend_Search_Lucene_Exception('Index doesn\'t exists in the specified directory.');
-        } else if ($this->_generation == 0) {
+        } elseif ($this->_generation == 0) {
             $this->_readPre21SegmentsFile();
         } else {
             $this->_readSegmentsFile();
@@ -647,7 +643,6 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
         return $this->_writer;
     }
 
-
     /**
      * Returns the Zend_Search_Lucene_Storage_Directory instance for this index.
      *
@@ -657,7 +652,6 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
     {
         return $this->_directory;
     }
-
 
     /**
      * Returns the total number of documents in this index (including deleted documents).
@@ -700,9 +694,9 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
     /**
      * Checks, that document is deleted
      *
-     * @param integer $id
+     * @param  integer $id
      * @return boolean
-     * @throws Zend_Search_Lucene_Exception    Exception is thrown if $id is out of the range
+     * @throws Zend_Search_Lucene_Exception Exception is thrown if $id is out of the range
      */
     public function isDeleted($id)
     {
@@ -912,8 +906,8 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
      * of Zend_Search_Lucene_Search_QueryHit objects.
      * Input is a string or Zend_Search_Lucene_Search_Query.
      *
-     * @param Zend_Search_Lucene_Search_QueryParser|string $query
-     * @return array Zend_Search_Lucene_Search_QueryHit
+     * @param  Zend_Search_Lucene_Search_QueryParser|string $query
+     * @return array                                        Zend_Search_Lucene_Search_QueryHit
      * @throws Zend_Search_Lucene_Exception
      */
     public function find($query)
@@ -931,9 +925,9 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
 
         $this->commit();
 
-        $hits = array();
-        $scores = array();
-        $ids = array();
+        $hits = [];
+        $scores = [];
+        $ids = [];
 
         $query = $query->rewrite($this)->optimize($this);
 
@@ -967,7 +961,7 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
 
         if (count($hits) == 0) {
             // skip sorting, which may cause a error on empty index
-            return array();
+            return [];
         }
 
         if ($topScore > 1) {
@@ -978,15 +972,21 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
 
         if (func_num_args() == 1) {
             // sort by scores
-            array_multisort($scores, SORT_DESC, SORT_NUMERIC,
-                $ids, SORT_ASC, SORT_NUMERIC,
-                $hits);
+            array_multisort(
+                $scores,
+                SORT_DESC,
+                SORT_NUMERIC,
+                $ids,
+                SORT_ASC,
+                SORT_NUMERIC,
+                $hits
+            );
         } else {
             // sort by given field names
 
             $argList = func_get_args();
             $fieldNames = $this->getFieldNames();
-            $sortArgs = array();
+            $sortArgs = [];
 
             // PHP 5.3 now expects all arguments to array_multisort be passed by
             // reference (if it's invoked through call_user_func_array());
@@ -995,7 +995,7 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
             $sortAsc = SORT_ASC;
             $sortNum = SORT_NUMERIC;
 
-            $sortFieldValues = array();
+            $sortFieldValues = [];
 
             require_once 'Zend/Search/Lucene/Exception.php';
             for ($count = 1; $count < count($argList); $count++) {
@@ -1013,7 +1013,7 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
                     }
 
                     if (!isset($sortFieldValues[$fieldName])) {
-                        $valuesArray = array();
+                        $valuesArray = [];
                         foreach ($hits as $hit) {
                             try {
                                 $value = $hit->getDocument()->getFieldValue($fieldName);
@@ -1072,30 +1072,29 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
         return $hits;
     }
 
-
     /**
      * Returns a list of all unique field names that exist in this index.
      *
-     * @param boolean $indexed
+     * @param  boolean $indexed
      * @return array
      */
     public function getFieldNames($indexed = false)
     {
-        $result = array();
+        $result = [];
         foreach ($this->_segmentInfos as $segmentInfo) {
             $result = array_merge($result, $segmentInfo->getFields($indexed));
         }
+
         return $result;
     }
-
 
     /**
      * Returns a Zend_Search_Lucene_Document object for the document
      * number $id in this index.
      *
-     * @param integer|Zend_Search_Lucene_Search_QueryHit $id
+     * @param  integer|Zend_Search_Lucene_Search_QueryHit $id
      * @return Zend_Search_Lucene_Document
-     * @throws Zend_Search_Lucene_Exception    Exception is thrown if $id is out of the range
+     * @throws Zend_Search_Lucene_Exception               Exception is thrown if $id is out of the range
      */
     public function getDocument($id)
     {
@@ -1156,13 +1155,12 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
         return $doc;
     }
 
-
     /**
      * Returns true if index contain documents with specified term.
      *
      * Is used for query optimization.
      *
-     * @param Zend_Search_Lucene_Index_Term $term
+     * @param  Zend_Search_Lucene_Index_Term $term
      * @return boolean
      */
     public function hasTerm(Zend_Search_Lucene_Index_Term $term)
@@ -1179,13 +1177,13 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
     /**
      * Returns IDs of all documents containing term.
      *
-     * @param Zend_Search_Lucene_Index_Term $term
-     * @param Zend_Search_Lucene_Index_DocsFilter|null $docsFilter
+     * @param  Zend_Search_Lucene_Index_Term $term
+     * @param  Zend_Search_Lucene_Index_DocsFilter|null $docsFilter
      * @return array
      */
     public function termDocs(Zend_Search_Lucene_Index_Term $term, $docsFilter = null)
     {
-        $subResults = array();
+        $subResults = [];
         $segmentStartDocId = 0;
 
         foreach ($this->_segmentInfos as $segmentInfo) {
@@ -1195,8 +1193,8 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
         }
 
         if (count($subResults) == 0) {
-            return array();
-        } else if (count($subResults) == 1) {
+            return [];
+        } elseif (count($subResults) == 1) {
             // Index is optimized (only one segment)
             // Do not perform array reindexing
             return reset($subResults);
@@ -1213,8 +1211,8 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
      * It performs the same operation as termDocs, but return result as
      * Zend_Search_Lucene_Index_DocsFilter object
      *
-     * @param Zend_Search_Lucene_Index_Term $term
-     * @param Zend_Search_Lucene_Index_DocsFilter|null $docsFilter
+     * @param  Zend_Search_Lucene_Index_Term $term
+     * @param  Zend_Search_Lucene_Index_DocsFilter|null $docsFilter
      * @return Zend_Search_Lucene_Index_DocsFilter
      */
     public function termDocsFilter(Zend_Search_Lucene_Index_Term $term, $docsFilter = null)
@@ -1229,8 +1227,8 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
         }
 
         if (count($subResults) == 0) {
-            return array();
-        } else if (count($subResults) == 1) {
+            return [];
+        } elseif (count($subResults) == 1) {
             // Index is optimized (only one segment)
             // Do not perform array reindexing
             return reset($subResults);
@@ -1241,18 +1239,17 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
         return $result;
     }
 
-
     /**
      * Returns an array of all term freqs.
      * Result array structure: array(docId => freq, ...)
      *
-     * @param Zend_Search_Lucene_Index_Term $term
-     * @param Zend_Search_Lucene_Index_DocsFilter|null $docsFilter
+     * @param  Zend_Search_Lucene_Index_Term $term
+     * @param  Zend_Search_Lucene_Index_DocsFilter|null $docsFilter
      * @return integer
      */
     public function termFreqs(Zend_Search_Lucene_Index_Term $term, $docsFilter = null)
     {
-        $result = array();
+        $result = [];
         $segmentStartDocId = 0;
         foreach ($this->_segmentInfos as $segmentInfo) {
             $result += $segmentInfo->termFreqs($term, $segmentStartDocId, $docsFilter);
@@ -1267,13 +1264,13 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
      * Returns an array of all term positions in the documents.
      * Result array structure: array(docId => array(pos1, pos2, ...), ...)
      *
-     * @param Zend_Search_Lucene_Index_Term $term
-     * @param Zend_Search_Lucene_Index_DocsFilter|null $docsFilter
+     * @param  Zend_Search_Lucene_Index_Term $term
+     * @param  Zend_Search_Lucene_Index_DocsFilter|null $docsFilter
      * @return array
      */
     public function termPositions(Zend_Search_Lucene_Index_Term $term, $docsFilter = null)
     {
-        $result = array();
+        $result = [];
         $segmentStartDocId = 0;
         foreach ($this->_segmentInfos as $segmentInfo) {
             $result += $segmentInfo->termPositions($term, $segmentStartDocId, $docsFilter);
@@ -1284,11 +1281,10 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
         return $result;
     }
 
-
     /**
      * Returns the number of documents in this index containing the $term.
      *
-     * @param Zend_Search_Lucene_Index_Term $term
+     * @param  Zend_Search_Lucene_Index_Term $term
      * @return integer
      */
     public function docFreq(Zend_Search_Lucene_Index_Term $term)
@@ -1304,7 +1300,6 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
         return $result;
     }
 
-
     /**
      * Retrive similarity used by index reader
      *
@@ -1318,12 +1313,11 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
         return Zend_Search_Lucene_Search_Similarity::getDefault();
     }
 
-
     /**
      * Returns a normalization factor for "field, document" pair.
      *
-     * @param integer $id
-     * @param string $fieldName
+     * @param  integer $id
+     * @param  string $fieldName
      * @return float
      */
     public function norm($id, $fieldName)
@@ -1364,12 +1358,11 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
         return false;
     }
 
-
     /**
      * Deletes a document from the index.
      * $id is an internal document id
      *
-     * @param integer|Zend_Search_Lucene_Search_QueryHit $id
+     * @param  integer|Zend_Search_Lucene_Search_QueryHit $id
      * @throws Zend_Search_Lucene_Exception
      */
     public function delete($id)
@@ -1397,7 +1390,6 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
         $this->_hasChanges = true;
     }
 
-
     /**
      * Adds a document to this index.
      *
@@ -1410,7 +1402,6 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
 
         $this->_hasChanges = true;
     }
-
 
     /**
      * Update document counter
@@ -1439,7 +1430,6 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
         }
     }
 
-
     /**
      * Optimize index.
      *
@@ -1456,7 +1446,6 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
         }
     }
 
-
     /**
      * Returns an array of all terms in this index.
      *
@@ -1464,7 +1453,7 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
      */
     public function terms()
     {
-        $result = array();
+        $result = [];
 
         /** Zend_Search_Lucene_Index_TermsPriorityQueue */
         require_once 'Zend/Search/Lucene/Index/TermsPriorityQueue.php';
@@ -1497,7 +1486,6 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
 
         return $result;
     }
-
 
     /**
      * Terms stream priority queue object
@@ -1564,9 +1552,8 @@ class Zend_Search_Lucene implements Zend_Search_Lucene_Interface
         $this->_termsStream = null;
     }
 
-
     /*************************************************************************
-    @todo UNIMPLEMENTED
+     * @todo UNIMPLEMENTED
      *************************************************************************/
     /**
      * Undeletes all documents currently marked as deleted in this index.

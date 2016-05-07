@@ -10,7 +10,6 @@
  *
  **/
 
-
 /**
  * This is the model class for table "ImageToGallery".
  *
@@ -18,17 +17,17 @@
  * @property string $id
  * @property string $image_id
  * @property string $gallery_id
- * @property string $creation_date
+ * @property string $create_time
  *
  * The followings are the available model relations:
  * @property Gallery $gallery
  * @property Image $image
  */
-class ImageToGallery extends YModel
+class ImageToGallery extends yupe\models\YModel
 {
     /**
      * Returns the static model of the specified AR class.
-     * @param string $className
+     * @param  string $className
      * @return ImageToGallery the static model class
      */
     public static function model($className = __CLASS__)
@@ -49,11 +48,11 @@ class ImageToGallery extends YModel
      */
     public function rules()
     {
-        return array(
-            array('image_id, gallery_id', 'required'),
-            array('image_id, gallery_id', 'numerical', 'integerOnly' => true),
-            array('id, image_id, gallery_id, creation_date', 'safe', 'on' => 'search'),
-        );
+        return [
+            ['image_id, gallery_id', 'required'],
+            ['image_id, gallery_id', 'numerical', 'integerOnly' => true],
+            ['id, image_id, gallery_id, create_time', 'safe', 'on' => 'search'],
+        ];
     }
 
     /**
@@ -63,10 +62,10 @@ class ImageToGallery extends YModel
     {
         // NOTE: you may need to adjust the relation name and the related
         // class name for the relations automatically generated below.
-        return array(
-            'gallery' => array(self::BELONGS_TO, 'Gallery', 'gallery_id'),
-            'image'   => array(self::BELONGS_TO, 'Image', 'image_id'),
-        );
+        return [
+            'gallery' => [self::BELONGS_TO, 'Gallery', 'gallery_id'],
+            'image'   => [self::BELONGS_TO, 'Image', 'image_id'],
+        ];
     }
 
     /**
@@ -74,12 +73,12 @@ class ImageToGallery extends YModel
      */
     public function attributeLabels()
     {
-        return array(
+        return [
             'id'            => Yii::t('GalleryModule.gallery', 'id'),
             'image_id'      => Yii::t('GalleryModule.gallery', 'Image'),
             'gallery_id'    => Yii::t('GalleryModule.gallery', 'Gallery'),
-            'creation_date' => Yii::t('GalleryModule.gallery', 'Created at'),
-        );
+            'create_time' => Yii::t('GalleryModule.gallery', 'Created at'),
+        ];
     }
 
     /**
@@ -91,21 +90,22 @@ class ImageToGallery extends YModel
         // Warning: Please modify the following code to remove attributes that
         // should not be searched.
 
-        $criteria = new CDbCriteria;
+        $criteria = new CDbCriteria();
 
         $criteria->compare('id', $this->id, true);
         $criteria->compare('image_id', $this->image_id, true);
         $criteria->compare('gallery_id', $this->gallery_id, true);
-        $criteria->compare('creation_date', $this->creation_date, true);
+        $criteria->compare('create_time', $this->create_time, true);
 
-        return new CActiveDataProvider(get_class($this), array('criteria' => $criteria));
+        return new CActiveDataProvider(get_class($this), ['criteria' => $criteria]);
     }
 
     public function beforeSave()
     {
         if ($this->isNewRecord) {
-            $this->creation_date = new CDbExpression('NOW()');
+            $this->create_time = new CDbExpression('NOW()');
         }
+
         return parent::beforeSave();
     }
 }

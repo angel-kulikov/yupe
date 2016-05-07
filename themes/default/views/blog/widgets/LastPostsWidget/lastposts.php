@@ -1,14 +1,23 @@
 <?php
-Yii::import('application.modules.blog.BlogModule');
-if (isset($models) && !empty($models)) {
-    $this->widget(
-        'bootstrap.widgets.TbBox',
-        array(
-            'title' => Yii::t('BlogModule.blog','Last in blogs'),
-            'headerIcon' => 'icon-pencil',
-            'content' => $this->render('_links', array('models' => $models), true),
-        )
-    );
-}
-
-
+$this->beginWidget(
+    'bootstrap.widgets.TbPanel',
+    [
+        'title' => Yii::t('BlogModule.blog', 'Latest posts'),
+    ]
+);
+?>
+<ul class="list-unstyled">
+    <?php foreach ($models as $model): ?>
+        <li>
+            <?= CHtml::link(
+                CHtml::encode($model->title),
+                ['/blog/post/view', 'slug' => $model->slug]
+            ); ?>
+            <nobr>
+                <i class="glyphicon glyphicon-comment"></i> <?= $model->getCommentCount(); ?>
+            </nobr>
+            <hr/>
+        </li>
+    <?php endforeach; ?>
+</ul>
+<?php $this->endWidget(); ?>

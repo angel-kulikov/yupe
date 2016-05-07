@@ -44,14 +44,14 @@ class Zend_Search_Lucene_Index_DictionaryLoader
      *
      * See Zend_Search_Lucene_Index_SegmintInfo class for details
      *
-     * @param string $data
+     * @param  string $data
      * @return array
      * @throws Zend_Search_Lucene_Exception
      */
     public static function load($data)
     {
-        $termDictionary = array();
-        $termInfos = array();
+        $termDictionary = [];
+        $termInfos = [];
         $pos = 0;
 
         // $tiVersion = $tiiFile->readInt();
@@ -96,7 +96,9 @@ class Zend_Search_Lucene_Index_DictionaryLoader
         $pos += 4;
 
         // $skipInterval   = $tiiFile->readInt();
-        $skipInterval = ord($data[$pos]) << 24 | ord($data[$pos + 1]) << 16 | ord($data[$pos + 2]) << 8 | ord($data[$pos + 3]);
+        $skipInterval = ord($data[$pos]) << 24 | ord($data[$pos + 1]) << 16 | ord($data[$pos + 2]) << 8 | ord(
+                $data[$pos + 3]
+            );
         $pos += 4;
         if ($indexTermCount < 1) {
             require_once 'Zend/Search/Lucene/Exception.php';
@@ -244,13 +246,12 @@ class Zend_Search_Lucene_Index_DictionaryLoader
             }
             $indexPointer += $vint;
 
-
             // $this->_termDictionary[] =  new Zend_Search_Lucene_Index_Term($termValue, $termFieldNum);
-            $termDictionary[] = array($termFieldNum, $termValue);
+            $termDictionary[] = [$termFieldNum, $termValue];
 
             $termInfos[] =
                 // new Zend_Search_Lucene_Index_TermInfo($docFreq, $freqPointer, $proxPointer, $skipDelta, $indexPointer);
-                array($docFreq, $freqPointer, $proxPointer, $skipDelta, $indexPointer);
+                [$docFreq, $freqPointer, $proxPointer, $skipDelta, $indexPointer];
 
             $prevTerm = $termValue;
         }
@@ -266,7 +267,6 @@ class Zend_Search_Lucene_Index_DictionaryLoader
             $termDictionary[0][0] = -1;
         }
 
-        return array($termDictionary, $termInfos);
+        return [$termDictionary, $termInfos];
     }
 }
-

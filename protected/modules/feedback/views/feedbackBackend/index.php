@@ -1,16 +1,23 @@
 <?php
-$this->breadcrumbs = array(
-    Yii::app()->getModule('feedback')->getCategory() => array(),
-    Yii::t('FeedbackModule.feedback', 'Messages ') => array('/feedback/feedbackBackend/index'),
+$this->breadcrumbs = [
+    Yii::t('FeedbackModule.feedback', 'Messages ') => ['/feedback/feedbackBackend/index'],
     Yii::t('FeedbackModule.feedback', 'Management'),
-);
+];
 
 $this->pageTitle = Yii::t('FeedbackModule.feedback', 'Messages - manage');
 
-$this->menu = array(
-    array('icon' => 'list-alt', 'label' => Yii::t('FeedbackModule.feedback', 'Messages management'), 'url' => array('/feedback/feedbackBackend/index')),
-    array('icon' => 'plus-sign', 'label' => Yii::t('FeedbackModule.feedback', 'Create message '), 'url' => array('/feedback/feedbackBackend/create')),
-);
+$this->menu = [
+    [
+        'icon'  => 'fa fa-fw fa-list-alt',
+        'label' => Yii::t('FeedbackModule.feedback', 'Messages management'),
+        'url'   => ['/feedback/feedbackBackend/index']
+    ],
+    [
+        'icon'  => 'fa fa-fw fa-plus-square',
+        'label' => Yii::t('FeedbackModule.feedback', 'Create message '),
+        'url'   => ['/feedback/feedbackBackend/create']
+    ],
+];
 $assets = Yii::app()->getAssetManager()->publish(
     Yii::getPathOfAlias('feedback.views.assets')
 );
@@ -19,46 +26,161 @@ Yii::app()->getClientScript()->registerCssFile($assets . '/css/feedback.css');
 ?>
 <div class="page-header">
     <h1>
-        <?php echo Yii::t('FeedbackModule.feedback', 'Messages '); ?>
-        <small><?php echo Yii::t('FeedbackModule.feedback', 'management'); ?></small>
+        <?=  Yii::t('FeedbackModule.feedback', 'Messages '); ?>
+        <small><?=  Yii::t('FeedbackModule.feedback', 'management'); ?></small>
     </h1>
 </div>
 
-<div class="row-fluid">
-    <button class="btn btn-small dropdown-toggle" data-toggle="collapse" data-target="#search-toggle">
-        <i class="icon-search">&nbsp;</i>
-        <?php echo CHtml::link(Yii::t('FeedbackModule.feedback', 'Find messages'), '#', array('class' => 'search-button')); ?>
+<p>
+    <a class="btn btn-default btn-sm dropdown-toggle" data-toggle="collapse" data-target="#search-toggle">
+        <i class="fa fa-search">&nbsp;</i>
+        <?=  Yii::t('FeedbackModule.feedback', 'Find messages'); ?>
         <span class="caret">&nbsp;</span>
-    </button>
+    </a>
+</p>
 
-    <div id="search-toggle" class="collapse out search-form">
-        <?php
-            Yii::app()->clientScript->registerScript('search', "
-                $('.search-form form').submit(function() {
-                    $.fn.yiiListView.update('feed-back-list', {
+<div id="search-toggle" class="collapse out search-form">
+    <?php
+    Yii::app()->clientScript->registerScript(
+        'search',
+        "
+                $('.search-form form').submit(function () {
+                    $.fn.yiiGridView.update('feed-back-list', {
                         data: $(this).serialize()
                     });
+
                     return false;
                 });
-                $('.search-form form [type=reset]').click(function() {
-                    $.fn.yiiListView.update('feed-back-list', {
+                $('.search-form form [type=reset]').click(function () {
+                    $.fn.yiiGridView.update('feed-back-list', {
                         data: $(this).serialize()
                     });
+
                     return false;
                 });
-            ");
-            $this->renderPartial('_search', array('model' => $model));
-        ?>
-    </div>
+            "
+    );
+    $this->renderPartial('_search', ['model' => $model]);
+    ?>
 </div>
 
-<!-- <p><?php echo Yii::t('FeedbackModule.feedback', 'This section represent feedback management'); ?></p> -->
-
 <?php $this->widget(
-    'yupe\widgets\CustomListView', array(
-        'id'           => 'feed-back-list',
-        'dataProvider' => $model->search(),
-        'itemView'     => '_view'
-    )
+    'yupe\widgets\CustomGridView',
+    [
+        'id'             => 'feed-back-list',
+        'dataProvider'   => $model->search(),
+        'filter'         => $model,
+        'actionsButtons' => [
+            CHtml::link(
+                Yii::t('YupeModule.yupe', 'Add'),
+                ['/feedback/feedbackBackend/create'],
+                ['class' => 'btn btn-success pull-right btn-sm']
+            )
+        ],
+        'columns'        => [
+            [
+                'class'    => 'bootstrap.widgets.TbEditableColumn',
+                'name'     => 'theme',
+                'editable' => [
+                    'url'    => $this->createUrl('/feedback/feedbackBackend/inline'),
+                    'mode'   => 'inline',
+                    'params' => [
+                        Yii::app()->getRequest()->csrfTokenName => Yii::app()->getRequest()->csrfToken
+                    ]
+                ],
+                'filter'   => CHtml::activeTextField($model, 'theme', ['class' => 'form-control']),
+            ],
+            [
+                'class'    => 'bootstrap.widgets.TbEditableColumn',
+                'name'     => 'name',
+                'editable' => [
+                    'url'    => $this->createUrl('/feedback/feedbackBackend/inline'),
+                    'mode'   => 'inline',
+                    'params' => [
+                        Yii::app()->getRequest()->csrfTokenName => Yii::app()->getRequest()->csrfToken
+                    ]
+                ],
+                'filter'   => CHtml::activeTextField($model, 'name', ['class' => 'form-control']),
+            ],
+            [
+                'class'    => 'bootstrap.widgets.TbEditableColumn',
+                'name'     => 'email',
+                'editable' => [
+                    'url'    => $this->createUrl('/feedback/feedbackBackend/inline'),
+                    'mode'   => 'inline',
+                    'params' => [
+                        Yii::app()->getRequest()->csrfTokenName => Yii::app()->getRequest()->csrfToken
+                    ]
+                ],
+                'filter'   => CHtml::activeTextField($model, 'email', ['class' => 'form-control']),
+            ],
+            'create_time',
+            [
+                'class'    => 'bootstrap.widgets.TbEditableColumn',
+                'editable' => [
+                    'url'    => $this->createUrl('/feedback/feedbackBackend/inline'),
+                    'mode'   => 'popup',
+                    'type'   => 'select',
+                    'source' => $model->getTypeList(),
+                    'params' => [
+                        Yii::app()->getRequest()->csrfTokenName => Yii::app()->getRequest()->csrfToken
+                    ]
+                ],
+                'name'     => 'type',
+                'type'     => 'raw',
+                'value'    => '$data->getType()',
+                'filter'   => CHtml::activeDropDownList(
+                    $model,
+                    'type',
+                    $model->getTypeList(),
+                    ['class' => 'form-control', 'empty' => '']
+                ),
+            ],
+            [
+                'class'   => 'yupe\widgets\EditableStatusColumn',
+                'name'    => 'status',
+                'url'     => $this->createUrl('/feedback/feedbackBackend/inline'),
+                'source'  => $model->getStatusList(),
+                'options' => [
+                    FeedBack::STATUS_ANSWER_SENDED => ['class' => 'label-success'],
+                    FeedBack::STATUS_FINISHED      => ['class' => 'label-success'],
+                    FeedBack::STATUS_NEW           => ['class' => 'label-default'],
+                    FeedBack::STATUS_PROCESS       => ['class' => 'label-info'],
+                ],
+            ],
+            [
+                'class'    => 'bootstrap.widgets.TbEditableColumn',
+                'editable' => [
+                    'url'    => $this->createUrl('/feedback/feedbackBackend/inline'),
+                    'mode'   => 'popup',
+                    'type'   => 'select',
+                    'source' => $model->getIsFaqList(),
+                    'params' => [
+                        Yii::app()->getRequest()->csrfTokenName => Yii::app()->getRequest()->csrfToken
+                    ]
+                ],
+                'name'     => 'is_faq',
+                'type'     => 'raw',
+                'value'    => '$data->getIsFaq()',
+                'filter'   => CHtml::activeDropDownList(
+                    $model,
+                    'is_faq',
+                    $model->getIsFaqList(),
+                    ['class' => 'form-control', 'empty' => '']
+                ),
+            ],
+            [
+                'class'    => 'yupe\widgets\CustomButtonColumn',
+                'template' => '{answer}{view}{update}{delete}',
+                'buttons'  => [
+                    'answer' => [
+                        'icon'  => 'fa fa-fw fa-envelope',
+                        'label' => Yii::t('FeedbackModule.feedback', 'Messages - answer'),
+                        'url'   => 'Yii::app()->createUrl("/feedback/feedbackBackend/answer", array("id" => $data->id))',
+                        'options' => ['class' => 'btn btn-sm btn-default']
+                    ]
+                ]
+            ],
+        ]
+    ]
 ); ?>
-

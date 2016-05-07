@@ -1,67 +1,104 @@
-<script type='text/javascript'>
-    $(document).ready(function(){
-        $('#dictionary-data-form').liTranslit({
-            elName: '#DictionaryData_name',
-            elAlias: '#DictionaryData_code'
-        });
-    })
-</script>
-
 <?php
-$form = $this->beginWidget('bootstrap.widgets.TbActiveForm', array(
-    'id'                     => 'dictionary-data-form',
-    'enableAjaxValidation'   => false,
-    'enableClientValidation' => true,
-    'type'                   => 'vertical',
-    'htmlOptions'            => array('class' => 'well'),
-    'inlineErrors'           => true,
-)); ?>
-    <div class="alert alert-info">
-        <?php echo Yii::t('DictionaryModule.dictionary', 'Fields with'); ?>
-        <span class="required">*</span>
-        <?php echo Yii::t('DictionaryModule.dictionary', 'are required.'); ?>
-    </div>
+/**
+ * @var $this DictionaryDataBackendController
+ * @var $model DictionaryData
+ * @var $form \yupe\widgets\ActiveForm
+ */
+$form = $this->beginWidget(
+    'yupe\widgets\ActiveForm',
+    [
+        'id'                     => 'dictionary-data-form',
+        'enableAjaxValidation'   => false,
+        'enableClientValidation' => true,
+        'type'                   => 'vertical',
+        'htmlOptions'            => ['class' => 'well'],
+    ]
+); ?>
+<div class="alert alert-info">
+    <?=  Yii::t('DictionaryModule.dictionary', 'Fields with'); ?>
+    <span class="required">*</span>
+    <?=  Yii::t('DictionaryModule.dictionary', 'are required.'); ?>
+</div>
 
-    <?php echo $form->errorSummary($model); ?>
+<?=  $form->errorSummary($model); ?>
 
-    <div class='control-group <?php echo $model->hasErrors("group_id") ? "error" : ""; ?>'>
-        <?php echo $form->dropDownListRow($model, 'group_id', CHtml::listData(DictionaryGroup::model()->findAll(), 'id', 'name')); ?>
-    </div>
+<div class="row">
+    <div class="col-sm-3">
+        <?=  $form->dropDownListGroup(
+            $model,
+            'group_id',
+            [
+                'widgetOptions' => [
+                    'data' => CHtml::listData(DictionaryGroup::model()->findAll(), 'id', 'name')
+                ]
+            ]
+        ); ?>
 
-    <div class='control-group <?php echo $model->hasErrors("name") ? "error" : ""; ?>'>
-        <?php echo $form->textFieldRow($model, 'name', array('class' => 'span7', 'maxlength' => 300)); ?>
     </div>
+    <div class="col-sm-3">
+        <?=  $form->dropDownListGroup(
+            $model,
+            'status',
+            ['widgetOptions' => ['data' => $model->getStatusList()]]
+        ); ?>
+    </div>
+</div>
 
-    <div class='control-group <?php echo $model->hasErrors("code") ? "error" : ""; ?>'>
-        <?php echo $form->textFieldRow($model, 'code', array('class' => 'span7', 'maxlength' => 100)); ?>
+<div class='row'>
+    <div class="col-sm-7">
+        <?=  $form->textFieldGroup($model, 'name'); ?>
     </div>
+</div>
 
-    <div class='control-group <?php echo $model->hasErrors("value") ? "error" : ""; ?>'>
-        <?php echo $form->textFieldRow($model, 'value', array('class' => 'span7', 'maxlength' => 100)); ?>
+<div class='row'>
+    <div class="col-sm-7">
+        <?=  $form->slugFieldGroup($model, 'code', ['sourceAttribute' => 'name']); ?>
     </div>
-    <div class="row-fluid control-group <?php echo $model->hasErrors('description') ? 'error' : ''; ?>">
-        <div class="popover-help" data-original-title='<?php echo $model->getAttributeLabel('description'); ?>' data-content='<?php echo $model->getAttributeDescription('description'); ?>'>
-            <?php echo $form->labelEx($model, 'description'); ?>
-            <?php $this->widget($this->yupe->editor, array(
-                'model'       => $model,
-                'attribute'   => 'description',
-                'options'     => $this->module->editorOptions,
-            )); ?>
-        </div>
-    </div>
-    <div class='control-group <?php echo $model->hasErrors("status") ? "error" : ""; ?>'>
-        <?php echo $form->dropDownListRow($model, 'status', $model->statusList); ?>
-    </div>
+</div>
 
-    <?php $this->widget('bootstrap.widgets.TbButton', array(
+<div class='row'>
+    <div class="col-sm-7">
+        <?=  $form->textFieldGroup($model, 'value'); ?>
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm-12 form-group popover-help"
+         data-original-title='<?=  $model->getAttributeLabel('description'); ?>'
+         data-content='<?=  $model->getAttributeDescription('description'); ?>'>
+        <?=  $form->labelEx($model, 'description'); ?>
+        <?php $this->widget(
+            $this->yupe->getVisualEditor(),
+            [
+                'model'     => $model,
+                'attribute' => 'description',
+            ]
+        ); ?>
+    </div>
+</div>
+
+
+<?php $this->widget(
+    'bootstrap.widgets.TbButton',
+    [
         'buttonType' => 'submit',
-        'type'       => 'primary',
-        'label'      => $model->isNewRecord ? Yii::t('DictionaryModule.dictionary', 'Create item and continue') : Yii::t('DictionaryModule.dictionary', 'Save value and continue'),
-    )); ?>
-    <?php $this->widget('bootstrap.widgets.TbButton', array(
+        'context'    => 'primary',
+        'label'      => $model->isNewRecord ? Yii::t(
+            'DictionaryModule.dictionary',
+            'Create item and continue'
+        ) : Yii::t('DictionaryModule.dictionary', 'Save value and continue'),
+    ]
+); ?>
+
+<?php $this->widget(
+    'bootstrap.widgets.TbButton',
+    [
         'buttonType'  => 'submit',
-        'htmlOptions' => array('name' => 'submit-type', 'value' => 'index'),
-        'label'       => $model->isNewRecord ? Yii::t('DictionaryModule.dictionary', 'Create item and close') : Yii::t('DictionaryModule.dictionary', 'Save value and close'),
-    )); ?>
+        'htmlOptions' => ['name' => 'submit-type', 'value' => 'index'],
+        'label'       => $model->isNewRecord ? Yii::t('DictionaryModule.dictionary', 'Create item and close') : Yii::t(
+            'DictionaryModule.dictionary',
+            'Save value and close'
+        ),
+    ]
+); ?>
 
 <?php $this->endWidget(); ?>

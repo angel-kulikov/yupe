@@ -1,69 +1,92 @@
 <?php
-    $this->breadcrumbs = array(
-        Yii::app()->getModule('image')->getCategory() => array(),
-        Yii::t('ImageModule.image', 'Images') => array('/image/imageBackend/index'),
-        Yii::t('ImageModule.image', 'Management'),
-    );
+$this->breadcrumbs = [
+    Yii::t('ImageModule.image', 'Images') => ['/image/imageBackend/index'],
+    Yii::t('ImageModule.image', 'Management'),
+];
 
-    $this->pageTitle = Yii::t('ImageModule.image', 'Images - manage');
+$this->pageTitle = Yii::t('ImageModule.image', 'Images - manage');
 
-    $this->menu = array(
-        array('icon' => 'list-alt', 'label' => Yii::t('ImageModule.image', 'Image management'), 'url' => array('/image/imageBackend/index')),
-        array('icon' => 'plus-sign', 'label' => Yii::t('ImageModule.image', 'Add image'), 'url' => array('/image/imageBackend/create')),
-    );
+$this->menu = [
+    [
+        'icon'  => 'fa fa-fw fa-list-alt',
+        'label' => Yii::t('ImageModule.image', 'Image management'),
+        'url'   => ['/image/imageBackend/index']
+    ],
+    [
+        'icon'  => 'fa fa-fw fa-plus-square',
+        'label' => Yii::t('ImageModule.image', 'Add image'),
+        'url'   => ['/image/imageBackend/create']
+    ],
+];
 ?>
 <div class="page-header">
     <h1>
-        <?php echo ucfirst(Yii::t('ImageModule.image', 'Images')); ?>
-        <small><?php echo Yii::t('ImageModule.image', 'management'); ?></small>
+        <?=  ucfirst(Yii::t('ImageModule.image', 'Images')); ?>
+        <small><?=  Yii::t('ImageModule.image', 'management'); ?></small>
     </h1>
 </div>
 
-<button class="btn btn-small dropdown-toggle" data-toggle="collapse" data-target="#search-toggle">
-    <i class="icon-search">&nbsp;</i>
-    <?php echo CHtml::link(Yii::t('ImageModule.image', 'Find images'), '#', array('class' => 'search-button')); ?>
-    <span class="caret">&nbsp;</span>
-</button>
+<p>
+    <a class="btn btn-default btn-sm dropdown-toggle" data-toggle="collapse" data-target="#search-toggle">
+        <i class="fa fa-search">&nbsp;</i>
+        <?=  Yii::t('ImageModule.image', 'Find images'); ?>
+        <span class="caret">&nbsp;</span>
+    </a>
+</p>
 
-<div id="search-toggle" class="collapse out">
-<?php
-Yii::app()->clientScript->registerScript('search', "
-    $('.search-form').submit(function() {
+<div id="search-toggle" class="search-form collapse out">
+    <?php
+    Yii::app()->clientScript->registerScript(
+        'search',
+        "
+    $('.search-form form').submit(function () {
         $.fn.yiiGridView.update('image-grid', {
             data: $(this).serialize()
         });
+
         return false;
     });
-");
-$this->renderPartial('_search', array('model' => $model));
-?>
+"
+    );
+    $this->renderPartial('_search', ['model' => $model]);
+    ?>
 </div>
-
-<br/>
-
-<p><?php echo Yii::t('ImageModule.image', 'This section describes Image management functions'); ?></p>
 
 <?php
 $this->widget(
-    'yupe\widgets\CustomGridView', array(
+    'yupe\widgets\CustomGridView',
+    [
         'id'           => 'image-grid',
-        'type'         => 'condensed',
+        'sortableRows'      => true,
+        'sortableAjaxSave'  => true,
+        'sortableAttribute' => 'sort',
+        'sortableAction'    => '/image/imageBackend/sortable',
         'dataProvider' => $model->search(),
         'filter'       => $model,
-        'columns'      => array(
-            'id',
-            array(
+        'columns'      => [
+            [
                 'name'   => Yii::t('ImageModule.image', 'file'),
                 'type'   => 'raw',
-                'value'  => 'CHtml::image($data->getUrl(75), $data->alt, array("width" => 75, "height" => 75))',
+                'value'  => 'CHtml::image($data->getImageUrl(75, 75), $data->alt, array("width" => 75, "height" => 75))',
                 'filter' => false
-            ),
-            array(
+            ],
+            'name',
+            [
+                'header' => Yii::t('ImageModule.image', 'Link'),
+                'type'   => 'raw',
+                'value'  => 'CHtml::link($data->getImageUrl(), $data->getImageUrl())'
+            ],
+            [
                 'name'   => 'category_id',
                 'value'  => '$data->getCategoryName()',
-                'filter' => CHtml::listData(Yii::app()->getModule('image')->getCategoryList(),'id','name')
-            ),
-            array(
+                'filter' => CHtml::activeDropDownList(
+                        $model,
+                        'category_id',
+                        Category::model()->getFormattedList(Yii::app()->getModule('image')->mainCategory),
+                        ['encode' => false, 'empty' => '', 'class' => 'form-control']
+                    )
+            ],
+            [
                 'name'   => 'galleryId',
                 'header' => Yii::t('ImageModule.image', 'Gallery'),
                 'type'   => 'raw',
@@ -72,19 +95,12 @@ $this->widget(
                             ? "---"
                             : CHtml::link(
                                 $data->gallery->name,
-                                Yii::app()->controller instanceof yupe\components\controllers\BackController
-                                ? array("/gallery/galleryBackend/update", "id" => $data->galleryId)
-                                : array("/gallery/gallery/update", "id" => $data->galleryId)
+                                array("/gallery/galleryBackend/images", "id" => $data->gallery->id)
                             )',
-            ),
-            'name',
-            'alt',
-            array(
-                'class'       => 'bootstrap.widgets.TbButtonColumn',
-                'htmlOptions' => array(
-                    'style'   => 'width: 60px;'
-                ),
-            ),
-        ),
-    )
+            ],
+            [
+                'class' => 'yupe\widgets\CustomButtonColumn',
+            ],
+        ],
+    ]
 ); ?>

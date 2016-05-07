@@ -1,4 +1,5 @@
 <?php
+
 /**
  * PostMetaWidget виджет для вывода мета-информации о посте
  *
@@ -9,8 +10,7 @@
  * @since 0.1
  *
  */
-
-class PostMetaWidget extends YWidget
+class PostMetaWidget extends yupe\widgets\YWidget
 {
     public $post;
 
@@ -18,6 +18,6 @@ class PostMetaWidget extends YWidget
 
     public function run()
     {
-        $this->render($this->view,array('post' => $this->post));
+        $this->render($this->view, ['post' => $this->post]);
     }
 }

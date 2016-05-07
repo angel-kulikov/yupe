@@ -10,82 +10,67 @@
  * @since 0.1
  *
  */
-class YQueueMailSenderCommand extends CConsoleCommand
+use yupe\components\ConsoleCommand;
+
+class YQueueMailSenderCommand extends ConsoleCommand
 {
     const MAIL_WORKER_ID = 1;
 
+    public $logCategory = 'mail';
+
+    public $from;
+
+    public $sender = 'mail';
+
+    public function getLogCategory()
+    {
+        return 'mail';
+    }
+
     public function actionIndex($limit = 5)
     {
-        $limit = (int) $limit;
+        $limit = (int)$limit;
 
-        echo "Process " . $limit . " mail task...\n";
+        $this->log("Try process {$limit} mail tasks...");
 
-        Yii::log("Process " . $limit . " mail task...\n");
+        $queue = new Queue();
 
-        $models = Queue::model()->findAll(array(
-            'condition' => 'worker = :worker AND status = :status',
-            'params' => array(
-                ':worker' => self::MAIL_WORKER_ID,
-                ':status' => Queue::STATUS_NEW
-            ),
-            'limit' => $limit,
-            'order' => 'priority desc'
-        ));
+        $models = $queue->getTasksForWorker(self::MAIL_WORKER_ID, $limit);
 
-        echo "Find " . count($models) . " new mail task...\n";
+        $this->log("Find " . count($models) . " new mail task");
 
-        Yii::log("Find " . count($models) . " new mail task...\n");
+        foreach ($models as $model) {
+            $this->log("Process mail task id = {$model->id}");
 
-        foreach ($models as $model)
-        {
-            echo "Process mail task id = {$model->id}...\n";
+            $data = $model->decodeJson();
 
-            Yii::log("Process mail task id = {$model->id}...\n");
+            if (!$data) {
+                $model->completeWithError('Error json_decode', CLogger::LEVEL_ERROR);
 
-            if (!$data = (array) json_decode($model->task))
-            {
-                $model->status = Queue::STATUS_ERROR;
-
-                $model->notice = 'Error json_decode...';
-
-                $model->save();
-
-                echo "Error json_decode...\n";
-
-                Yii::log('Error json_decode...');
+                $this->log("Error json_decode");
 
                 continue;
             }
 
-            if (!isset($data['from'], $data['to'], $data['theme'], $data['body']))
-            {
-                $model->status = Queue::STATUS_ERROR;
+            if (!isset($data['from'], $data['to'], $data['theme'], $data['body'])) {
+                $model->completeWithError('Wrong data...');
 
-                $model->notice = 'Wrong data...';
-
-                $model->save();
-
-                echo "Wrong data...";
-
-                Yii::log('Wrong data...');
+                $this->log('Wrong data...', CLogger::LEVEL_ERROR);
 
                 continue;
             }
 
-            if (Yii::app()->mail->send($data['from'], $data['to'], $data['theme'], $data['body']))
-            {
-                $model->status = Queue::STATUS_COMLETED;
+            $from = $this->from ? $this->from : $data['from'];
 
-                $model->complete_time = new CDbExpression('NOW()');
+            if (Yii::app()->getComponent($this->sender)->send($from, $data['to'], $data['theme'], $data['body'])) {
+                $model->complete();
 
-                $model->save();
-
-                echo "Success send...";
-
-                Yii::log("Success send...");
+                $this->log("Success send mail");
 
                 continue;
             }
+
+            $this->log('Error sending email', CLogger::LEVEL_ERROR);
         }
     }
 }

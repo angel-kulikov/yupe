@@ -1,41 +1,92 @@
 <?php
-$this->breadcrumbs=array(
-    $this->module->getCategory() => array('index'),
-    Yii::t('MailModule.mail','Mail events')=>array('/mail/eventBackend/index'),
-    Yii::t('MailModule.mail','Mail templates')=>array('index'),
+$this->breadcrumbs = [
+    Yii::t('MailModule.mail', 'Mail events')    => ['/mail/eventBackend/index'],
+    Yii::t('MailModule.mail', 'Mail templates') => ['index'],
     $model->name,
-);
-$this-> pageTitle = Yii::t('MailModule.mail','View mail template');
-$this->menu=array(
-    array('icon'=> 'list-alt', 'label' => Yii::t('MailModule.mail','Templates list'),'url'=>array('/mail/templateBackend/index')),
-    array('icon'=> 'plus-sign', 'label' =>  Yii::t('MailModule.mail','Template creation'),'url'=>array('/mail/templateBackend/create')),
-    array('icon'=>'pencil','encodeLabel'=> false, 'label' => Yii::t('MailModule.mail','Edit template'),'url'=>array('/mail/templateBackend/update','id'=>$model->id)),
-    array('icon'=>'eye-open','encodeLabel'=> false, 'label' => Yii::t('MailModule.mail','View template'),'url'=>array('/mail/templateBackend/view','id'=>$model->id)),
-    array('icon'=>'remove', 'label' =>  Yii::t('MailModule.mail','Remove template'),'url'=>'#','linkOptions'=>array('submit'=>array('delete','id'=>$model->id),'confirm'=> Yii::t('MailModule.mail','Do you really want to remove?'))),
-);
+];
+$this->pageTitle = Yii::t('MailModule.mail', 'View mail template');
+$this->menu = [
+    ['label' => Yii::t('MailModule.mail', 'Mail templates')],
+    [
+        'icon'  => 'fa fa-fw fa-list-alt',
+        'label' => Yii::t('MailModule.mail', 'Templates list'),
+        'url'   => ['/mail/templateBackend/index']
+    ],
+    [
+        'icon'  => 'fa fa-fw fa-plus-square',
+        'label' => Yii::t('MailModule.mail', 'Create template'),
+        'url'   => ['/mail/templateBackend/create/', 'eid' => $model->id]
+    ],
+    ['label' => Yii::t('MailModule.mail', 'Template') . ' «' . mb_substr($model->name, 0, 32) . '»'],
+    [
+        'icon'  => 'fa fa-fw fa-pencil',
+        'label' => Yii::t('MailModule.mail', 'Edit template'),
+        'url'   => [
+            '/mail/templateBackend/update',
+            'id' => $model->id
+        ]
+    ],
+    [
+        'icon'  => 'fa fa-fw fa-eye',
+        'label' => Yii::t('MailModule.mail', 'View template'),
+        'url'   => [
+            '/mail/templateBackend/view',
+            'id' => $model->id
+        ]
+    ],
+    [
+        'icon'        => 'fa fa-fw fa-trash-o',
+        'label'       => Yii::t('MailModule.mail', 'Remove template'),
+        'url'         => '#',
+        'linkOptions' => [
+            'submit'  => ['/mail/templateBackend/delete', 'id' => $model->id],
+            'confirm' => Yii::t('MailModule.mail', 'Do you really want to remove?'),
+            'csrf'    => true,
+        ]
+    ],
+    ['label' => Yii::t('MailModule.mail', 'Mail events')],
+    [
+        'icon'  => 'fa fa-fw fa-list-alt',
+        'label' => Yii::t('MailModule.mail', 'Messages list'),
+        'url'   => ['/mail/eventBackend/index']
+    ],
+    [
+        'icon'  => 'fa fa-fw fa-plus-square',
+        'label' => Yii::t('MailModule.mail', 'Create event'),
+        'url'   => ['/mail/eventBackend/create']
+    ],
+];
 ?>
 <div class="page-header">
-    <h1><?php echo Yii::t('MailModule.mail','View mail template');?><br /><small style='margin-left:-10px;'>&laquo;<?php echo  $model->name; ?>&raquo;</small></h1>
+    <h1><?=  Yii::t('MailModule.mail', 'View mail template'); ?><br/>
+        <small>&laquo;<?=  $model->name; ?>&raquo;</small>
+    </h1>
 </div>
 
-<?php $this->widget('bootstrap.widgets.TbDetailView',array(
-    'data'=>$model,
-    'attributes'=>array(
-        'id',
-        'code',
-        array(
-            'name'  => 'event_id',
-            'value' => $model->event->name,
-        ),
-        'name',
-        'description',
-        'from',
-        'to',
-        'theme',
-        'body',
-        array(
-            'name'  => 'status',
-            'value' => $model->getStatus(),
-        ),
-    ),
-)); ?>
+<?php $this->widget(
+    'bootstrap.widgets.TbDetailView',
+    [
+        'data'       => $model,
+        'attributes' => [
+            'id',
+            'code',
+            [
+                'name'  => 'event_id',
+                'value' => $model->event->name,
+            ],
+            'name',
+            'description',
+            'from',
+            'to',
+            'theme',
+            [
+                'name' => 'body',
+                'type' => 'raw'
+            ],
+            [
+                'name'  => 'status',
+                'value' => $model->getStatus(),
+            ],
+        ],
+    ]
+); ?>

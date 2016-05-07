@@ -1,4 +1,5 @@
 <?php
+
 /**
  * TemplateBackendController - Класс контроллера Template:
  *
@@ -10,6 +11,30 @@
  **/
 class TemplateBackendController extends yupe\components\controllers\BackController
 {
+    public function accessRules()
+    {
+        return [
+            ['allow', 'roles' => ['admin']],
+            ['allow', 'actions' => ['index'], 'roles' => ['Mail.TemplateBackend.Index']],
+            ['allow', 'actions' => ['view'], 'roles' => ['Mail.TemplateBackend.View']],
+            ['allow', 'actions' => ['create'], 'roles' => ['Mail.TemplateBackend.Create']],
+            ['allow', 'actions' => ['update', 'inline'], 'roles' => ['Mail.TemplateBackend.Update']],
+            ['allow', 'actions' => ['delete', 'multiaction'], 'roles' => ['Mail.TemplateBackend.Delete']],
+            ['deny']
+        ];
+    }
+
+    public function actions()
+    {
+        return [
+            'inline' => [
+                'class'           => 'yupe\components\actions\YInLineEditAction',
+                'model'           => 'MailTemplate',
+                'validAttributes' => ['event_id', 'name', 'description', 'from', 'to', 'theme', 'status']
+            ]
+        ];
+    }
+
     /**
      * Отображает почтовый шаблон по указанному идентификатору
      *
@@ -19,7 +44,7 @@ class TemplateBackendController extends yupe\components\controllers\BackControll
      */
     public function actionView($id)
     {
-        $this->render('view', array('model' => $this->loadModel($id)));
+        $this->render('view', ['model' => $this->loadModel($id)]);
     }
 
     /**
@@ -30,31 +55,31 @@ class TemplateBackendController extends yupe\components\controllers\BackControll
      */
     public function actionCreate()
     {
-        $model = new MailTemplate;
+        $model = new MailTemplate();
 
-        // Uncomment the following line if AJAX validation is needed
-        // $this->performAjaxValidation($model);
-        if (Yii::app()->getRequest()->getParam('eid'))
-            $model->event_id = (int) Yii::app()->getRequest()->getParam('eid');
+        if (Yii::app()->getRequest()->getParam('eid')) {
+            $model->event_id = (int)Yii::app()->getRequest()->getParam('eid');
+        }
 
         if (($data = Yii::app()->getRequest()->getPost('MailTemplate')) !== null) {
             $model->setAttributes($data);
 
             if ($model->save()) {
                 Yii::app()->user->setFlash(
-                    YFlashMessages::SUCCESS_MESSAGE,
+                    yupe\widgets\YFlashMessages::SUCCESS_MESSAGE,
                     Yii::t('MailModule.mail', 'Record was created!')
                 );
 
                 $this->redirect(
-                    (array) Yii::app()->getRequest()->getPost(
-                        'submit-type', array('create')
+                    (array)Yii::app()->getRequest()->getPost(
+                        'submit-type',
+                        ['create']
                     )
                 );
             }
         }
-        
-        $this->render('create', array('model' => $model));
+
+        $this->render('create', ['model' => $model]);
     }
 
     /**
@@ -68,29 +93,27 @@ class TemplateBackendController extends yupe\components\controllers\BackControll
     {
         $model = $this->loadModel($id);
 
-        // Uncomment the following line if AJAX validation is needed
-        // $this->performAjaxValidation($model);
-
         if (($data = Yii::app()->getRequest()->getPost('MailTemplate')) !== null) {
-            
+
             $model->setAttributes($data);
 
             if ($model->save()) {
-                
+
                 Yii::app()->user->setFlash(
-                    YFlashMessages::SUCCESS_MESSAGE,
+                    yupe\widgets\YFlashMessages::SUCCESS_MESSAGE,
                     Yii::t('MailModule.mail', 'Record was updated!')
                 );
 
                 $this->redirect(
-                    (array) Yii::app()->getRequest()->getPost(
-                        'submit-type', array('update','id' => $model->id)
+                    (array)Yii::app()->getRequest()->getPost(
+                        'submit-type',
+                        ['update', 'id' => $model->id]
                     )
                 );
             }
         }
 
-        $this->render('update', array('model' => $model));
+        $this->render('update', ['model' => $model]);
     }
 
     /**
@@ -110,13 +133,13 @@ class TemplateBackendController extends yupe\components\controllers\BackControll
             $this->loadModel($id)->delete();
 
             Yii::app()->user->setFlash(
-                YFlashMessages::SUCCESS_MESSAGE,
+                yupe\widgets\YFlashMessages::SUCCESS_MESSAGE,
                 Yii::t('MailModule.mail', 'Record was removed!')
             );
 
             // если это AJAX запрос ( кликнули удаление в админском grid view), мы не должны никуда редиректить
             Yii::app()->getRequest()->getParam('ajax') !== null || $this->redirect(
-                (array) Yii::app()->getRequest()->getPost('returnUrl', 'index')
+                (array)Yii::app()->getRequest()->getPost('returnUrl', 'index')
             );
         } else {
             throw new CHttpException(
@@ -134,20 +157,22 @@ class TemplateBackendController extends yupe\components\controllers\BackControll
     public function actionIndex()
     {
         $model = new MailTemplate('search');
-        
-        $model->unsetAttributes();  // clear any default values
-        
+
+        $model->unsetAttributes(); // clear any default values
+
         $model->event_id = Yii::app()->getRequest()->getQuery(
-            'event', null
+            'event',
+            null
         );
-        
+
         $model->setAttributes(
             Yii::app()->getRequest()->getParam(
-                'MailTemplate', array()
+                'MailTemplate',
+                []
             )
         );
-        
-        $this->render('index', array('model' => $model));
+
+        $this->render('index', ['model' => $model]);
     }
 
     /**
@@ -163,7 +188,7 @@ class TemplateBackendController extends yupe\components\controllers\BackControll
     public function loadModel($id)
     {
         $model = MailTemplate::model()->findByPk($id);
-        
+
         if ($model === null) {
             throw new CHttpException(
                 404,
@@ -172,20 +197,5 @@ class TemplateBackendController extends yupe\components\controllers\BackControll
         }
 
         return $model;
-    }
-
-    /**
-     * Производит AJAX-валидацию
-     *
-     * @param class $model - CModel модель, которую необходимо валидировать
-     *
-     * @return void
-     */
-    protected function performAjaxValidation(MailTemplate $model)
-    {
-        if (Yii::app()->getRequest()->getIsAjaxRequest() && Yii::app()->getRequest()->getPost('ajax') === 'mail-template-form') {
-            echo CActiveForm::validate($model);
-            Yii::app()->end();
-        }
     }
 }

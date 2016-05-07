@@ -1,5 +1,10 @@
 <?php
+namespace tests\acceptance\user;
+
 use \WebGuy;
+use tests\acceptance\pages\LoginPage;
+use tests\acceptance\pages\CommonPage;
+use tests\acceptance\user\steps\UserSteps;
 
 class UserLoginCest
 {
@@ -7,9 +12,9 @@ class UserLoginCest
     {
         $I->amOnPage(LoginPage::$URL);
         $I->wantTo('Check login form elements...');
-        $I->seeInTitle(\CommonPage::LOGIN_LABEL);
+        $I->seeInTitle(CommonPage::LOGIN_LABEL);
         $I->seeLink('Забыли пароль?');
-        $I->see(\CommonPage::LOGIN_LABEL);
+        $I->see(CommonPage::LOGIN_LABEL);
         $I->see('Запомнить меня');
         $I->dontSeeCheckboxIsChecked(LoginPage::$rememberMeField);
         $I->seeLink('Регистрация');
@@ -17,20 +22,13 @@ class UserLoginCest
         $I->seeInField(LoginPage::$passwordField, '');
 
         $I->amOnPage(LoginPage::$URL);
-        $I->wantTo('Check form with wrong data format...');
-        $I->fillField(LoginPage::$emailField, 'test');
-        $I->fillField(LoginPage::$passwordField, 'testpass');
-        $I->click(\CommonPage::LOGIN_LABEL, \CommonPage::BTN_PRIMARY_CSS_CLASS);
-        $I->see('Email не является правильным E-Mail адресом.', \CommonPage::ERROR_CSS_CLASS);
-
-        $I->amOnPage(LoginPage::$URL);
         $I->wantTo('Check form with wrong data...');
         $I->fillField(LoginPage::$emailField, 'test@test.ru');
         $I->fillField(LoginPage::$passwordField, 'testpass');
-        $I->click(\CommonPage::LOGIN_LABEL, \CommonPage::BTN_PRIMARY_CSS_CLASS);
-        $I->see('Email или пароль введены неверно!', \CommonPage::ERROR_CSS_CLASS);
+        $I->click(CommonPage::LOGIN_BTN_CONTEXT);
+        $I->see('Email или пароль введены неверно!', CommonPage::ERROR_CSS_CLASS);
 
-        $I = new WebGuy\UserSteps($scenario);
-        $I->login('yupe@yupe.local','testpassword');
+        $I = new UserSteps($scenario);
+        $I->login('yupe@yupe.local', 'testpassword');
     }
 }

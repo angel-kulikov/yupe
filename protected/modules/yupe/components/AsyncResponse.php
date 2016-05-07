@@ -28,42 +28,74 @@ namespace yupe\components;
 use CApplicationComponent;
 use Yii;
 
+/**
+ * Class AsyncResponse
+ * @package yupe\components
+ */
 class AsyncResponse extends CApplicationComponent
 {
-    public $success         = true;
-    public $failure         = false;
+    /**
+     * @var bool
+     */
+    public $success = true;
+    /**
+     * @var bool
+     */
+    public $failure = false;
+    /**
+     * @var string
+     */
     public $resultParamName = 'result';
-    public $dataParamName   = 'data';
+    /**
+     * @var string
+     */
+    public $dataParamName = 'data';
 
+    /**
+     * @return bool
+     */
     public function init()
     {
         return true;
     }
 
+    /**
+     * @param null $data
+     */
     public function success($data = null)
     {
         ContentType::setHeader(ContentType::TYPE_JSON);
 
-        echo json_encode(array(
-            $this->resultParamName => $this->success,
-            $this->dataParamName   => $data,
-        ));
+        echo json_encode(
+            [
+                $this->resultParamName => $this->success,
+                $this->dataParamName => $data,
+            ]
+        );
 
         Yii::app()->end();
     }
 
+    /**
+     * @param null $data
+     */
     public function failure($data = null)
     {
         ContentType::setHeader(ContentType::TYPE_JSON);
 
-        echo json_encode(array(
-            $this->resultParamName => $this->failure,
-            $this->dataParamName   => $data,
-        ));
+        echo json_encode(
+            [
+                $this->resultParamName => $this->failure,
+                $this->dataParamName => $data,
+            ]
+        );
 
         Yii::app()->end();
     }
 
+    /**
+     * @param $data
+     */
     public function raw($data)
     {
         ContentType::setHeader(ContentType::TYPE_JSON);
@@ -72,8 +104,19 @@ class AsyncResponse extends CApplicationComponent
         Yii::app()->end();
     }
 
-    public function rawText($data)
+
+    /**
+     * @param $data
+     * @param null $status
+     */
+    public function rawText($data, $status = null)
     {
+        $status = (int)$status;
+
+        if ($status) {
+            http_response_code($status);
+        }
+
         echo $data;
         Yii::app()->end();
     }

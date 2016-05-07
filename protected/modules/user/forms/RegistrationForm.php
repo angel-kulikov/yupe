@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Форма регистрации
  *
@@ -12,97 +13,114 @@
  **/
 class RegistrationForm extends CFormModel
 {
+
     public $nick_name;
     public $email;
     public $password;
     public $cPassword;
     public $verifyCode;
-    public $about;
-    public $hash;
-    public $status       = User::STATUS_NOT_ACTIVE;
-    public $emailConfirm = User::EMAIL_CONFIRM_NO;
-    public $first_name   = '';
-    public $last_name    = '';
+
+    public $disableCaptcha = false;
+
+    public function isCaptchaEnabled()
+    {
+        $module = Yii::app()->getModule('user');
+
+        if (!$module->showCaptcha || !CCaptcha::checkRequirements() || $this->disableCaptcha) {
+            return false;
+        }
+
+        return true;
+    }
 
     public function rules()
     {
         $module = Yii::app()->getModule('user');
 
-        return array(
-            array('nick_name, email', 'filter', 'filter' => 'trim'),
-            array('nick_name, email', 'filter', 'filter' => array($obj = new CHtmlPurifier(), 'purify')),
-            array('nick_name, email, password, cPassword', 'required'),
-            array('nick_name, email', 'length', 'max' => 50),
-            array('password, cPassword', 'length', 'min' => $module->minPasswordLength),
-            array('nick_name', 'match','pattern' => '/^[A-Za-z0-9]{2,50}$/', 'message' => Yii::t('UserModule.user', 'Bad field format for "{attribute}". You can use only letters and digits from 2 to 20 symbols')),
-            array('nick_name', 'checkNickName'),
-            array('cPassword', 'compare', 'compareAttribute' => 'password', 'message' => Yii::t('UserModule.user', 'Password is not coincide')),
-            array('email', 'email'),
-            array('email', 'checkEmail'),
-            array('verifyCode', 'YRequiredValidator', 'allowEmpty' => !$module->showCaptcha || !CCaptcha::checkRequirements(), 'message' => Yii::t('UserModule.user', 'Check code incorrect')),
-            array('verifyCode', 'captcha', 'allowEmpty' => !$module->showCaptcha || !CCaptcha::checkRequirements()),
-            array('verifyCode', 'emptyOnInvalid'),
-            array('status, emailConfirm', 'numerical', 'integerOnly' => true),
-            array('first_name, last_name', 'length', 'max' => 50),
-            array('hash', 'hashPassword'),
-        );
+        return [
+            ['nick_name, email', 'filter', 'filter' => 'trim'],
+            ['nick_name, email', 'filter', 'filter' => [new CHtmlPurifier(), 'purify']],
+            ['nick_name, email, password, cPassword', 'required'],
+            ['nick_name, email', 'length', 'max' => 50],
+            ['password, cPassword', 'length', 'min' => $module->minPasswordLength],
+            [
+                'nick_name',
+                'match',
+                'pattern' => '/^[A-Za-z0-9_-]{2,50}$/',
+                'message' => Yii::t(
+                    'UserModule.user',
+                    'Bad field format for "{attribute}". You can use only letters and digits from 2 to 20 symbols'
+                )
+            ],
+            ['nick_name', 'checkNickName'],
+            [
+                'cPassword',
+                'compare',
+                'compareAttribute' => 'password',
+                'message' => Yii::t('UserModule.user', 'Password is not coincide')
+            ],
+            ['email', 'email'],
+            ['email', 'checkEmail'],
+            [
+                'verifyCode',
+                'yupe\components\validators\YRequiredValidator',
+                'allowEmpty' => !$this->isCaptchaEnabled(),
+                'message' => Yii::t('UserModule.user', 'Check code incorrect')
+            ],
+            ['verifyCode', 'captcha', 'allowEmpty' => !$this->isCaptchaEnabled()],
+            ['verifyCode', 'emptyOnInvalid']
+        ];
+    }
+
+    /**
+     * Метод выполняется перед валидацией
+     *
+     * @return bool
+     */
+    public function beforeValidate()
+    {
+        $module = Yii::app()->getModule('user');
+
+        if ($module->generateNickName) {
+            $this->nick_name = 'user' . time();
+        }
+
+        return parent::beforeValidate();
     }
 
     public function attributeLabels()
     {
-        return array(
-            'nick_name'  => Yii::t('UserModule.user', 'User name'),
-            'email'      => Yii::t('UserModule.user', 'Email'),
-            'password'   => Yii::t('UserModule.user', 'Password'),
-            'cPassword'  => Yii::t('UserModule.user', 'Password confirmation'),
+        return [
+            'nick_name' => Yii::t('UserModule.user', 'User name'),
+            'email' => Yii::t('UserModule.user', 'Email'),
+            'password' => Yii::t('UserModule.user', 'Password'),
+            'cPassword' => Yii::t('UserModule.user', 'Password confirmation'),
             'verifyCode' => Yii::t('UserModule.user', 'Check code'),
-        );
+        ];
     }
 
-    public function beforeValidate()
+    public function checkNickName($attribute, $params)
     {
-        if (Yii::app()->getModule('user')->autoNick) {
-            $this->nick_name = substr(
-                md5(uniqid()), 10
-            );
-        }
-        return parent::beforeValidate();
-    }
-
-    public function checkNickName($attribute,$params)
-    {
-        $model = User::model()->find('nick_name = :nick_name', array(':nick_name' => $this->$attribute));
+        $model = User::model()->find('nick_name = :nick_name', [':nick_name' => $this->$attribute]);
 
         if ($model) {
             $this->addError('nick_name', Yii::t('UserModule.user', 'User name already exists'));
         }
     }
 
-    public function checkEmail($attribute,$params)
+    public function checkEmail($attribute, $params)
     {
-        $model = User::model()->find('email = :email', array(':email' => $this->$attribute));
-        if ($model)
+        $model = User::model()->find('email = :email', [':email' => $this->$attribute]);
+
+        if ($model) {
             $this->addError('email', Yii::t('UserModule.user', 'Email already busy'));
+        }
     }
 
-    /**
-     * Обнуляем введённое значение капчи, если оно введено неверно:
-     *
-     * @param string $attribute - имя атрибута
-     * @param mixed  $params    - параметры
-     *
-     * @return void
-     **/
     public function emptyOnInvalid($attribute, $params)
     {
-        if ($this->hasErrors())
+        if ($this->hasErrors()) {
             $this->verifyCode = null;
-    }
-
-    public function hashPassword($attribute, $params)
-    {
-        if ($this->hasErrors() === false) {
-            $this->hash = User::hashPassword($this->password);
         }
     }
 }

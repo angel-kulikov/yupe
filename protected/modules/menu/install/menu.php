@@ -8,13 +8,11 @@
  * @license  BSD https://raw.github.com/yupe/yupe/master/LICENSE
  * @link     http://yupe.ru
  **/
-return array(
-    'module'   => array(
+return [
+    'module'    => [
         'class' => 'application.modules.menu.MenuModule',
-    ),
-    'import'    => array(
-        'application.modules.menu.models.*',
-    ),
-    'component' => array(),
-    'rules'     => array(),
-);
+    ],
+    'import'    => [],
+    'component' => [],
+    'rules'     => [],
+];

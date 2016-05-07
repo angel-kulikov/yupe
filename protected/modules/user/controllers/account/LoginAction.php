@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Экшн, отвечающий за авторизацию пользователя
  *
@@ -6,79 +7,66 @@
  * @package  yupe.modules.user.controllers.account
  * @author   YupeTeam <team@yupe.ru>
  * @license  BSD http://ru.wikipedia.org/wiki/%D0%9B%D0%B8%D1%86%D0%B5%D0%BD%D0%B7%D0%B8%D1%8F_BSD
- * @version  0.5.3
+ * @version  0.7
  * @link     http://yupe.ru
  *
- **/
+ */
 class LoginAction extends CAction
 {
     /**
-     * Запуск action'a:
      *
-     * @return nothing
-     **/
+     */
     public function run()
     {
-
         /**
          * Если было совершено больше 3х попыток входа
          * в систему, используем сценарий с капчей:
          **/
-        $form = new LoginForm(
-            Yii::app()->user->getState('badLoginCount', 0) >= 3
-                ? 'loginLimit'
-                : ''
-        );
+
+        $badLoginCount = Yii::app()->authenticationManager->getBadLoginCount(Yii::app()->getUser());
+
+        $module = Yii::app()->getModule('user');
+
+        $scenario = $badLoginCount >= (int)$module->badLoginCount ? LoginForm::LOGIN_LIMIT_SCENARIO : '';
+
+        $form = new LoginForm($scenario);
 
         if (Yii::app()->getRequest()->getIsPostRequest() && !empty($_POST['LoginForm'])) {
-            $form->setAttributes($_POST['LoginForm']);
 
-            if ($form->validate()) {
-                Yii::app()->user->setFlash(
-                    YFlashMessages::SUCCESS_MESSAGE,
+            $form->setAttributes(Yii::app()->getRequest()->getPost('LoginForm'));
+
+            if (Yii::app()->authenticationManager->login(
+                    $form,
+                    Yii::app()->getUser(),
+                    Yii::app()->getRequest()
+                )
+            ) {
+
+                Yii::app()->getUser()->setFlash(
+                    yupe\widgets\YFlashMessages::SUCCESS_MESSAGE,
                     Yii::t('UserModule.user', 'You authorized successfully!')
                 );
 
-                Yii::log(
-                    Yii::t(
-                        'UserModule.user', 'User with {email} was logined with IP-address {ip}!', array(
-                            '{email}' => $form->email,
-                            '{ip}'    => Yii::app()->getRequest()->getUserHostAddress(),
-                        )
-                    ),
-                    CLogger::LEVEL_INFO, UserModule::$logCategory
-                );
+                if (Yii::app()->getUser()->isSuperUser() && $module->loginAdminSuccess) {
+                    $redirect = [$module->loginAdminSuccess];
+                } else {
+                    $redirect = empty($module->loginSuccess) ? Yii::app()->getBaseUrl() : [$module->loginSuccess];
+                }
 
-                $module = Yii::app()->getModule('user');
+                $redirect = Yii::app()->getUser()->getReturnUrl($redirect);
 
-                $redirect = (Yii::app()->user->isSuperUser() && $module->loginAdminSuccess)
-                    ? array($module->loginAdminSuccess)
-                    : array($module->loginSuccess);
+                Yii::app()->authenticationManager->setBadLoginCount(Yii::app()->getUser(), 0);
 
-                #die('<pre>' . print_r(Yii::app()->user->getReturnUrl(), true) . ' ' . print_r($redirect, true));
+                $this->getController()->redirect($redirect);
 
-                /**
-                 * #485 Редиректим запрошенный URL (если такой был задан)
-                 * {@link CWebUser getReturnUrl}
-                 */
-                Yii::app()->user->setState('badLoginCount', null);
-
-                $this->controller->redirect(Yii::app()->user->getReturnUrl($redirect));
             } else {
-                Yii::app()->user->setState('badLoginCount', Yii::app()->user->getState('badLoginCount', 0) + 1);
 
-                Yii::log(
-                    Yii::t(
-                        'user', 'Authorization error with IP-address {ip}! email => {email}, Password => {password}!', array(
-                            '{email}'    => $form->email,
-                            '{password}' => $form->password,
-                            '{ip}'       => Yii::app()->getRequest()->getUserHostAddress(),
-                        )
-                    ),
-                    CLogger::LEVEL_ERROR, UserModule::$logCategory
-                );
+                $form->addError('email', Yii::t('UserModule.user', 'Email or password was typed wrong!'));
+
+                Yii::app()->authenticationManager->setBadLoginCount(Yii::app()->getUser(), $badLoginCount + 1);
             }
         }
-        $this->controller->render($this->id, array('model' => $form));
+
+        $this->getController()->render($this->id, ['model' => $form]);
     }
 }

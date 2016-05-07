@@ -1,4 +1,5 @@
 <?php
+
 /**
  * YQueueMail компонент для отправки почты через очередь
  *
@@ -11,38 +12,69 @@
  * @abstract
  *
  */
-class YQueueMail extends YMail
+class YQueueMail extends yupe\components\Mail
 {
-    public $queueComponent    = 'queue';
+    /**
+     * @var string
+     */
+    public $queueComponent = 'queue';
+    /**
+     * @var int
+     */
     public $queueMailWorkerId = 1;
+    /**
+     * @var
+     */
     private $_queue;
 
+    /**
+     *
+     */
     public function init()
     {
         parent::init();
     }
 
+    /**
+     * @return mixed
+     * @throws Exception
+     */
     public function getQueueComponent()
     {
         if ($this->_queue !== null) {
             return $this->_queue;
-        }
-        else if (($id = $this->queueComponent) !== null)
-        {
-            if (($this->_queue = Yii::app()->getComponent($id)) instanceof YQueue){
+        } elseif (($id = $this->queueComponent) !== null) {
+            if (($this->_queue = Yii::app()->getComponent($id)) instanceof YQueue) {
                 return $this->_queue;
             }
         }
-        throw new Exception(Yii::t('QueueModule.queue', 'YQuemail.queueComponent contains bad identifier of queue component!'));
+        throw new Exception(
+            Yii::t(
+                'QueueModule.queue',
+                'YQuemail.queueComponent contains bad identifier of queue component!'
+            )
+        );
     }
 
+    /**
+     * @param string $from
+     * @param array|string $to
+     * @param string $theme
+     * @param string $body
+     * @param bool|false $isText
+     * @return mixed
+     * @throws Exception
+     */
     public function send($from, $to, $theme, $body, $isText = false)
     {
-        return $this->getQueueComponent()->add($this->queueMailWorkerId, array(
-            'from'  => $from,
-            'to'    => $to,
-            'theme' => $theme,
-            'body'  => $body,
-        ));
+        return $this->getQueueComponent()->add(
+            $this->queueMailWorkerId,
+            [
+                'from' => $from,
+                'to' => $to,
+                'theme' => $theme,
+                'body' => $body,
+            ]
+        );
     }
 }

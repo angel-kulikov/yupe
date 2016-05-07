@@ -1,104 +1,157 @@
 <?php
 /**
  * Отображение для postBackend/_form:
- * 
- *   @category YupeView
- *   @package  yupe
- *   @author   Yupe Team <team@yupe.ru>
- *   @license  https://github.com/yupe/yupe/blob/master/LICENSE BSD
- *   @link     http://yupe.ru
+ *
+ * @category YupeView
+ * @package  yupe
+ * @author   Yupe Team <team@yupe.ru>
+ * @license  https://github.com/yupe/yupe/blob/master/LICENSE BSD
+ * @link     http://yupe.ru
  **/
-$this->breadcrumbs = array(
-    Yii::app()->getModule('blog')->getCategory() => array(),
-    Yii::t('BlogModule.blog', 'Posts') => array('/blog/postBackend/index'),
+$this->breadcrumbs = [
+    Yii::t('BlogModule.blog', 'Posts') => ['/blog/postBackend/index'],
     $model->title,
-);
+];
 
 $this->pageTitle = Yii::t('BlogModule.blog', 'Posts - view');
 
-$this->menu = array(
-    array('label' => Yii::t('BlogModule.blog', 'Blogs'), 'items' => array(
-        array('icon' => 'list-alt', 'label' => Yii::t('BlogModule.blog', 'Manage blogs'), 'url' => array('/blog/blogBackend/index')),
-        array('icon' => 'plus-sign', 'label' => Yii::t('BlogModule.blog', 'Add a blog'), 'url' => array('/blog/blogBackend/create')),
-    )),
-    array('label' => Yii::t('BlogModule.blog', 'Posts'), 'items' => array(
-        array('icon' => 'list-alt', 'label' => Yii::t('BlogModule.blog', 'Manage posts'), 'url' => array('/blog/postBackend/index')),
-        array('icon' => 'plus-sign', 'label' => Yii::t('BlogModule.blog', 'Add a post'), 'url' => array('/blog/postBackend/create')),
-        array('label' => Yii::t('BlogModule.blog', 'Post') . ' «' . mb_substr($model->title, 0, 32) . '»', 'utf-8'),
-        array('icon' => 'pencil', 'label' => Yii::t('BlogModule.blog', 'Edit posts'), 'url' => array(
-            '/blog/postBackend/update',
-            'id' => $model->id
-        )),
-        array('icon' => 'eye-open', 'label' => Yii::t('BlogModule.blog', 'View post'), 'url' => array(
-            '/blog/postBackend/view',
-            'id' => $model->id
-        )),
-        array('icon' => 'trash', 'label' => Yii::t('BlogModule.blog', 'Remove post'), 'url' => '#', 'linkOptions' => array(
-            'submit' => array('/blog/postBackend/delete', 'id' => $model->id),
-            'confirm' => Yii::t('BlogModule.blog', 'Do you really want to remove the post?'),
-        )),
-    )),
-    array('label' => Yii::t('BlogModule.blog', 'Members'), 'items' => array(
-        array('icon' => 'list-alt', 'label' => Yii::t('BlogModule.blog', 'Manage members'), 'url' => array('/blog/userToBlogBackend/index')),
-        array('icon' => 'plus-sign', 'label' => Yii::t('BlogModule.blog', 'Add a member'), 'url' => array('/blog/userToBlogBackend/create')),
-    )),
-);
+$this->menu = [
+    [
+        'label' => Yii::t('BlogModule.blog', 'Blogs'),
+        'items' => [
+            [
+                'icon'  => 'fa fa-fw fa-list-alt',
+                'label' => Yii::t('BlogModule.blog', 'Manage blogs'),
+                'url'   => ['/blog/blogBackend/index']
+            ],
+            [
+                'icon'  => 'fa fa-fw fa-plus-square',
+                'label' => Yii::t('BlogModule.blog', 'Add a blog'),
+                'url'   => ['/blog/blogBackend/create']
+            ],
+        ]
+    ],
+    [
+        'label' => Yii::t('BlogModule.blog', 'Posts'),
+        'items' => [
+            [
+                'icon'  => 'fa fa-fw fa-list-alt',
+                'label' => Yii::t('BlogModule.blog', 'Manage posts'),
+                'url'   => ['/blog/postBackend/index']
+            ],
+            [
+                'icon'  => 'fa fa-fw fa-plus-square',
+                'label' => Yii::t('BlogModule.blog', 'Add a post'),
+                'url'   => ['/blog/postBackend/create']
+            ],
+            ['label' => Yii::t('BlogModule.blog', 'Post') . ' «' . mb_substr($model->title, 0, 32) . '»', 'utf-8'],
+            [
+                'icon'  => 'fa fa-fw fa-pencil',
+                'label' => Yii::t('BlogModule.blog', 'Edit posts'),
+                'url'   => [
+                    '/blog/postBackend/update',
+                    'id' => $model->id
+                ]
+            ],
+            [
+                'icon'  => 'fa fa-fw fa-eye',
+                'label' => Yii::t('BlogModule.blog', 'View post'),
+                'url'   => [
+                    '/blog/postBackend/view',
+                    'id' => $model->id
+                ]
+            ],
+            [
+                'icon'        => 'fa fa-fw fa-trash-o',
+                'label'       => Yii::t('BlogModule.blog', 'Remove post'),
+                'url'         => '#',
+                'linkOptions' => [
+                    'submit'  => ['/blog/postBackend/delete', 'id' => $model->id],
+                    'confirm' => Yii::t('BlogModule.blog', 'Do you really want to remove the post?'),
+                    'params'  => [Yii::app()->getRequest()->csrfTokenName => Yii::app()->getRequest()->csrfToken],
+                ]
+            ],
+        ]
+    ],
+    [
+        'label' => Yii::t('BlogModule.blog', 'Members'),
+        'items' => [
+            [
+                'icon'  => 'fa fa-fw fa-list-alt',
+                'label' => Yii::t('BlogModule.blog', 'Manage members'),
+                'url'   => ['/blog/userToBlogBackend/index']
+            ],
+            [
+                'icon'  => 'fa fa-fw fa-plus-square',
+                'label' => Yii::t('BlogModule.blog', 'Add a member'),
+                'url'   => ['/blog/userToBlogBackend/create']
+            ],
+        ]
+    ],
+];
 ?>
 <div class="page-header">
     <h1>
-        <?php echo Yii::t('BlogModule.blog', 'View posts'); ?><br />
-        <small>&laquo;<?php echo $model->title; ?>&raquo;</small>
+        <?=  Yii::t('BlogModule.blog', 'Viewing post'); ?><br/>
+        <small>&laquo;<?=  $model->title; ?>&raquo;</small>
     </h1>
 </div>
 
 <?php $this->widget(
-    'bootstrap.widgets.TbDetailView', array(
+    'bootstrap.widgets.TbDetailView',
+    [
         'data'       => $model,
-        'attributes' => array(
+        'attributes' => [
             'id',
-            array(
+            [
                 'name'  => 'blog',
                 'value' => $model->blog->name,
-            ),
-            array(
+            ],
+            [
                 'name'  => 'create_user_id',
                 'value' => $model->createUser->getFullName(),
-            ),
-            array(
+            ],
+            [
                 'name'  => 'update_user_id',
                 'value' => $model->updateUser->getFullName(),
-            ),
-            array(
-                'name'  => 'publish_date',
-                'value' => Yii::app()->getDateFormatter()->formatDateTime($model->publish_date, "short", "short"),
-            ),
-            array(
-                'name'  => 'create_date',
-                'value' => Yii::app()->getDateFormatter()->formatDateTime($model->create_date, "short", "short"),
-            ),
-            array(
-                'name'  => 'update_date',
-                'value' => Yii::app()->getDateFormatter()->formatDateTime($model->update_date, "short", "short"),
-            ),
+            ],
+            [
+                'name'  => 'publish_time',
+                'value' => Yii::app()->getDateFormatter()->formatDateTime($model->publish_time, "short", "short"),
+            ],
+            [
+                'name'  => 'create_time',
+                'value' => Yii::app()->getDateFormatter()->formatDateTime($model->create_time, "short", "short"),
+            ],
+            [
+                'name'  => 'update_time',
+                'value' => Yii::app()->getDateFormatter()->formatDateTime($model->update_time, "short", "short"),
+            ],
             'slug',
             'title',
-            'quote',
-            'content',
+            [
+                'name' => 'quote',
+                'type' => 'raw'
+            ],
+            [
+                'name' => 'content',
+                'type' => 'raw'
+            ],
             'link',
-            array(
+            [
                 'name'  => 'status',
                 'value' => $model->getStatus(),
-            ),
-            array(
+            ],
+            [
                 'name'  => 'comment_status',
                 'value' => $model->getCommentStatus(),
-            ),
-            array(
+            ],
+            [
                 'name'  => 'access_type',
                 'value' => $model->getAccessType(),
-            ),
+            ],
             'keywords',
             'description',
-        ),
-    )
+        ],
+    ]
 ); ?>

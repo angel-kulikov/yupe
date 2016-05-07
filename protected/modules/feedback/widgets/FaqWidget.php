@@ -10,18 +10,21 @@
  * @link     http://yupe.ru
  *
  **/
+Yii::import('application.modules.feedback.models.FeedBack');
 
-class FaqWidget extends YWidget
+class FaqWidget extends yupe\widgets\YWidget
 {
     public $view = 'faqwidget';
 
     public function run()
     {
-        $models = FeedBack::model()->answered()->faq()->cache($this->cacheTime)->findAll(array(
-            'limit' => $this->limit,
-            'order' => 'id DESC',
-        ));
+        $models = FeedBack::model()->answered()->faq()->cache($this->cacheTime)->findAll(
+            [
+                'limit' => $this->limit,
+                'order' => 'id DESC',
+            ]
+        );
 
-        $this->render($this->view, array('models' => $models));
+        $this->render($this->view, ['models' => $models]);
     }
 }

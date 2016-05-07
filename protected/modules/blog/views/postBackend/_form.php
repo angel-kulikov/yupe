@@ -1,12 +1,3 @@
-<script type='text/javascript'>
-    $(document).ready(function () {
-        $('#post-form').liTranslit({
-            elName: '#Post_title',
-            elAlias: '#Post_slug'
-        });
-    })
-</script>
-
 <?php
 /**
  * Отображение для postBackend/_form:
@@ -16,199 +7,395 @@
  * @author   Yupe Team <team@yupe.ru>
  * @license  https://github.com/yupe/yupe/blob/master/LICENSE BSD
  * @link     http://yupe.ru
+ *
+ * @var $form \yupe\widgets\ActiveForm
+ * @var $model Post
+ * @var $this PostController
  **/
 $form = $this->beginWidget(
-    'bootstrap.widgets.TbActiveForm', array(
-        'id' => 'post-form',
-        'enableAjaxValidation' => false,
+    '\yupe\widgets\ActiveForm',
+    [
+        'id'                     => 'post-form',
+        'enableAjaxValidation'   => false,
         'enableClientValidation' => true,
-        'type' => 'vertical',
-        'htmlOptions' => array('class' => 'well', 'enctype' => 'multipart/form-data'),
-        'inlineErrors' => true,
-    )
+        'type'                   => 'vertical',
+        'htmlOptions'            => ['class' => 'well', 'enctype' => 'multipart/form-data'],
+    ]
 );
 
 ?>
 <div class="alert alert-info">
-    <?php echo Yii::t('BlogModule.blog', 'Fields marked with'); ?>
+    <?=  Yii::t('BlogModule.blog', 'Fields marked with'); ?>
     <span class="required">*</span>
-    <?php echo Yii::t('BlogModule.blog', 'are required.'); ?>
+    <?=  Yii::t('BlogModule.blog', 'are required.'); ?>
 </div>
 
-<?php echo $form->errorSummary($model); ?>
+<?=  $form->errorSummary($model); ?>
 
-<div
-    class="wide row-fluid control-group <?php echo ($model->hasErrors('status') || $model->hasErrors('comment_status') || $model->hasErrors('access_type')) ? 'error' : ''; ?>">
-    <div class="span3">
-        <?php echo $form->dropDownListRow($model, 'status', $model->getStatusList(), array('class' => 'popover-help', 'data-original-title' => $model->getAttributeLabel('status'), 'data-content' => $model->getAttributeDescription('status'))); ?>
-    </div>
-    <div class="span2">
-        <?php echo $form->dropDownListRow($model, 'access_type', $model->getAccessTypeList(), array('class' => 'popover-help', 'data-original-title' => $model->getAttributeLabel('access_type'), 'data-content' => $model->getAttributeDescription('access_type'))); ?>
-    </div>
-    <div class="span2">
-        <br/><br/>
-        <?php echo $form->checkBoxRow($model, 'comment_status', array('class' => 'popover-help', 'data-original-title' => $model->getAttributeLabel('comment_status'), 'data-content' => $model->getAttributeDescription('comment_status'))); ?>
-    </div>
-</div>
-<div
-    class="wide row-fluid control-group <?php echo ($model->hasErrors('publish_date_tmp') || $model->hasErrors('publish_time_tmp')) ? 'error' : ''; ?>">
-    <div class="span4 popover-help" data-original-title='<?php echo $model->getAttributeLabel('publish_date_tmp'); ?>'
-         data-content='<?php echo $model->getAttributeDescription('publish_date_tmp'); ?>'>
-        <?php
-        echo $form->datepickerRow(
-            $model, 'publish_date_tmp', array(
-                'prepend' => '<i class="icon-calendar"></i>',
-                'options' => array(
-                    'format' => 'dd-mm-yyyy',
-                    'weekStart' => 1,
-                    'autoclose' => true,
-                ),
-                'class' => 'span11'
-            )
+<div class="row">
+    <div class="col-sm-3">
+        <?=  $form->select2Group(
+            $model,
+            'blog_id',
+            [
+                'widgetOptions' => [
+                    'data' => ['' => '---'] + CHtml::listData(Blog::model()->getList(), 'id', 'name'),
+                ]
+            ]
         ); ?>
     </div>
-    <div class="span3">
-
-        <?php
-        echo $form->textFieldRow(
-            $model, 'publish_time_tmp', array(
-                'append' => '<i class="icon-time" style="cursor:pointer"></i>',
-                'class' => 'span11',
-            )
-        );?>
+    <div class="col-sm-3">
+        <?=  $form->dropDownListGroup(
+            $model,
+            'status',
+            [
+                'widgetOptions' => [
+                    'data'        => $model->getStatusList(),
+                    'htmlOptions' => [
+                        'class'               => 'popover-help',
+                        'data-original-title' => $model->getAttributeLabel('status'),
+                        'data-content'        => $model->getAttributeDescription('status')
+                    ],
+                ],
+            ]
+        ); ?>
+    </div>
+    <div class="col-sm-3">
+        <?=  $form->dateTimePickerGroup(
+            $model,
+            'publish_time',
+            [
+                'widgetOptions' => [
+                    'options'     => [
+                        'format'    => 'dd-mm-yyyy hh:ii',
+                        'weekStart' => 1,
+                        'autoclose' => true,
+                    ],
+                    'htmlOptions' => [
+                        'class'               => 'popover-help',
+                        'data-original-title' => $model->getAttributeLabel('publish_time'),
+                        'data-content'        => $model->getAttributeDescription('publish_time'),
+                    ],
+                ],
+                'prepend'       => '<i class="fa fa-calendar"></i>',
+            ]
+        ); ?>
     </div>
 </div>
 
-<div class="row-fluid control-group <?php echo $model->hasErrors('blog_id') ? 'error' : ''; ?>">
-    <?php echo $form->dropDownListRow($model, 'blog_id', CHtml::listData(Blog::model()->findAll(), 'id', 'name'), array('empty' => Yii::t('BlogModule.blog', '--choose blog--'), 'class' => 'span7 popover-help', 'data-original-title' => $model->getAttributeLabel('blog_id'), 'data-content' => $model->getAttributeDescription('blog_id'))); ?>
+<div class="row">
+    <div class="col-sm-7">
+        <?=  $form->textFieldGroup(
+            $model,
+            'title',
+            [
+                'widgetOptions' => [
+                    'htmlOptions' => [
+                        'class'               => 'popover-help',
+                        'data-original-title' => $model->getAttributeLabel('title'),
+                        'data-content'        => $model->getAttributeDescription('title')
+                    ],
+                ],
+            ]
+        ); ?>
+    </div>
 </div>
-
-<div class="row-fluid control-group <?php echo $model->hasErrors('category_id') ? 'error' : ''; ?>">
-    <?php echo $form->dropDownListRow($model, 'category_id', CHtml::listData($this->module->getCategoryListForPost(), 'id', 'name'), array('empty' => Yii::t('BlogModule.blog', '--choose--'), 'class' => 'popover-help span7', 'maxlength' => 11, 'data-original-title' => $model->getAttributeLabel('category_id'), 'data-content' => $model->getAttributeDescription('category_id'))); ?>
+<div class="row">
+    <div class="col-sm-7">
+        <?=  $form->slugFieldGroup(
+            $model,
+            'slug',
+            [
+                'sourceAttribute' => 'title',
+                'widgetOptions'   => [
+                    'htmlOptions' => [
+                        'class'               => 'popover-help',
+                        'data-original-title' => $model->getAttributeLabel('slug'),
+                        'data-content'        => $model->getAttributeDescription('slug')
+                    ],
+                ],
+            ]
+        ); ?>
+    </div>
 </div>
-
-<div class="row-fluid control-group <?php echo $model->hasErrors('title') ? 'error' : ''; ?>">
-    <?php echo $form->textFieldRow($model, 'title', array('class' => 'span7 popover-help', 'maxlength' => 250, 'size' => 60, 'data-original-title' => $model->getAttributeLabel('title'), 'data-content' => $model->getAttributeDescription('title'))); ?>
+<div class="row">
+    <div class="col-sm-7">
+        <?=  $form->textFieldGroup(
+            $model,
+            'link',
+            [
+                'widgetOptions' => [
+                    'htmlOptions' => [
+                        'class'               => 'popover-help',
+                        'data-original-title' => $model->getAttributeLabel('link'),
+                        'data-content'        => $model->getAttributeDescription('link')
+                    ],
+                ],
+            ]
+        ); ?>
+    </div>
 </div>
-<div class="row-fluid control-group <?php echo $model->hasErrors('slug') ? 'error' : ''; ?>">
-    <?php echo $form->textFieldRow($model, 'slug', array('class' => 'span7 popover-help', 'maxlength' => 150, 'size' => 60, 'data-original-title' => $model->getAttributeLabel('slug'), 'data-content' => $model->getAttributeDescription('slug'))); ?>
+<div class="row">
+    <div class="col-sm-5">
+        <div class="form-group">
+            <?=  $form->labelEx($model, 'tags', ['control-label']); ?>
+            <?php
+            $this->widget(
+                'booster.widgets.TbSelect2',
+                [
+                    'asDropDownList' => false,
+                    'name'           => 'tags',
+                    'options'        => [
+                        'tags'        => array_values(CHtml::listData(Tag::model()->findAll(), 'id', 'name')),
+                        'placeholder' => Yii::t('BlogModule.blog', 'tags'),
+                    ],
+                    'value'          => implode(", ", $model->getTags()),
+                    'htmlOptions'    => [
+                        'class'               => 'form-control popover-help',
+                        'data-original-title' => $model->getAttributeLabel('tags'),
+                        'data-content'        => $model->getAttributeDescription('tags')
+                    ],
+                ]
+            ); ?>
+        </div>
+    </div>
 </div>
-<div class="row-fluid control-group <?php echo $model->hasErrors('link') ? 'error' : ''; ?>">
-    <?php echo $form->textFieldRow($model, 'link', array('class' => 'span7 popover-help', 'maxlength' => 250, 'size' => 60, 'data-original-title' => $model->getAttributeLabel('link'), 'data-content' => $model->getAttributeDescription('link'))); ?>
-</div>
-<div class="row-fluid control-group <?php echo $model->hasErrors('image') ? 'error' : ''; ?>">
-    <div class="span7  popover-help" data-original-title="<?php echo $model->getAttributeLabel('image'); ?>">
+<div class='row'>
+    <div class="col-sm-7">
         <?php
         echo CHtml::image(
-            !$model->isNewRecord && $model->image
-                ? $model->getImageUrl()
-                : '#',
-            $model->title, array(
+            !$model->isNewRecord && $model->image ? $model->getImageUrl() : '#',
+            $model->title,
+            [
                 'class' => 'preview-image',
-                'style' => !$model->isNewRecord && $model->image
-                    ? ''
-                    : 'display:none'
-            )
+                'style' => !$model->isNewRecord && $model->image ? '' : 'display:none'
+            ]
         ); ?>
-        <?php echo $form->labelEx($model, 'image'); ?>
-        <?php echo $form->fileField($model, 'image', array('onchange' => 'readURL(this);')); ?>
-    </div>
-    <div class="span5">
-        <?php echo $form->error($model, 'image'); ?>
-    </div>
-</div>
-<div class="row-fluid control-group <?php echo $model->hasErrors('content') ? 'error' : ''; ?>">
-    <div class="popover-help" data-original-title='<?php echo $model->getAttributeLabel('content'); ?>'
-         data-content='<?php echo $model->getAttributeDescription('content'); ?>'>
-        <?php echo $form->labelEx($model, 'content'); ?>
-        <?php
-        $this->widget(
-            $this->module->editor, array(
-                'model' => $model,
-                'attribute' => 'content',
-                'options' => $this->module->editorOptions,
-            )
-        ); ?>
-    </div>
-</div>
-<div class="row-fluid control-group <?php echo $model->hasErrors('quote') ? 'error' : ''; ?>">
-    <div class="popover-help" data-original-title='<?php echo $model->getAttributeLabel('quote'); ?>'
-         data-content='<?php echo $model->getAttributeDescription('quote'); ?>'>
-        <?php echo $form->labelEx($model, 'quote'); ?>
-        <?php
-        $this->widget(
-            $this->module->editor, array(
-                'model' => $model,
-                'attribute' => 'quote',
-                'options' => $this->module->editorOptions,
-            )
-        ); ?>
-    </div>
-</div>
-<div class="row-fluid control-group <?php echo $model->hasErrors('link') ? 'error' : ''; ?>">
 
-    <script type="text/javascript">
-        $(document).ready(function () {
-            $("#tags").val('<?php echo join(',',$model->getTags());?>');
-        });
-    </script>
-
-    <div class="popover-help" data-original-title='<?php echo $model->getAttributeLabel('tags'); ?>'
-         data-content='<?php echo $model->getAttributeDescription('tags'); ?>'>
-        <?php echo $form->labelEx($model, 'tags'); ?>
-        <?php
-
-        $this->widget(
-            'bootstrap.widgets.TbSelect2', array(
-                'asDropDownList' => false,
-                'name' => 'tags',
-                'options' => array(
-                    'tags' => array_values(CHtml::listData(Tag::model()->findAll(), 'id', 'name')),
-                    'placeholder' => Yii::t('BlogModule.blog', 'tags'),
-                    'width' => '40%',
-                    'tokenSeparators' => array(',', ' ')
-                )
-            )
-        ); ?>
-    </div>
-</div>
-<?php $collapse = $this->beginWidget('bootstrap.widgets.TbCollapse'); ?>
-<div class="accordion-group">
-    <div class="accordion-heading">
-        <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseOne">
-            <?php echo Yii::t('BlogModule.blog', 'Data for SEO'); ?>
-        </a>
-    </div>
-    <div id="collapseOne" class="accordion-body collapse">
-        <div class="accordion-inner">
-            <div class="row-fluid control-group <?php echo $model->hasErrors('keywords') ? 'error' : ''; ?>">
-                <?php echo $form->textFieldRow($model, 'keywords', array('size' => 60, 'maxlength' => 250, 'class' => 'span7 popover-help', 'data-original-title' => $model->getAttributeLabel('keywords'), 'data-content' => $model->getAttributeDescription('keywords'))); ?>
+        <?php if (!$model->isNewRecord && $model->image): ?>
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" name="delete-file"> <?= Yii::t('YupeModule.yupe', 'Delete the file') ?>
+                </label>
             </div>
-            <div class="row-fluid control-group <?php echo $model->hasErrors('description') ? 'error' : ''; ?>">
-                <?php echo $form->textAreaRow($model, 'description', array('rows' => 3, 'cols' => 98, 'class' => 'span7 popover-help', 'data-original-title' => $model->getAttributeLabel('description'), 'data-content' => $model->getAttributeDescription('description'))); ?>
+        <?php endif; ?>
+
+        <?=  $form->fileFieldGroup(
+            $model,
+            'image',
+            [
+                'widgetOptions' => [
+                    'htmlOptions' => [
+                        'onchange' => 'readURL(this);',
+                        'style'    => 'background-color: inherit;'
+                    ]
+                ]
+            ]
+        ); ?>
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm-12 form-group popover-help"
+         data-original-title='<?=  $model->getAttributeLabel('content'); ?>'
+         data-content='<?=  $model->getAttributeDescription('content'); ?>'>
+        <?=  $form->labelEx($model, 'content'); ?>
+        <?php
+        $this->widget(
+            $this->module->getVisualEditor(),
+            [
+                'model'     => $model,
+                'attribute' => 'content',
+            ]
+        ); ?>
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm-12 form-group popover-help"
+         data-original-title='<?=  $model->getAttributeLabel('quote'); ?>'
+         data-content='<?=  $model->getAttributeDescription('quote'); ?>'>
+        <?=  $form->labelEx($model, 'quote'); ?>
+        <?php
+        $this->widget(
+            $this->module->getVisualEditor(),
+            [
+                'model'     => $model,
+                'attribute' => 'quote',
+            ]
+        ); ?>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-sm-12">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <a data-toggle="collapse" data-parent="#accordion" href="#blog_post_additional">
+                        <?=  Yii::t('BlogModule.blog', 'Дополнительно'); ?>
+                    </a>
+                </h4>
+            </div>
+            <div id="blog_post_additional" class="panel-collapse collapse">
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-sm-2">
+                            <?=  $form->dropDownListGroup(
+                                $model,
+                                'category_id',
+                                [
+                                    'widgetOptions' => [
+                                        'data'        => Category::model()->getFormattedList(
+                                            (int)Yii::app()->getModule('blog')->mainPostCategory
+                                        ),
+                                        'htmlOptions' => [
+                                            'empty'               => Yii::t('BlogModule.blog', '--choose--'),
+                                            'class'               => 'popover-help',
+                                            'data-original-title' => $model->getAttributeLabel('category_id'),
+                                            'data-content'        => $model->getAttributeDescription('category_id'),
+                                            'data-container'      => "body",
+                                        ],
+                                    ],
+                                ]
+                            ); ?>
+                        </div>
+                        <div class="col-sm-2">
+                            <?=  $form->dropDownListGroup(
+                                $model,
+                                'access_type',
+                                [
+                                    'widgetOptions' => [
+                                        'data'        => $model->getAccessTypeList(),
+                                        'htmlOptions' => [
+                                            'class'               => 'popover-help',
+                                            'data-original-title' => $model->getAttributeLabel('access_type'),
+                                            'data-content'        => $model->getAttributeDescription('access_type'),
+                                            'data-container'      => "body",
+                                        ],
+                                    ],
+                                ]
+                            ); ?>
+                        </div>
+                        <div class="col-sm-2">
+                            <?=  $form->dropDownListGroup(
+                                $model,
+                                'comment_status',
+                                [
+                                    'widgetOptions' => [
+                                        'data'        => $model->getCommentStatusList(),
+                                        'htmlOptions' => [
+                                            'class'               => 'popover-help',
+                                            'data-original-title' => $model->getAttributeLabel('comment_status'),
+                                            'data-content'        => $model->getAttributeDescription('comment_status'),
+                                            'data-container'      => "body",
+                                        ],
+                                    ],
+                                ]
+                            ); ?>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
-<?php $this->endWidget(); ?>
+
+<div class="row">
+    <div class="col-sm-12">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <a data-toggle="collapse" data-parent="#accordion" href="#blog_post_seodata">
+                        <?=  Yii::t('BlogModule.blog', 'Data for SEO'); ?>
+                    </a>
+                </h4>
+            </div>
+            <div id="blog_post_seodata" class="panel-collapse collapse">
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-sm-7">
+                            <?=  $form->textFieldGroup(
+                                $model,
+                                'keywords',
+                                [
+                                    'widgetOptions' => [
+                                        'htmlOptions' => [
+                                            'class'               => 'popover-help',
+                                            'data-original-title' => $model->getAttributeLabel('keywords'),
+                                            'data-content'        => $model->getAttributeDescription('keywords'),
+                                        ],
+                                    ],
+                                ]
+                            ); ?>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-7">
+                            <?=  $form->textAreaGroup(
+                                $model,
+                                'description',
+                                [
+                                    'widgetOptions' => [
+                                        'htmlOptions' => [
+                                            'class'               => 'popover-help',
+                                            'data-original-title' => $model->getAttributeLabel('description'),
+                                            'data-content'        => $model->getAttributeDescription('description'),
+                                        ],
+                                    ],
+                                ]
+                            ); ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <br/>
 
+<?php if (!$model->getIsNewRecord() && !$model->isPublished()): ?>
+
+    <?php
+    $this->widget(
+        'bootstrap.widgets.TbButton',
+        [
+            'id'          => 'post-publish',
+            'buttonType'  => 'submit',
+            'context'     => 'success',
+            'label'       => Yii::t('BlogModule.blog', 'Publish'),
+            'htmlOptions' => [
+                'name' => 'post-publish'
+            ]
+        ]
+    );
+    ?>
+
+<?php endif; ?>
+
 <?php
 $this->widget(
-    'bootstrap.widgets.TbButton', array(
+    'bootstrap.widgets.TbButton',
+    [
         'buttonType' => 'submit',
-        'type' => 'primary',
-        'label' => $model->isNewRecord ? Yii::t('BlogModule.blog', 'Create post and continue') : Yii::t('BlogModule.blog', 'Save post and continue'),
-    )
+        'context'    => 'primary',
+        'label'      => $model->isNewRecord ? Yii::t('BlogModule.blog', 'Create post and continue') : Yii::t(
+            'BlogModule.blog',
+            'Save post and continue'
+        ),
+    ]
 ); ?>
+
 <?php
 $this->widget(
-    'bootstrap.widgets.TbButton', array(
-        'buttonType' => 'submit',
-        'htmlOptions' => array('name' => 'submit-type', 'value' => 'index'),
-        'label' => $model->isNewRecord ? Yii::t('BlogModule.blog', 'Create post and close') : Yii::t('BlogModule.blog', 'Save post and close'),
-    )
+    'bootstrap.widgets.TbButton',
+    [
+        'buttonType'  => 'submit',
+        'htmlOptions' => ['name' => 'submit-type', 'value' => 'index'],
+        'label'       => $model->isNewRecord ? Yii::t('BlogModule.blog', 'Create post and close') : Yii::t(
+            'BlogModule.blog',
+            'Save post and close'
+        ),
+    ]
 ); ?>
 
 <?php $this->endWidget(); ?>

@@ -1,26 +1,72 @@
 <?php
-$form = $this->beginWidget('bootstrap.widgets.TbActiveForm', array(
-    'action'      => Yii::app()->createUrl($this->route),
-    'method'      => 'get',
-    'type'        => 'vertical',
-    'htmlOptions' => array('class' => 'well'),
-)); ?>
-    <fieldset class="inline">
-        <?php echo $form->textFieldRow($model, 'id', array('class' => 'span5', 'maxlength' => 10, 'size' => 60)); ?>
-        <?php echo $form->textFieldRow($model, 'parent_id', array('class' => 'span5', 'size' => 60, 'maxlength' => 60)); ?>
-        <?php echo $form->textFieldRow($model, 'name', array('class' => 'span5', 'maxlength' => 150, 'size' => 60)); ?>
-        <?php echo $form->textFieldRow($model, 'image', array('class' => 'span5', 'maxlength' => 300, 'size' => 60)); ?>
-        <?php echo $form->textAreaRow($model, 'short_description', array('rows' => 6, 'cols' => 50, 'class' => 'span8')); ?>
-        <?php echo $form->textAreaRow($model, 'description', array('rows' => 6, 'cols' => 50, 'class' => 'span8')); ?>
-        <?php echo $form->textFieldRow($model, 'alias', array('class' => 'span5', 'maxlength' => 100, 'size' => 60)); ?>
-        <?php echo $form->textFieldRow($model, 'status', array('class' => 'span5', 'size' => 60, 'maxlength' => 60)); ?>
-    </fieldset>
+$form = $this->beginWidget(
+    'bootstrap.widgets.TbActiveForm',
+    [
+        'action'      => Yii::app()->createUrl($this->route),
+        'method'      => 'get',
+        'type'        => 'vertical',
+        'htmlOptions' => ['class' => 'well'],
+    ]
+); ?>
+<fieldset>
+    <div class="row">
+        <div class="col-sm-3">
+            <?=  $form->textFieldGroup($model, 'name'); ?>
+        </div>
+        <div class="col-sm-3">
+            <?=  $form->textFieldGroup($model, 'slug'); ?>
+        </div>
+        <div class="col-sm-3">
+            <?=  $form->dropDownListGroup(
+                $model,
+                'status',
+                [
+                    'widgetOptions' => [
+                        'data'        => $model->getStatusList(),
+                        'htmlOptions' => [
+                            'empty' => '---',
+                        ],
+                    ]
+                ]
+            );?>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-3">
+            <?=  $form->textFieldGroup($model, 'short_description'); ?>
+        </div>
+        <div class="col-sm-3">
+            <?=  $form->textFieldGroup($model, 'description'); ?>
+        </div>
+        <div class="col-sm-3">
+            <?=  $form->dropDownListGroup(
+                $model,
+                'parent_id',
+                [
+                    'widgetOptions' => [
+                        'data'        => Category::model()->getFormattedList(),
+                        'htmlOptions' => [
+                            'empty' => '---',
+                        ],
+                    ]
+                ]
+            );?>
+        </div>
+    </div>
 
-    <?php $this->widget('bootstrap.widgets.TbButton', array(
-        'type'        => 'primary',
+</fieldset>
+
+<?php $this->widget(
+    'bootstrap.widgets.TbButton',
+    [
+        'context'     => 'primary',
         'encodeLabel' => false,
         'buttonType'  => 'submit',
-        'label'       => '<i class="icon-search icon-white">&nbsp;</i> ' . Yii::t('CategoryModule.category', 'Find category'),
-    )); ?>
+        'label'       => '<i class="fa fa-search">&nbsp;</i> ' . Yii::t(
+                'CategoryModule.category',
+                'Find category'
+            ),
+    ]
+); ?>
 
 <?php $this->endWidget(); ?>

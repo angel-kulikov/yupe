@@ -10,6 +10,17 @@
  * @link     http://yupe.ru
  *
  **/
+namespace yupe\components\actions;
+
+use CAction;
+use Yii;
+use EFeed;
+use DateTime;
+
+/**
+ * Class YFeedAction
+ * @package yupe\components\actions
+ */
 class YFeedAction extends CAction
 {
     /**
@@ -21,7 +32,7 @@ class YFeedAction extends CAction
      *     {
      *         return array(
      *             'atomfeed' => array(
-     *                 'class'        => 'application.modules.yupe.components.actions.YFeedAction',
+     *                 'class'        => 'yupe\components\actions\YFeedAction',
      *                 'data'         => News::model()->published()->findAll(),
      *                 // Параметр title по умолчанию берётся из настроек приложения
      *                 //'title'        => Yii::t('YupeModule.yupe', 'Site title'),
@@ -33,11 +44,11 @@ class YFeedAction extends CAction
      *                     // author_object, если не задан - у
      *                     // item-елемента запросится author_nickname
      *                     'author_object'   => 'user',
-     *                     // 'author_nickname' => 'nick_name', 
+     *                     // 'author_nickname' => 'nick_name',
      *                     'author_nickname' => 'nick_name',
      *                     'content'         => 'full_text',
      *                     'datetime'        => 'creation_date',
-     *                     'link'            => '/news/news/show',
+     *                     'link'            => '/news/news/view',
      *                     'linkParams'      => array('title' => 'alias'),
      *                     'title'           => 'title',
      *                     'updated'         => 'change_date',
@@ -48,22 +59,34 @@ class YFeedAction extends CAction
      **/
 
     public $data;
+    /**
+     * @var
+     */
     public $description;
-    public $itemFields = array(
+    /**
+     * @var array
+     */
+    public $itemFields = [
         // author_object, если не задан - у
         // item-елемента запросится author_nickname
-        'author_object'   => null,
+        'author_object' => null,
         // author nick_name param
         'author_nickname' => 'nick_name',
-        'content'         => null,
-        'datetime'        => null,
-        'link'            => null,
-        'linkParams'      => null,
-        'title'           => null,
-        'updated'         => null,
+        'content' => null,
+        'datetime' => null,
+        'link' => null,
+        'linkParams' => null,
+        'title' => null,
+        'updated' => null,
 
-    );
+    ];
+    /**
+     * @var
+     */
     public $link;
+    /**
+     * @var
+     */
     public $title;
 
     /**
@@ -110,13 +133,13 @@ class YFeedAction extends CAction
         $this->itemFields['author_nickname'] = !isset($this->itemFields['author_nickname'])
             ? 'nick_name'
             : $this->itemFields['author_nickname'];
-        
+
         $feed = new EFeed(EFeed::ATOM);
- 
+
         $feed->title = $this->title;
         $feed->link = $this->link;
         $feed->description = $this->description;
-         
+
         $feed->addChannelTag('updated', date(DATE_ATOM, time()));
         if (count($this->data) > 0) {
             foreach ($this->data as $feedItem) {
@@ -134,23 +157,29 @@ class YFeedAction extends CAction
                  * Устанавливаем автора для $item
                  */
                 if (!empty($this->itemFields['author_object'])) {
-                    $item->addTag('author', $feedItem->{$this->itemFields['author_object']}->{$this->itemFields['author_nickname']});
-                }
-                elseif (empty($this->itemFields['author_object'])
+                    $item->addTag(
+                        'author',
+                        $feedItem->{$this->itemFields['author_object']}->{$this->itemFields['author_nickname']}
+                    );
+                } elseif (empty($this->itemFields['author_object'])
                     && !empty($this->itemFields['author_nickname'])
-                    && property_exists($feedItem, $this->itemFields['author_nickname'])) {
+                    && property_exists($feedItem, $this->itemFields['author_nickname'])
+                ) {
                     $item->addTag('author', $feedItem->{$this->itemFields['author_nickname']});
                 }
 
                 /**
                  * Устанавливаем дату для $item
                  */
-                if (!empty($this->itemFields['datetime'])){
-                    if(is_numeric($feedItem->{$this->itemFields['datetime']})){
-                        $feedItem->{$this->itemFields['datetime']} = date('d-m-Y',$feedItem->{$this->itemFields['datetime']});
+                if (!empty($this->itemFields['datetime'])) {
+                    if (is_numeric($feedItem->{$this->itemFields['datetime']})) {
+                        $feedItem->{$this->itemFields['datetime']} = date(
+                            'd-m-Y',
+                            $feedItem->{$this->itemFields['datetime']}
+                        );
                     }
                     $tag = new DateTime($feedItem->{$this->itemFields['datetime']});
-                    $item->addTag('published',$tag->format(DateTime::ATOM));
+                    $item->addTag('published', $tag->format(DateTime::ATOM));
                 }
 
                 /**
@@ -171,18 +200,18 @@ class YFeedAction extends CAction
                  * Устанавливаем ссылку для $item
                  */
                 if (!empty($this->itemFields['link'])) {
-                    $link = array();
+                    $link = [];
                     foreach ($this->itemFields['linkParams'] as $key => $param) {
                         $link[$key] = $feedItem->$param;
                     }
                     $item->link = Yii::app()->createAbsoluteUrl($this->itemFields['link'], $link);
                 }
 
-                if (!empty($this->itemFields['updated'])){
+                if (!empty($this->itemFields['updated'])) {
                     $date = new DateTime($feedItem->{$this->itemFields['datetime']});
                     $item->date = $date->format(DateTime::ATOM);
                 }
-                 
+
                 $feed->addItem($item);
             }
         } else {
@@ -200,10 +229,10 @@ class YFeedAction extends CAction
 
             $date = new DateTime('NOW');
             $item->date = $date->format(DateTime::ATOM);
-             
+
             $feed->addItem($item);
         }
-         
+
         $feed->generateFeed();
         Yii::app()->end();
     }

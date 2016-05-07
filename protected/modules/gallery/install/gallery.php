@@ -8,13 +8,15 @@
  * @license  BSD https://raw.github.com/yupe/yupe/master/LICENSE
  * @link     http://yupe.ru
  **/
-return array(
-    'module'   => array(
+return [
+    'module'    => [
         'class' => 'application.modules.gallery.GalleryModule',
-    ),
-    'import'    => array(
-        'application.modules.gallery.models.*',
-    ),
-    'component' => array(),
-    'rules'     => array(),
-);
+    ],
+    'import'    => [],
+    'component' => [],
+    'rules'     => [
+        '/albums'                 => '/gallery/gallery/index',
+        '/albums/<id:\d+>'        => '/gallery/gallery/view',
+        '/albums/images/<id:\d+>' => '/gallery/gallery/image'
+    ],
+];

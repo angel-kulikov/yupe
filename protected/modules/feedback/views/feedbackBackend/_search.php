@@ -1,95 +1,120 @@
 <?php
-$form = $this->beginWidget('bootstrap.widgets.TbActiveForm', array(
-    'action'      => Yii::app()->createUrl($this->route),
-    'method'      => 'get',
-    'type'        => 'vertical',
-    'htmlOptions' => array(
-        'class' => 'well',
-    ),
-)); ?>
+$form = $this->beginWidget(
+    'bootstrap.widgets.TbActiveForm',
+    [
+        'action'      => Yii::app()->createUrl($this->route),
+        'method'      => 'get',
+        'type'        => 'vertical',
+        'htmlOptions' => [
+            'class' => 'well',
+        ],
+    ]
+); ?>
 
-    <div class="row-fluid">
-        <div class="span3">
-            <?php echo $form->textFieldRow($model, 'name', array('maxlength' => 150, 'size' => 60)); ?>
-        </div>
-        <div class="span3">
-            <?php echo $form->textFieldRow($model, 'email', array('size' => 60, 'maxlength' => 60)); ?>
-        </div>
-        <div class="span3">
-            <?php echo $form->textFieldRow($model, 'phone', array('size' => 60, 'maxlength' => 60)); ?>
-        </div>
-        <div class="span3">
-            <?php echo $form->textFieldRow($model, 'theme', array('size' => 60, 'maxlength' => 60)); ?>
-        </div>
+<div class="row">
+    <div class="col-sm-3">
+        <?=  $form->textFieldGroup($model, 'name'); ?>
     </div>
-    <div class="row-fluid">
-        <div class="span3">
-            <?php echo $form->dropDownListRow(
-                $model, 'type', $model->typeList, array(
-                    'empty' => '---',
-                )
-            ); ?>
-        </div>
-        <div class="span3">
-            <?php echo $form->dropDownListRow(
-                $model, 'status', $model->statusList, array(
-                    'empty' => '---',
-                )
-            ); ?>
-        </div>
-        <div class="span3">
-            <?php echo $form->dropDownListRow(
-                $model, 'category_id', CHtml::listData($this->module->getCategoryList(),'id','name'), array(
-                    'empty' => '---',
-                )
-            ); ?>
-        </div>
-        <div class="span3">
-            <?php echo $form->datepickerRow(
-                $model,
-                'creation_date',
-                array(
-                    'class'   => 'span12', 
-                    'options' => array(
-                        'language'   => Yii::app()->language,
-                        'format'     => 'yyyy-mm-dd',
-                    ),
-                    'prepend' => '<i class="icon-calendar"></i>'
-                )
-            ); ?>
-        </div>
+    <div class="col-sm-3">
+        <?=  $form->textFieldGroup($model, 'email'); ?>
     </div>
-    <div class="row-fluid">
-        <div class="span4">
-            <?php echo $form->textFieldRow($model, 'id', array('maxlength' => 10, 'size' => 60)); ?>
-        </div>
+    <div class="col-sm-3">
+        <?=  $form->textFieldGroup($model, 'phone'); ?>
     </div>
-    <?php echo $form->checkBoxRow($model, 'is_faq', $model->isFaqList); ?>
-    <div class='hide'>
-        <?php $this->widget(
-            'application.modules.yupe.widgets.editors.imperaviRedactor.ImperaviRedactorWidget', array(
-                'model'       => $model,
-                'attribute'   => 'answer',
-            )
+    <div class="col-sm-3">
+        <?=  $form->textFieldGroup($model, 'theme'); ?>
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm-3">
+        <?=  $form->dropDownListGroup(
+            $model,
+            'type',
+            [
+                'widgetOptions' => [
+                    'data'        => $model->getTypeList(),
+                    'htmlOptions' => [
+                        'empty' => '---',
+                    ],
+                ],
+            ]
         ); ?>
     </div>
+    <div class="col-sm-3">
+        <?=  $form->dropDownListGroup(
+            $model,
+            'status',
+            [
+                'widgetOptions' => [
+                    'data'        => $model->getStatusList(),
+                    'htmlOptions' => [
+                        'empty' => '---',
+                    ],
+                ],
+            ]
+        ); ?>
+    </div>
+    <div class="col-sm-3">
+        <?=  $form->dropDownListGroup(
+            $model,
+            'category_id',
+            [
+                'widgetOptions' => [
+                    'data'        => Category::model()->getFormattedList(
+                            (int)Yii::app()->getModule('feedback')->mainCategory
+                        ),
+                    'htmlOptions' => [
+                        'empty' => '---',
+                    ],
+                ],
+            ]
+        ); ?>
+    </div>
+    <div class="col-sm-3">
+        <?=  $form->datePickerGroup(
+            $model,
+            'create_time',
+            [
+                'widgetOptions' => [
+                    'options' => [
+                        'format'    => 'yyyy-mm-dd',
+                        'weekStart' => 1,
+                        'autoclose' => true,
+                    ],
+                ],
+                'prepend'       => '<i class="fa fa-calendar"></i>',
+            ]
+        ); ?>
+    </div>
+</div>
+<div class="row">
+    <div class="col-sm-7">
+        <?=  $form->checkBoxGroup($model, 'is_faq', $model->isFaqList); ?>
+    </div>
+</div>
+<div class='row hidden'>
+    <div class="col-sm-12">
+        <?php $this->widget(
+            'application.modules.yupe.widgets.editors.imperaviRedactor.ImperaviRedactorWidget',
+            [
+                'model'     => $model,
+                'attribute' => 'answer',
+            ]
+        ); ?>
+    </div>
+</div>
 
-    <?php $this->widget(
-        'bootstrap.widgets.TbButton', array(
-            'type'        => 'primary',
-            'encodeLabel' => false,
-            'buttonType'  => 'submit',
-            'label'       => '<i class="icon-search icon-white">&nbsp;</i> ' . Yii::t('FeedbackModule.feedback', 'Find messages '),
-        )
-    ); ?>
-
-    <?php $this->widget(
-        'bootstrap.widgets.TbButton', array(
-            'type'        => 'danger',
-            'encodeLabel' => false,
-            'buttonType'  => 'reset',
-            'label'       => Yii::t('FeedbackModule.feedback', 'Reset'),
-        )
-    ); ?>
+<?php $this->widget(
+    'bootstrap.widgets.TbButton',
+    [
+        'context'     => 'primary',
+        'encodeLabel' => false,
+        'buttonType'  => 'submit',
+        'label'       => '<i class="fa fa-search">&nbsp;</i>' . Yii::t(
+                'FeedbackModule.feedback',
+                'Find messages '
+            ),
+    ]
+); ?>
 
 <?php $this->endWidget(); ?>

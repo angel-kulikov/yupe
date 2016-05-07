@@ -1,15 +1,16 @@
 <?php
 /**
- * Gallery основная модель
+ * Gallery
  *
- * @category YupeMigration
- * @package  yupe.modules.gallery.models
- * @author   YupeTeam <team@yupe.ru>
- * @license  BSD https://raw.github.com/yupe/yupe/master/LICENSE
- * @link     http://yupe.ru
+ * Модель для работы с галереями
  *
- **/
-
+ * @author yupe team <team@yupe.ru>
+ * @link http://yupe.ru
+ * @copyright 2009-2013 amyLabs && Yupe! team
+ * @package yupe.modules.gallery.models
+ * @since 0.1
+ *
+ */
 
 /**
  * This is the model class for table "Gallery".
@@ -20,16 +21,16 @@
  * @property string $description
  * @property integer $status
  */
-class Gallery extends YModel
+class Gallery extends yupe\models\YModel
 {
-    const STATUS_DRAFT    = 0;
-    const STATUS_PUBLIC   = 1;
+    const STATUS_DRAFT = 0;
+    const STATUS_PUBLIC = 1;
     const STATUS_PERSONAL = 2;
-    const STATUS_PRIVATE  = 3;
+    const STATUS_PRIVATE = 3;
 
     /**
      * Returns the static model of the specified AR class.
-     * @param string $className
+     * @param  string $className
      * @return Gallery the static model class
      */
     public static function model($className = __CLASS__)
@@ -52,14 +53,14 @@ class Gallery extends YModel
     {
         // NOTE: you should only define rules for those attributes that
         // will receive user inputs.
-        return array(
-            array('name, description, owner', 'required'),
-            array('status, owner', 'numerical', 'integerOnly' => true),
-            array('name', 'length', 'max' => 250),            
-            // The following rule is used by search().
-            // Please remove those attributes that should not be searched.
-            array('id, name, description, status, owner', 'safe', 'on' => 'search'),
-        );
+        return [
+            ['name, description', 'filter', 'filter' => [new CHtmlPurifier(), 'purify']],
+            ['name, description, owner', 'required'],
+            ['status, owner', 'numerical', 'integerOnly' => true],
+            ['name', 'length', 'max' => 250],
+            ['status', 'in', 'range' => array_keys($this->getStatusList())],
+            ['id, name, description, status, owner', 'safe', 'on' => 'search'],
+        ];
     }
 
     /**
@@ -69,13 +70,13 @@ class Gallery extends YModel
     {
         // NOTE: you may need to adjust the relation name and the related
         // class name for the relations automatically generated below.
-        return array(
-            'imagesRell'  => array(self::HAS_MANY, 'ImageToGallery', array('gallery_id' => 'id')),
-            'images'      => array(self::HAS_MANY, 'Image', 'image_id', 'through' => 'imagesRell'),
-            'imagesCount' => array(self::STAT, 'ImageToGallery', 'gallery_id'),
-            'user'        => array(self::BELONGS_TO, 'User', 'owner'),
-            'lastUpdated' => array(self::STAT, 'ImageToGallery', 'gallery_id', 'select' => 'max(creation_date)')
-        );
+        return [
+            'imagesRell'  => [self::HAS_MANY, 'ImageToGallery', ['gallery_id' => 'id']],
+            'images'      => [self::HAS_MANY, 'Image', 'image_id', 'through' => 'imagesRell'],
+            'imagesCount' => [self::STAT, 'ImageToGallery', 'gallery_id'],
+            'user'        => [self::BELONGS_TO, 'User', 'owner'],
+            'lastUpdated' => [self::STAT, 'ImageToGallery', 'gallery_id', 'select' => 'max(create_time)']
+        ];
     }
 
     /**
@@ -86,8 +87,9 @@ class Gallery extends YModel
     public function beforeValidate()
     {
         // Проверяем наличие установленного хозяина галереи
-        if (isset($this->owner) && empty($this->owner))
+        if (isset($this->owner) && empty($this->owner)) {
             $this->owner = Yii::app()->user->getId();
+        }
 
         return parent::beforeValidate();
     }
@@ -97,13 +99,14 @@ class Gallery extends YModel
      */
     public function attributeLabels()
     {
-        return array(
+        return [
             'id'          => Yii::t('GalleryModule.gallery', 'Id'),
             'name'        => Yii::t('GalleryModule.gallery', 'Title'),
             'owner'       => Yii::t('GalleryModule.gallery', 'Vendor'),
             'description' => Yii::t('GalleryModule.gallery', 'Description'),
             'status'      => Yii::t('GalleryModule.gallery', 'Status'),
-        );
+            'imagesCount' => Yii::t('GalleryModule.gallery', 'Images count'),
+        ];
     }
 
     /**
@@ -115,7 +118,7 @@ class Gallery extends YModel
         // Warning: Please modify the following code to remove attributes that
         // should not be searched.
 
-        $criteria = new CDbCriteria;
+        $criteria = new CDbCriteria();
 
         $criteria->compare('id', $this->id, true);
         $criteria->compare('name', $this->name, true);
@@ -123,33 +126,36 @@ class Gallery extends YModel
         $criteria->compare('owner', $this->owner);
         $criteria->compare('status', $this->status);
 
-        return new CActiveDataProvider(get_class($this), array('criteria' => $criteria));
+        return new CActiveDataProvider(get_class($this), ['criteria' => $criteria]);
     }
 
     public function getStatusList()
     {
-        return array(
+        return [
             self::STATUS_DRAFT    => Yii::t('GalleryModule.gallery', 'hidden'),
             self::STATUS_PUBLIC   => Yii::t('GalleryModule.gallery', 'public'),
             self::STATUS_PERSONAL => Yii::t('GalleryModule.gallery', 'my own'),
             self::STATUS_PRIVATE  => Yii::t('GalleryModule.gallery', 'private'),
-        );
+        ];
     }
 
     public function getStatus()
     {
-        $data = $this->statusList;
+        $data = $this->getStatusList();
+
         return isset($data[$this->status]) ? $data[$this->status] : Yii::t('GalleryModule.gallery', '*неизвестно*');
     }
 
     public function addImage(Image $image)
     {
-        $im2g = new ImageToGallery;
+        $im2g = new ImageToGallery();
 
-        $im2g->setAttributes(array(
-            'image_id'  => $image->id,
-            'gallery_id' => $this->id,
-        ));
+        $im2g->setAttributes(
+            [
+                'image_id'   => $image->id,
+                'gallery_id' => $this->id,
+            ]
+        );
 
         return $im2g->save();
     }
@@ -157,32 +163,16 @@ class Gallery extends YModel
     /**
      * Получаем картинку для галереи:
      *
-     * @param int $width  - ширина
+     * @param int $width - ширина
      * @param int $height - высота
-     * 
+     *
      * @return string image Url
      **/
-    public function previewImage($width = 190, $height = 0)
+    public function previewImage($width = 190, $height = 190)
     {
         return $this->imagesCount > 0
-            ? $this->images[0]->getUrl($width, $height)
-            : Yii::app()->assetManager->publish(
-                Yii::app()->theme->basePath . '/web/images/thumbnail.png'
-            );
-    }
-
-    /**
-     * get user list
-     *
-     * @return array of user list
-     **/
-    public function getUsersList()
-    {
-        return CHtml::listData(
-            ($users = User::model()->cache(0, new CDbCacheDependency('SELECT MAX(id) FROM {{user_user}}'))->findAll()), 'id', function ($user) {
-                return CHtml::encode($user->fullName);
-            }
-        );
+            ? $this->images[0]->getImageUrl($width, $height)
+            : Yii::app()->getTheme()->getAssetsUrl() . '/images/thumbnail.png';
     }
 
     /**
@@ -205,24 +195,10 @@ class Gallery extends YModel
     public function getCanAddPhoto()
     {
         return $this->status == Gallery::STATUS_PUBLIC
-            || (
-                ($this->status == Gallery::STATUS_PRIVATE
-                    || $this->status == Gallery::STATUS_PERSONAL
-                ) && Yii::app()->user->getId() == $this->owner
-            );
-    }
-
-    /**
-     * Список статусов опубликованых галерей
-     *
-     * @return array of published status
-     **/
-    public function getPublishedStatus()
-    {
-        return array(
-            Gallery::STATUS_PERSONAL,
-            Gallery::STATUS_PRIVATE,
-            Gallery::STATUS_PUBLIC,
+        || (
+            ($this->status == Gallery::STATUS_PRIVATE
+                || $this->status == Gallery::STATUS_PERSONAL
+            ) && Yii::app()->user->getId() == $this->owner
         );
     }
 
@@ -233,10 +209,13 @@ class Gallery extends YModel
      **/
     public function scopes()
     {
-        return array(
-            'published' => array(
-                'condition'=>'status IN (' . implode(', ', $this->publishedStatus) . ')',
-            ),
-        );
+        return [
+            'published' => [
+                'condition' => 'status  = :status',
+                'params'    => [
+                    ':status' => self::STATUS_PUBLIC
+                ]
+            ],
+        ];
     }
 }

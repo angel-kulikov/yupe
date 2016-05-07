@@ -10,21 +10,19 @@
  * @since 0.1
  *
  */
-
-class PostCategoryWidget extends YWidget
+class PostCategoryWidget extends yupe\widgets\YWidget
 {
     public $view = 'post-category';
 
     public function run()
     {
         $data = Yii::app()->db->cache($this->cacheTime)->createCommand()
-            ->select('c.id, c.name, c.alias , count(p.id) postCnt')
+            ->select('c.id, c.name, c.slug , count(p.id) postCnt')
             ->from('{{blog_post}} p')
-            ->join('{{category_category}} c','p.category_id = c.id')
+            ->join('{{category_category}} c', 'p.category_id = c.id')
             ->order('postCnt DESC')
             ->group('c.id')->queryAll();
 
-
-        $this->render($this->view,array('data' => $data));
+        $this->render($this->view, ['data' => $data]);
     }
 }

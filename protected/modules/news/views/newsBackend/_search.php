@@ -1,51 +1,109 @@
 <?php
-$form = $this->beginWidget('bootstrap.widgets.TbActiveForm', array(
-    'action'      => Yii::app()->createUrl($this->route),
-    'method'      => 'get',
-    'type'        => 'vertical',
-    'htmlOptions' => array('class' => 'well form-vertical'),
-)); ?>
-    <fieldset class="inline">
-        <div class="row-fluid control-group">
-            <div class="span3">
-                <?php echo $form->textFieldRow($model, 'id'); ?>
-            </div>
-            <div class="span3">
-                <?php echo $form->textFieldRow($model, 'date'); ?>
-            </div>
-            <div class="span3">
-                <?php echo $form->dropDownListRow($model, 'status', $model->statusList, array('empty' => Yii::t('NewsModule.news', '- no matter -'))); ?>
-            </div>
-            <div class="span3">
-                <?php echo $form->dropDownListRow($model, 'category_id', CHtml::listData($this->module->categoryList, 'id', 'name'), array('empty' => Yii::t('NewsModule.news', '-no matter-'))); ?>
-            </div>
-        </div>
-        <div class="row-fluid control-group">
-            <div class="span6">
-                <?php echo $form->textFieldRow($model, 'title', array('size' => 60, 'maxlength' => 150)); ?>
-            </div>
-            <div class="span6">
-                <?php echo $form->textFieldRow($model, 'alias', array('size' => 60, 'maxlength' => 150)); ?>
-            </div>
-        </div>
-        <div class="row-fluid control-group">
-            <div class="span6">
-                <?php echo $form->textFieldRow($model, 'short_text', array('size' => 60, 'maxlength' => 400)); ?>
-            </div>
-            <div class="span6">
-                <?php echo $form->textFieldRow($model, 'full_text'); ?>
-            </div>
-            <div class="span10">
-                <?php echo $form->checkBoxRow($model, 'is_protected', $model->protectedStatusList); ?>
-            </div>
-        </div>
-    </fieldset>
+$form = $this->beginWidget(
+    'bootstrap.widgets.TbActiveForm',
+    [
+        'action' => Yii::app()->createUrl($this->route),
+        'method' => 'get',
+        'type' => 'vertical',
+        'htmlOptions' => ['class' => 'well'],
+    ]
+); ?>
 
-    <?php $this->widget('bootstrap.widgets.TbButton', array(
-        'type'        => 'primary',
+<div class="row">
+    <div class="col-sm-4">
+        <?= $form->textFieldGroup($model, 'title'); ?>
+    </div>
+    <div class="col-sm-4">
+        <?= $form->textFieldGroup($model, 'slug'); ?>
+    </div>
+    <div class="col-sm-4">
+        <?= $form->datePickerGroup(
+            $model,
+            'date',
+            [
+                'widgetOptions' => [
+                    'options' => [
+                        'format' => 'dd-mm-yyyy',
+                        'weekStart' => 1,
+                        'autoclose' => true,
+                    ],
+                ],
+                'prepend' => '<i class="fa fa-calendar"></i>',
+            ]
+        );
+        ?>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-sm-4">
+        <?= $form->dropDownListGroup(
+            $model,
+            'category_id',
+            [
+                'widgetOptions' => [
+                    'data' => CHtml::listData($this->module->categoryList, 'id', 'name'),
+                    'htmlOptions' => [
+                        'empty' => Yii::t('NewsModule.news', '-no matter-'),
+                    ],
+                ],
+            ]
+        ); ?>
+    </div>
+    <div class="col-sm-4">
+        <?= $form->textFieldGroup($model, 'short_text'); ?>
+    </div>
+    <div class="col-sm-4">
+        <?= $form->textFieldGroup($model, 'full_text'); ?>
+    </div>
+</div>
+
+
+<div class="row">
+    <div class="col-sm-3">
+        <?= $form->dropDownListGroup(
+            $model,
+            'status',
+            [
+                'widgetOptions' => [
+                    'data' => $model->getStatusList(),
+                    'htmlOptions' => [
+                        'empty' => Yii::t('NewsModule.news', '-no matter-'),
+                    ],
+                ],
+            ]
+        ); ?>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-sm-3">
+        <?= $form->dropDownListGroup(
+            $model,
+            'is_protected',
+            [
+                'widgetOptions' => [
+                    'data' => $model->getProtectedStatusList(),
+                    'htmlOptions' => [
+                        'empty' => '---',
+                    ],
+                ],
+            ]
+        ); ?>
+    </div>
+</div>
+
+<?php $this->widget(
+    'bootstrap.widgets.TbButton',
+    [
+        'context' => 'primary',
         'encodeLabel' => false,
-        'buttonType'  => 'submit',
-        'label'       => '<i class="icon-search icon-white">&nbsp;</i> ' . Yii::t('NewsModule.news', 'Find article'),
-    )); ?>
+        'buttonType' => 'submit',
+        'label' => '<i class="fa fa-search">&nbsp;</i> ' . Yii::t(
+                'NewsModule.news',
+                'Find article'
+            ),
+    ]
+); ?>
 
 <?php $this->endWidget(); ?>

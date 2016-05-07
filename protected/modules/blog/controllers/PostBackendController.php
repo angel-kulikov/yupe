@@ -1,4 +1,5 @@
 <?php
+
 /**
  * PostBackendController контроллер для постов в панели управления
  *
@@ -11,20 +12,54 @@
  */
 class PostBackendController extends yupe\components\controllers\BackController
 {
+    public function accessRules()
+    {
+        return [
+            ['allow', 'roles' => ['admin']],
+            ['allow', 'actions' => ['index'], 'roles' => ['Blog.PostBackend.Index']],
+            ['allow', 'actions' => ['view'], 'roles' => ['Blog.PostBackend.View']],
+            ['allow', 'actions' => ['create'], 'roles' => ['Blog.PostBackend.Create']],
+            ['allow', 'actions' => ['update', 'inline'], 'roles' => ['Blog.PostBackend.Update']],
+            ['allow', 'actions' => ['delete', 'multiaction'], 'roles' => ['Blog.PostBackend.Delete']],
+            ['deny']
+        ];
+    }
+
+    public function actions()
+    {
+        return [
+            'inline' => [
+                'class'           => 'yupe\components\actions\YInLineEditAction',
+                'model'           => 'Post',
+                'validAttributes' => [
+                    'title',
+                    'slug',
+                    'publish_time',
+                    'status',
+                    'comment_status',
+                    'blog_id',
+                    'category_id',
+                    'tags',
+                ]
+            ]
+        ];
+    }
+
     /**
      * Отображает запись по указанному идентификатору
-     * 
-     * @param integer $id Идинтификатор запись для отображения
+     *
+     * @param  integer $id Идинтификатор запись для отображения
      * @throws CHttpException
      * @return void
      */
     public function actionView($id)
     {
-        if (($post = Post::model()->loadModel($id)) === null) {
+        if (($post = Post::model()->findByPk($id)) === null) {
+
             throw new CHttpException(404, Yii::t('BlogModule.blog', 'Requested page was not found'));
         }
 
-        $this->render('view', array('model' => $post));
+        $this->render('view', ['model' => $post]);
     }
 
     /**
@@ -35,49 +70,42 @@ class PostBackendController extends yupe\components\controllers\BackController
      */
     public function actionCreate()
     {
-        $model = new Post;
-        $model->publish_date_tmp = date('d-m-Y');
-        $model->publish_time_tmp = date('h:i');
+        $model = new Post();
 
-        // Uncomment the following line if AJAX validation is needed
-        // $this->performAjaxValidation($model);
-        if (Yii::app()->getRequest()->getQuery('blog')) {
-            $model->blog_id = (int) Yii::app()->getRequest()->getQuery('blog');
-        }
+        $model->publish_time = date('d-m-Y h:i');
 
         if (Yii::app()->getRequest()->getIsPostRequest() && Yii::app()->getRequest()->getPost('Post')) {
             $model->setAttributes(
                 Yii::app()->getRequest()->getPost('Post')
             );
-            $model->setTags(
-                Yii::app()->getRequest()->getPost('tags')
-            );
+            $model->tags = Yii::app()->getRequest()->getPost('tags');
 
             if ($model->save()) {
                 Yii::app()->user->setFlash(
-                    YFlashMessages::SUCCESS_MESSAGE,
+                    yupe\widgets\YFlashMessages::SUCCESS_MESSAGE,
                     Yii::t('BlogModule.blog', 'Post was created!')
                 );
                 $this->redirect(
-                    (array) Yii::app()->getRequest()->getPost(
-                        'submit-type', array('create')
+                    (array)Yii::app()->getRequest()->getPost(
+                        'submit-type',
+                        ['create']
                     )
                 );
             }
         }
-        $this->render('create', array('model' => $model));
+        $this->render('create', ['model' => $model]);
     }
 
     /**
      * Редактирование записи.
-     * 
-     * @param integer $id the ID of the model to be updated
+     *
+     * @param  integer $id the ID of the model to be updated
      * @throws CHttpException
      * @return void
      */
     public function actionUpdate($id)
     {
-        if (($model = Post::model()->loadModel($id)) === null) {
+        if (($model = Post::model()->findByPk($id)) === null) {
             throw new CHttpException(404, Yii::t('BlogModule.blog', 'Requested page was not found!'));
         }
 
@@ -85,35 +113,38 @@ class PostBackendController extends yupe\components\controllers\BackController
             $model->setAttributes(
                 Yii::app()->getRequest()->getPost('Post')
             );
-            $model->setTags(
-                Yii::app()->getRequest()->getPost('tags')
-            );
+            $model->tags = Yii::app()->getRequest()->getPost('tags');
 
             if ($model->save()) {
                 Yii::app()->user->setFlash(
-                    YFlashMessages::SUCCESS_MESSAGE,
+                    yupe\widgets\YFlashMessages::SUCCESS_MESSAGE,
                     Yii::t('BlogModule.blog', 'Post was updated!')
                 );
 
+                if (isset($_POST['post-publish'])) {
+                    $model->publish();
+                }
+
                 $this->redirect(
-                    (array) Yii::app()->getRequest()->getPost(
-                        'submit-type', array(
+                    (array)Yii::app()->getRequest()->getPost(
+                        'submit-type',
+                        [
                             'update',
                             'id' => $model->id,
-                        )
+                        ]
                     )
                 );
             }
         }
 
-        $this->render('update', array('model' => $model));
+        $this->render('update', ['model' => $model]);
     }
 
     /**
      * Удаляет модель записи из базы.
      * Если удаление прошло успешно - возвращется в index
-     * 
-     * @param integer $id идентификатор записи, который нужно удалить
+     *
+     * @param  integer $id идентификатор записи, который нужно удалить
      * @throws CHttpException
      * @return void
      */
@@ -121,26 +152,33 @@ class PostBackendController extends yupe\components\controllers\BackController
     {
         if (Yii::app()->getRequest()->getIsPostRequest()) {
             // поддерживаем удаление только из POST-запроса
-            
-            if (($post = Post::model()->loadModel($id)) === null)
+
+            if (($post = Post::model()->findByPk($id)) === null) {
                 throw new CHttpException(404, Yii::t('BlogModule.blog', 'Requested page was not found'));
-            else
+            } else {
                 $post->delete();
+            }
 
             Yii::app()->user->setFlash(
-                YFlashMessages::SUCCESS_MESSAGE,
+                yupe\widgets\YFlashMessages::SUCCESS_MESSAGE,
                 Yii::t('BlogModule.blog', 'Post was removed!')
             );
 
             // если это AJAX запрос ( кликнули удаление в админском grid view), мы не должны никуда редиректить
-            if (!Yii::app()->getRequest()->getIsAjaxRequest())
+            if (!Yii::app()->getRequest()->getIsAjaxRequest()) {
                 $this->redirect(
-                    (array) Yii::app()->getRequest()->getPost(
-                        'returnUrl', array('index')
+                    (array)Yii::app()->getRequest()->getPost(
+                        'returnUrl',
+                        ['index']
                     )
                 );
-        } else
-            throw new CHttpException(400, Yii::t('BlogModule.blog', 'Wrong request. Please don\'t repeate requests like this!'));
+            }
+        } else {
+            throw new CHttpException(400, Yii::t(
+                'BlogModule.blog',
+                'Wrong request. Please don\'t repeate requests like this!'
+            ));
+        }
     }
 
     /**
@@ -152,25 +190,11 @@ class PostBackendController extends yupe\components\controllers\BackController
     {
         $model = new Post('search');
         $model->unsetAttributes(); // clear any default values
-        if (Yii::app()->getRequest()->getParam('Post'))
+        if (Yii::app()->getRequest()->getParam('Post')) {
             $model->setAttributes(
                 Yii::app()->getRequest()->getParam('Post')
             );
-        $this->render('index', array('model' => $model));
-    }
-
-    /**
-     * Производит AJAX-валидацию
-     * 
-     * @param CModel $model - модель, которую необходимо валидировать
-     *
-     * @return void
-     */
-    protected function performAjaxValidation(Post $model)
-    {
-        if (Yii::app()->getRequest()->getIsAjaxRequest() && Yii::app()->getRequest()->getPost('ajax') === 'post-form') {
-            echo CActiveForm::validate($model);
-            Yii::app()->end();
         }
+        $this->render('index', ['model' => $model]);
     }
 }

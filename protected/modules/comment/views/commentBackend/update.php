@@ -1,37 +1,57 @@
 <?php
-    $this->breadcrumbs = array(
-        Yii::app()->getModule('comment')->getCategory() => array(),
-        Yii::t('CommentModule.comment', 'Comments') => array('/comment/commentBackend/index'),
-        $model->id => array('/comment/commentBackend/view', 'id' => $model->id),
-        Yii::t('CommentModule.comment', 'Edit'),
-    );
+$this->breadcrumbs = [
+    Yii::t('CommentModule.comment', 'Comments') => ['/comment/commentBackend/index'],
+    $model->id                                  => ['/comment/commentBackend/view', 'id' => $model->id],
+    Yii::t('CommentModule.comment', 'Edit'),
+];
 
-    $this->pageTitle = Yii::t('CommentModule.comment', 'Comments - edit');
+$this->pageTitle = Yii::t('CommentModule.comment', 'Comments - edit');
 
-    $this->menu = array(
-        array('icon' => 'list-alt', 'label' => Yii::t('CommentModule.comment', 'Manage comments'), 'url' => array('/comment/commentBackend/index')),
-        array('icon' => 'plus-sign', 'label' => Yii::t('CommentModule.comment', 'Create comment'), 'url' => array('/comment/commentBackend/create')),
-        array('label' => Yii::t('CommentModule.comment', 'Comment') . ' «' . mb_substr($model->id, 0, 32) . '»'),
-        array('icon' => 'pencil', 'label' => Yii::t('CommentModule.comment', 'Edit comment'), 'url' => array(
+$this->menu = [
+    [
+        'icon'  => 'fa fa-fw fa-list-alt',
+        'label' => Yii::t('CommentModule.comment', 'Manage comments'),
+        'url'   => ['/comment/commentBackend/index']
+    ],
+    [
+        'icon'  => 'fa fa-fw fa-plus-square',
+        'label' => Yii::t('CommentModule.comment', 'Create comment'),
+        'url'   => ['/comment/commentBackend/create']
+    ],
+    ['label' => Yii::t('CommentModule.comment', 'Comment') . ' «' . mb_substr($model->id, 0, 32) . '»'],
+    [
+        'icon'  => 'fa fa-fw fa-pencil',
+        'label' => Yii::t('CommentModule.comment', 'Edit comment'),
+        'url'   => [
             '/comment/commentBackend/update',
             'id' => $model->id
-        )),
-        array('icon' => 'eye-open', 'label' => Yii::t('CommentModule.comment', 'View comment'), 'url' => array(
+        ]
+    ],
+    [
+        'icon'  => 'fa fa-fw fa-eye',
+        'label' => Yii::t('CommentModule.comment', 'View comment'),
+        'url'   => [
             '/comment/commentBackend/view',
             'id' => $model->id
-        )),
-        array('icon' => 'trash', 'label' => Yii::t('CommentModule.comment', 'Delete comment'), 'url' => '#', 'linkOptions' => array(
-            'submit' => array('/comment/commentBackend/delete', 'id' => $model->id),
-            'params' => array(Yii::app()->getRequest()->csrfTokenName => Yii::app()->getRequest()->csrfToken),
+        ]
+    ],
+    [
+        'icon'        => 'fa fa-fw fa-trash-o',
+        'label'       => Yii::t('CommentModule.comment', 'Delete comment'),
+        'url'         => '#',
+        'linkOptions' => [
+            'submit'  => ['/comment/commentBackend/delete', 'id' => $model->id],
+            'params'  => [Yii::app()->getRequest()->csrfTokenName => Yii::app()->getRequest()->csrfToken],
             'confirm' => Yii::t('CommentModule.comment', 'Do you really want do remove comment?'),
-        )),
-    );
+        ]
+    ],
+];
 ?>
 <div class="page-header">
     <h1>
-        <?php echo Yii::t('CommentModule.comment', 'Edit comment'); ?><br />
-        <small>&laquo;<?php echo $model->id; ?>&raquo;</small>
+        <?=  Yii::t('CommentModule.comment', 'Editing comment'); ?><br/>
+        <small>&laquo;<?=  $model->id; ?>&raquo;</small>
     </h1>
 </div>
 
-<?php echo $this->renderPartial('_form', array('model' => $model)); ?>
+<?=  $this->renderPartial('_form', ['model' => $model]); ?>

@@ -10,7 +10,6 @@
  *
  */
 
-
 /**
  * This is the model class for table "dictionary_group".
  *
@@ -19,8 +18,8 @@
  * @property string $code
  * @property string $name
  * @property string $description
- * @property string $creation_date
- * @property string $update_date
+ * @property string $create_time
+ * @property string $update_time
  * @property string $create_user_id
  * @property string $update_user_id
  *
@@ -29,11 +28,11 @@
  * @property User $updateUser
  * @property User $createUser
  */
-class DictionaryGroup extends YModel
+class DictionaryGroup extends yupe\models\YModel
 {
     /**
      * Returns the static model of the specified AR class.
-     * @param string $className
+     * @param  string $className
      * @return DictionaryGroup the static model class
      */
     public static function model($className = __CLASS__)
@@ -56,17 +55,21 @@ class DictionaryGroup extends YModel
     {
         // NOTE: you should only define rules for those attributes that
         // will receive user inputs.
-        return array(
-            array('code, name', 'required'),
-            array('code', 'length', 'max' => 100),
-            array('name, description', 'length', 'max' => 250),
-            array('create_user_id, update_user_id', 'length', 'max' => 10),
-            array('code', 'YSLugValidator'),
-            array('code', 'unique'),
+        return [
+            ['code, name', 'required'],
+            ['code', 'length', 'max' => 100],
+            ['name, description', 'length', 'max' => 250],
+            ['create_user_id, update_user_id', 'length', 'max' => 10],
+            ['code', 'yupe\components\validators\YSLugValidator'],
+            ['code', 'unique'],
             // The following rule is used by search().
             // Please remove those attributes that should not be searched.
-            array('id, code, name, description, creation_date, update_date, create_user_id, update_user_id', 'safe', 'on' => 'search'),
-        );
+            [
+                'id, code, name, description, create_time, update_time, create_user_id, update_user_id',
+                'safe',
+                'on' => 'search'
+            ],
+        ];
     }
 
     /**
@@ -76,12 +79,12 @@ class DictionaryGroup extends YModel
     {
         // NOTE: you may need to adjust the relation name and the related
         // class name for the relations automatically generated below.
-        return array(
-            'dictionaryData' => array(self::HAS_MANY, 'DictionaryData', 'group_id'),
-            'updateUser'     => array(self::BELONGS_TO, 'User', 'update_user_id'),
-            'createUser'     => array(self::BELONGS_TO, 'User', 'create_user_id'),
-            'dataCount'      => array(self::STAT, 'DictionaryData', 'group_id'),
-        );
+        return [
+            'dictionaryData' => [self::HAS_MANY, 'DictionaryData', 'group_id'],
+            'updateUser'     => [self::BELONGS_TO, 'User', 'update_user_id'],
+            'createUser'     => [self::BELONGS_TO, 'User', 'create_user_id'],
+            'dataCount'      => [self::STAT, 'DictionaryData', 'group_id'],
+        ];
     }
 
     /**
@@ -89,16 +92,16 @@ class DictionaryGroup extends YModel
      */
     public function attributeLabels()
     {
-        return array(
+        return [
             'id'             => Yii::t('DictionaryModule.dictionary', 'id'),
             'code'           => Yii::t('DictionaryModule.dictionary', 'Code'),
             'name'           => Yii::t('DictionaryModule.dictionary', 'Title'),
             'description'    => Yii::t('DictionaryModule.dictionary', 'Description'),
-            'creation_date'  => Yii::t('DictionaryModule.dictionary', 'Created at'),
-            'update_date'    => Yii::t('DictionaryModule.dictionary', 'Updated at'),
+            'create_time'  => Yii::t('DictionaryModule.dictionary', 'Created at'),
+            'update_time'    => Yii::t('DictionaryModule.dictionary', 'Updated at'),
             'create_user_id' => Yii::t('DictionaryModule.dictionary', 'Created by.'),
             'update_user_id' => Yii::t('DictionaryModule.dictionary', 'Updated by'),
-        );
+        ];
     }
 
     /**
@@ -110,29 +113,28 @@ class DictionaryGroup extends YModel
         // Warning: Please modify the following code to remove attributes that
         // should not be searched.
 
-        $criteria = new CDbCriteria;
+        $criteria = new CDbCriteria();
 
         $criteria->compare('id', $this->id, true);
         $criteria->compare('code', $this->code, true);
         $criteria->compare('name', $this->name, true);
         $criteria->compare('description', $this->description, true);
-        $criteria->compare('creation_date', $this->creation_date, true);
-        $criteria->compare('update_date', $this->update_date, true);
+        $criteria->compare('create_time', $this->create_time, true);
+        $criteria->compare('update_time', $this->update_time, true);
         $criteria->compare('create_user_id', $this->create_user_id, true);
         $criteria->compare('update_user_id', $this->update_user_id, true);
 
-        return new CActiveDataProvider(get_class($this), array('criteria' => $criteria));
+        return new CActiveDataProvider(get_class($this), ['criteria' => $criteria]);
     }
 
     public function beforeSave()
     {
         $this->update_user_id = Yii::app()->user->getId();
-        $this->update_date    = new CDbExpression('NOW()');
+        $this->update_time = new CDbExpression('NOW()');
 
-        if ($this->isNewRecord)
-        {
+        if ($this->isNewRecord) {
             $this->create_user_id = $this->update_user_id;
-            $this->creation_date  = $this->update_date;
+            $this->create_time = $this->update_time;
         }
 
         return parent::beforeSave();
@@ -140,10 +142,12 @@ class DictionaryGroup extends YModel
 
     public function getData()
     {
-        return DictionaryData::model()->cache(Yii::app()->getModule('yupe')->coreCacheTime)->findAll(array(
-            'condition' => 'group_id = :group_id',
-            'params'    => array(':group_id' => $this->id),
-            'order'     => 'name DESC',
-        ));
+        return DictionaryData::model()->cache(Yii::app()->getModule('yupe')->coreCacheTime)->findAll(
+            [
+                'condition' => 'group_id = :group_id',
+                'params'    => [':group_id' => $this->id],
+                'order'     => 'name DESC',
+            ]
+        );
     }
 }

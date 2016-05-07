@@ -1,6 +1,7 @@
 <?php
+
 /**
- * Контроллер, отвечающий за регистрацию, авторизацию и т.д. пользователя
+ * Контроллер, отвечающий за регистрацию, авторизацию и т.д. действия неавторизованного пользователя
  *
  * @category YupeComponents
  * @package  yupe.modules.user.controllers
@@ -10,44 +11,41 @@
  * @link     http://yupe.ru
  *
  **/
-class AccountController extends yupe\components\controllers\FrontController
+class AccountController extends \yupe\components\controllers\FrontController
 {
     public function actions()
     {
-        return array(
-            'captcha' => array(
-                'class'     => 'application.modules.yupe.components.actions.YCaptchaAction',
+        return [
+            'captcha' => [
+                'class' => 'yupe\components\actions\YCaptchaAction',
                 'backColor' => 0xFFFFFF,
                 'testLimit' => 1,
                 'minLength' => Yii::app()->getModule('user')->minCaptchaLength,
-            ),
-            'registration'     => array(
+            ],
+            'registration' => [
                 'class' => 'application.modules.user.controllers.account.RegistrationAction',
-            ),
-            'profile'          => array(
-                'class' => 'application.modules.user.controllers.account.ProfileAction'
-            ),
-            'activate'         => array(
+            ],
+            'activate' => [
                 'class' => 'application.modules.user.controllers.account.ActivateAction',
-            ),
-            'login'            => array(
+            ],
+            'login' => [
                 'class' => 'application.modules.user.controllers.account.LoginAction',
-            ),
-            'backendlogin'            => array(
+            ],
+            'backendlogin' => [
                 'class' => 'application.modules.user.controllers.account.LoginAction',
-            ),
-            'logout'           => array(
+            ],
+            'logout' => [
                 'class' => 'application.modules.user.controllers.account.LogOutAction',
-            ),
-            'recovery'         => array(
+            ],
+            'recovery' => [
                 'class' => 'application.modules.user.controllers.account.RecoveryAction',
-            ),
-            'restore' => array(
+            ],
+            'restore' => [
                 'class' => 'application.modules.user.controllers.account.RecoveryPasswordAction',
-            ),
-            'confirm'     => array(
+            ],
+            'confirm' => [
                 'class' => 'application.modules.user.controllers.account.EmailConfirmAction',
-            ),
-        );
+            ],
+        ];
     }
 }

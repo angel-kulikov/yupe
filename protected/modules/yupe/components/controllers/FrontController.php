@@ -13,27 +13,36 @@
 namespace yupe\components\controllers;
 
 use Yii;
+use yupe\events\YupeControllerInitEvent;
+use yupe\events\YupeEvents;
+use application\components\Controller;
 
-class FrontController extends Controller
+/**
+ * Class FrontController
+ * @package yupe\components\controllers
+ */
+abstract class FrontController extends Controller
 {
+    public $mainAssets;
+
     /**
      * Вызывается при инициализации FrontController
      * Присваивает значения, необходимым переменным
      */
     public function init()
     {
+        Yii::app()->eventManager->fire(YupeEvents::BEFORE_FRONT_CONTROLLER_INIT, new YupeControllerInitEvent($this, Yii::app()->getUser()));
+
         parent::init();
-        $this->pageTitle = $this->yupe->siteName;
-        $this->description = $this->yupe->siteDescription;
-        $this->keywords = $this->yupe->siteKeyWords;
-        if ($this->yupe->theme) {
-            Yii::app()->theme = $this->yupe->theme;
-            $bootstrap = Yii::app()->theme->basePath . DIRECTORY_SEPARATOR . "bootstrap.php";
-            if (is_file($bootstrap)) {
-                require($bootstrap);
-            }
-        } else {
-            Yii::app()->theme = 'default';
+
+        Yii::app()->theme = $this->yupe->theme ?: 'default';
+
+        $this->mainAssets = Yii::app()->getTheme()->getAssetsUrl();
+
+        $bootstrap = Yii::app()->getTheme()->getBasePath() . DIRECTORY_SEPARATOR . "bootstrap.php";
+
+        if (is_file($bootstrap)) {
+            require $bootstrap;
         }
     }
 }

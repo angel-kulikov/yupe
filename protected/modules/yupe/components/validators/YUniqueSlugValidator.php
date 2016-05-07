@@ -10,13 +10,25 @@
  * @since 0.1
  *
  */
+namespace yupe\components\validators;
 
+use CUniqueValidator;
 
+/**
+ * Class YUniqueSlugValidator
+ * @package yupe\components\validators
+ */
 class YUniqueSlugValidator extends CUniqueValidator
 {
-    protected function validateAttribute( $object, $attribute )
+    /**
+     * @param \CModel $object
+     * @param string $attribute
+     * @throws \CException
+     */
+    protected function validateAttribute($object, $attribute)
     {
-        $this->criteria = array('condition' => 'lang = :lang', 'params' => array(':lang' => $object->lang));
-        return parent::validateAttribute( $object, $attribute );
+        $this->criteria = ['condition' => 'lang = :lang', 'params' => [':lang' => $object->lang]];
+
+        return parent::validateAttribute($object, $attribute);
     }
 }

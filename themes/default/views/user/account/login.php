@@ -1,86 +1,118 @@
 <?php
-$this->pageTitle = Yii::t('UserModule.user', 'Sign in');
-$this->breadcrumbs = array(Yii::t('UserModule.user', 'Sign in'));
+$this->title = Yii::t('UserModule.user', 'Sign in');
+$this->breadcrumbs = [Yii::t('UserModule.user', 'Sign in')];
 ?>
 
-<?php $this->widget('application.modules.yupe.widgets.YFlashMessages'); ?>
+<?php $this->widget('yupe\widgets\YFlashMessages'); ?>
 
 <?php $form = $this->beginWidget(
     'bootstrap.widgets.TbActiveForm',
-    array(
-        'id' => 'login-form',
-        'type' => 'vertical',
-        'inlineErrors' => true,
-        'htmlOptions' => array(
+    [
+        'id'          => 'login-form',
+        'type'        => 'vertical',
+        'htmlOptions' => [
             'class' => 'well',
-        )
-    )
+        ]
+    ]
 ); ?>
 
-<?php echo $form->errorSummary($model); ?>
+<?= $form->errorSummary($model); ?>
 
-<div class='row-fluid control-group <?php echo $model->hasErrors('email') ? 'error' : ''; ?>'>
-    <?php echo $form->textFieldRow($model, 'email', array('class' => 'span6', 'required' => true)); ?>
-</div>
-
-<div class='row-fluid control-group <?php echo $model->hasErrors('password') ? 'error' : ''; ?>'>
-    <?php echo $form->passwordFieldRow($model, 'password', array('class' => 'span6', 'required' => true)); ?>
-</div>
-
-<?php if ($this->getModule()->sessionLifeTime > 0): ?>
-    <div class='row-fluid control-group <?php echo $model->hasErrors('remember_me') ? 'error' : ''; ?>'>
-        <?php echo $form->checkBoxRow($model, 'remember_me'); ?>
+<div class='row'>
+    <div class="col-xs-6">
+        <?= $form->textFieldGroup($model, 'email'); ?>
     </div>
-<?php endif; ?>
-
-<?php if (Yii::app()->user->getState('badLoginCount', 0) >= 3 && CCaptcha::checkRequirements('gd')): ?>
-    <?php $this->widget(
-        'CCaptcha',
-        array(
-            'showRefreshButton' => true,
-            'imageOptions' => array(
-                'width' => '150',
-            ),
-            'buttonOptions' => array(
-                'class' => 'btn',
-            ),
-            'buttonLabel' => '<i class="icon-repeat"></i>',
-        )
-    ); ?>
-
-    <div class='row-fluid control-group <?php echo $model->hasErrors('verifyCode') ? 'error' : ''; ?>'>
-        <?php echo $form->textFieldRow($model, 'verifyCode', array('class' => 'span3', 'required' => true)); ?>
-        <span class="help-block">
-            <?php echo Yii::t('UserModule.user', 'Please enter the text from the image'); ?>
-        </span>
-    </div>
-<?php endif; ?>
-
-
-<div class="row-fluid  control-group">
-    <?php
-    $this->widget(
-        'bootstrap.widgets.TbButton',
-        array(
-            'buttonType' => 'submit',
-            'type' => 'primary',
-            'icon' => 'signin',
-            'label' => Yii::t('UserModule.user', 'Sign in'),
-        )
-    ); ?>
-
-    <?php
-    $this->widget(
-        'bootstrap.widgets.TbButton',
-        array(
-            'buttonType' => 'link',
-            'label' => Yii::t('UserModule.user', 'Sign up'),
-            'url' => Yii::app()->createUrl('/user/account/registration'),
-        )
-    ); ?>
 </div>
 
-<?php echo CHtml::link(Yii::t('UserModule.user', 'Forgot your password?'), array('/user/account/recovery')) ?>
+<div class='row'>
+    <div class="col-xs-6">
+        <?= $form->passwordFieldGroup($model, 'password'); ?>
+    </div>
+</div>
+
+<?php if ($this->getModule()->sessionLifeTime > 0): { ?>
+    <div class='row'>
+        <div class="col-xs-12">
+            <?= $form->checkBoxGroup($model, 'remember_me'); ?>
+        </div>
+    </div>
+<?php } endif; ?>
+
+<?php if (Yii::app()->getUser()->getState('badLoginCount', 0) >= 3 && CCaptcha::checkRequirements('gd')): { ?>
+    <div class="row">
+        <div class="col-xs-4">
+            <?= $form->textFieldGroup(
+                $model,
+                'verifyCode',
+                ['hint' => Yii::t('UserModule.user', 'Please enter the text from the image')]
+            ); ?>
+        </div>
+        <div class="col-xs-4">
+            <?php $this->widget(
+                'CCaptcha',
+                [
+                    'showRefreshButton' => true,
+                    'imageOptions'      => [
+                        'width' => '150',
+                    ],
+                    'buttonOptions'     => [
+                        'class' => 'btn btn-default',
+                    ],
+                    'buttonLabel'       => '<i class="glyphicon glyphicon-repeat"></i>',
+                ]
+            ); ?>
+        </div>
+    </div>
+<?php } endif; ?>
+
+
+<div class="row">
+    <div class="col-xs-12">
+        <?php
+        $this->widget(
+            'bootstrap.widgets.TbButton',
+            [
+                'buttonType'  => 'submit',
+                'context'     => 'primary',
+                'icon'        => 'glyphicon glyphicon-signin',
+                'label'       => Yii::t('UserModule.user', 'Sign in'),
+                'htmlOptions' => ['id' => 'login-btn', 'name' => 'login-btn']
+            ]
+        ); ?>
+
+        <?php
+        $this->widget(
+            'bootstrap.widgets.TbButton',
+            [
+                'buttonType' => 'link',
+                'context'    => 'link',
+                'label'      => Yii::t('UserModule.user', 'Sign up'),
+                'url'        => Yii::app()->createUrl('/user/account/registration'),
+            ]
+        ); ?>
+    </div>
+</div>
+
+<?php if (Yii::app()->hasModule('social')): { ?>
+    <hr/>
+    <div class="row">
+        <div class="col-xs-12">
+            <?php
+            $this->widget(
+                'vendor.nodge.yii-eauth.EAuthWidget',
+                [
+                    'action'             => '/social/login',
+                    'predefinedServices' => ['google', 'facebook', 'vkontakte', 'twitter', 'github'],
+                ]
+            );
+            ?>
+        </div>
+    </div>
+<?php } endif; ?>
+<div class="row">
+    <div class="col-xs-12">
+        <?= CHtml::link(Yii::t('UserModule.user', 'Forgot your password?'), ['/user/account/recovery']) ?>
+    </div>
+</div>
 
 <?php $this->endWidget(); ?>
-<!-- form -->

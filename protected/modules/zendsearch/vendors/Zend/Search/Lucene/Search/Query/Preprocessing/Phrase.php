@@ -20,7 +20,6 @@
  * @version    $Id: Phrase.php 24593 2012-01-05 20:35:02Z matthew $
  */
 
-
 /** Zend_Search_Lucene_Search_Query_Processing */
 require_once 'Zend/Search/Lucene/Search/Query/Preprocessing.php';
 
@@ -51,7 +50,6 @@ class Zend_Search_Lucene_Search_Query_Preprocessing_Phrase extends Zend_Search_L
      */
     private $_phraseEncoding;
 
-
     /**
      * Field name.
      *
@@ -81,9 +79,9 @@ class Zend_Search_Lucene_Search_Query_Preprocessing_Phrase extends Zend_Search_L
     /**
      * Class constructor.  Create a new preprocessing object for prase query.
      *
-     * @param string $phrase          Phrase to search.
-     * @param string $phraseEncoding  Phrase encoding.
-     * @param string $fieldName       Field name.
+     * @param string $phrase Phrase to search.
+     * @param string $phraseEncoding Phrase encoding.
+     * @param string $fieldName Field name.
      */
     public function __construct($phrase, $phraseEncoding, $fieldName)
     {
@@ -102,7 +100,6 @@ class Zend_Search_Lucene_Search_Query_Preprocessing_Phrase extends Zend_Search_L
         $this->_slop = $slop;
     }
 
-
     /**
      * Get slop
      *
@@ -116,7 +113,7 @@ class Zend_Search_Lucene_Search_Query_Preprocessing_Phrase extends Zend_Search_L
     /**
      * Re-write query into primitive queries in the context of specified index
      *
-     * @param Zend_Search_Lucene_Interface $index
+     * @param  Zend_Search_Lucene_Interface $index
      * @return Zend_Search_Lucene_Search_Query
      */
     public function rewrite(Zend_Search_Lucene_Interface $index)
@@ -139,7 +136,7 @@ class Zend_Search_Lucene_Search_Query_Preprocessing_Phrase extends Zend_Search_L
             if (Zend_Search_Lucene::getDefaultSearchField() === null) {
                 $searchFields = $index->getFieldNames(true);
             } else {
-                $searchFields = array(Zend_Search_Lucene::getDefaultSearchField());
+                $searchFields = [Zend_Search_Lucene::getDefaultSearchField()];
             }
 
             foreach ($searchFields as $fieldName) {
@@ -152,6 +149,7 @@ class Zend_Search_Lucene_Search_Query_Preprocessing_Phrase extends Zend_Search_L
             }
 
             $this->_matches = $query->getQueryTerms();
+
             return $query;
         }
 
@@ -165,17 +163,18 @@ class Zend_Search_Lucene_Search_Query_Preprocessing_Phrase extends Zend_Search_L
             $query->setBoost($this->getBoost());
 
             $this->_matches = $query->getQueryTerms();
+
             return $query;
         }
-
 
         // tokenize phrase using current analyzer and process it as a phrase query
         require_once 'Zend/Search/Lucene/Analysis/Analyzer.php';
         $tokens = Zend_Search_Lucene_Analysis_Analyzer::getDefault()->tokenize($this->_phrase, $this->_phraseEncoding);
 
         if (count($tokens) == 0) {
-            $this->_matches = array();
+            $this->_matches = [];
             require_once 'Zend/Search/Lucene/Search/Query/Insignificant.php';
+
             return new Zend_Search_Lucene_Search_Query_Insignificant();
         }
 
@@ -187,6 +186,7 @@ class Zend_Search_Lucene_Search_Query_Preprocessing_Phrase extends Zend_Search_L
             $query->setBoost($this->getBoost());
 
             $this->_matches = $query->getQueryTerms();
+
             return $query;
         }
 
@@ -202,13 +202,14 @@ class Zend_Search_Lucene_Search_Query_Preprocessing_Phrase extends Zend_Search_L
             $query->setSlop($this->getSlop());
         }
         $this->_matches = $query->getQueryTerms();
+
         return $query;
     }
 
     /**
      * Query specific matches highlighting
      *
-     * @param Zend_Search_Lucene_Search_Highlighter_Interface $highlighter  Highlighter object (also contains doc for highlighting)
+     * @param Zend_Search_Lucene_Search_Highlighter_Interface $highlighter Highlighter object (also contains doc for highlighting)
      */
     protected function _highlightMatches(Zend_Search_Lucene_Search_Highlighter_Interface $highlighter)
     {
@@ -217,7 +218,6 @@ class Zend_Search_Lucene_Search_Query_Preprocessing_Phrase extends Zend_Search_L
         /** Skip exact term matching recognition, keyword fields highlighting is not supported */
 
         /** Skip wildcard queries recognition. Supported wildcards are removed by text analyzer */
-
 
         // tokenize phrase using current analyzer and process it as a phrase query
         require_once 'Zend/Search/Lucene/Analysis/Analyzer.php';
@@ -230,11 +230,12 @@ class Zend_Search_Lucene_Search_Query_Preprocessing_Phrase extends Zend_Search_L
 
         if (count($tokens) == 1) {
             $highlighter->highlight($tokens[0]->getTermText());
+
             return;
         }
 
         //It's non-trivial phrase query
-        $words = array();
+        $words = [];
         foreach ($tokens as $token) {
             $words[] = $token->getTermText();
         }

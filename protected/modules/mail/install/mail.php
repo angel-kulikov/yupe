@@ -11,21 +11,19 @@
  * @link     http://yupe.ru
  **/
 
-return array(
-    'module'    => array(
+return [
+    'module'    => [
         'class' => 'application.modules.mail.MailModule',
-    ),
-    'import'    => array(
-        'application.modules.mail.models.*',
-    ),
-    'component' => array(
+    ],
+    'import'    => [],
+    'component' => [
         // компонент для отправки почты
-        'mail' => array(
-            'class' => 'application.modules.mail.components.YMail',
-        ),
-        'mailMessage' => array(
+        'mail'        => [
+            'class' => 'yupe\components\Mail',
+        ],
+        'mailMessage' => [
             'class' => 'application.modules.mail.components.YMailMessage'
-        ),
-    ),
-    'rules'     => array(),
-);
+        ],
+    ],
+    'rules'     => [],
+];

@@ -10,10 +10,14 @@
  * @version  0.0.1
  * @link     http://yupe.ru
  **/
-return array(
+return [
     'install' => true,
-    'rules'   => array(
+    'module'  => [
+        'class' => 'application.modules.install.InstallModule',
+    ],
+    'preload' => ['bootstrap'],
+    'rules'   => [
         // правила контроллера site
-        '/' =>'site/index',
-    ),
-);
+        '/' => '/install/default/index'
+    ],
+];

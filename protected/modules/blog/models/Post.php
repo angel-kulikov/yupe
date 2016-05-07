@@ -20,10 +20,10 @@
  * @property string $blog_id
  * @property string $create_user_id
  * @property string $update_user_id
- * @property integer $create_date
- * @property integer $update_date
+ * @property integer $create_time
+ * @property integer $update_time
  * @property string $slug
- * @property string $publish_date
+ * @property string $publish_time
  * @property string $title
  * @property string $quote
  * @property string $content
@@ -43,22 +43,65 @@
  * @property User $updateUser
  * @property Blog $blog
  */
-class Post extends YModel
-{
-    const STATUS_DRAFT     = 0;
-    const STATUS_PUBLISHED = 1;
-    const STATUS_SHEDULED  = 2;
+Yii::import('application.modules.blog.models.Blog');
+Yii::import('application.modules.blog.events.*');
+Yii::import('application.modules.blog.listeners.*');
+Yii::import('application.modules.comment.components.ICommentable');
 
-    const ACCESS_PUBLIC  = 1;
+/**
+ * Class Post
+ */
+class Post extends yupe\models\YModel implements ICommentable
+{
+    /**
+     *
+     */
+    const STATUS_DRAFT = 0;
+    /**
+     *
+     */
+    const STATUS_PUBLISHED = 1;
+    /**
+     *
+     */
+    const STATUS_SCHEDULED = 2;
+    /**
+     *
+     */
+    const STATUS_MODERATED = 3;
+
+    /**
+     *
+     */
+    const STATUS_DELETED = 4;
+
+    /**
+     *
+     */
+    const ACCESS_PUBLIC = 1;
+    /**
+     *
+     */
     const ACCESS_PRIVATE = 2;
 
-    public $publish_date_tmp;
-    public $publish_time_tmp;
+    /**
+     *
+     */
+    const COMMENT_YES = 1;
+    /**
+     *
+     */
+    const COMMENT_NO = 0;
+
+    /**
+     * @var  string|array tags list
+     */
+    public $tags;
 
     /**
      * Returns the static model of the specified AR class.
-     * @param string $className
-     * @return Post the static model class
+     * @param  string $className
+     * @return Post   the static model class
      */
     public static function model($className = __CLASS__)
     {
@@ -80,26 +123,48 @@ class Post extends YModel
     {
         // NOTE: you should only define rules for those attributes that
         // will receive user inputs.
-        return array(
-            array('blog_id, slug, publish_date_tmp, publish_time_tmp, title, content', 'required', 'except' => 'search'),
-            array('blog_id, create_user_id, update_user_id, status, comment_status, access_type, create_date, update_date, category_id', 'numerical', 'integerOnly' => true),
-            array('blog_id, create_user_id, update_user_id, create_date, update_date, publish_date, status, comment_status, access_type', 'length', 'max' => 11),
-            array('lang', 'length', 'max' => 2),
-            array('slug', 'length', 'max' => 150),
-            array('image', 'length', 'max' => 300),
-            array('create_user_ip', 'length', 'max' => 20),
-            array('quote, description, title, link, keywords', 'length', 'max' => 250),
-            array('publish_date_tmp', 'type', 'type' => 'date', 'dateFormat' => 'dd-mm-yyyy'),
-            array('publish_time_tmp', 'type', 'type' => 'time', 'timeFormat' => 'hh:mm'),
-            array('link', 'YUrlValidator'),
-            array('comment_status', 'in', 'range' => array(0, 1)),
-            array('access_type', 'in', 'range' => array_keys($this->getAccessTypeList())),
-            array('status', 'in', 'range' => array_keys($this->getStatusList())),
-            array('slug', 'YSLugValidator', 'message' => Yii::t('BlogModule.blog', 'Forbidden symbols in {attribute}')),
-            array('title, slug, link, keywords, description, publish_date', 'filter', 'filter' => array($obj = new CHtmlPurifier(), 'purify')),
-            array('slug', 'unique'),
-            array('id, blog_id, create_user_id, update_user_id, create_date, update_date, slug, publish_date, title, quote, content, link, status, comment_status, access_type, keywords, description, lang', 'safe', 'on' => 'search'),
-        );
+        return [
+            ['blog_id, slug,  title, content, status, publish_time', 'required', 'except' => 'search'],
+            [
+                'blog_id, create_user_id, update_user_id, status, comment_status, access_type, create_time, update_time, category_id',
+                'numerical',
+                'integerOnly' => true
+            ],
+            [
+                'blog_id, create_user_id, update_user_id, create_time, update_time, status, comment_status, access_type',
+                'length',
+                'max' => 11
+            ],
+            ['lang', 'length', 'max' => 2],
+            ['publish_time', 'length', 'max' => 20],
+            ['slug', 'length', 'max' => 150],
+            ['image', 'length', 'max' => 300],
+            ['create_user_ip', 'length', 'max' => 20],
+            ['description, title, link, keywords', 'length', 'max' => 250],
+            ['quote', 'filter', 'filter' => 'trim'],
+            ['link', 'yupe\components\validators\YUrlValidator'],
+            ['comment_status', 'in', 'range' => array_keys($this->getCommentStatusList())],
+            ['access_type', 'in', 'range' => array_keys($this->getAccessTypeList())],
+            ['status', 'in', 'range' => array_keys($this->getStatusList())],
+            [
+                'slug',
+                'yupe\components\validators\YSLugValidator',
+                'message' => Yii::t('BlogModule.blog', 'Forbidden symbols in {attribute}')
+            ],
+            [
+                'title, slug, link, keywords, description, publish_time',
+                'filter',
+                'filter' => [$obj = new CHtmlPurifier(), 'purify']
+            ],
+            ['slug', 'unique'],
+            ['tags', 'safe'],
+            ['tags', 'default', 'value' => []],
+            [
+                'id, blog_id, create_user_id, update_user_id, create_time, update_time, slug, publish_time, title, quote, content, link, status, comment_status, access_type, keywords, description, lang',
+                'safe',
+                'on' => 'search'
+            ],
+        ];
     }
 
     /**
@@ -109,55 +174,74 @@ class Post extends YModel
     {
         // NOTE: you may need to adjust the relation name and the related
         // class name for the relations automatically generated below.
-        return array(
-            'createUser' => array(self::BELONGS_TO, 'User', 'create_user_id'),
-            'updateUser' => array(self::BELONGS_TO, 'User', 'update_user_id'),
-            'blog'       => array(self::BELONGS_TO, 'Blog', 'blog_id'),
-            'comments'   => array(self::HAS_MANY,'Comment','model_id',
-                'on' => 'model = :model AND comments.status = :status','params' => array(
-                    ':model' => 'Post',
+        return [
+            'createUser'    => [self::BELONGS_TO, 'User', 'create_user_id'],
+            'updateUser'    => [self::BELONGS_TO, 'User', 'update_user_id'],
+            'blog'          => [self::BELONGS_TO, 'Blog', 'blog_id'],
+            'comments'      => [
+                self::HAS_MANY,
+                'Comment',
+                'model_id',
+                'on'     => 'model = :model AND comments.status = :status and level > 1',
+                'params' => [
+                    ':model'  => 'Post',
                     ':status' => Comment::STATUS_APPROVED
-                ),
-                'order' => 'comments.id'
-            ),
-            'commentsCount' => array(self::STAT,'Comment','model_id',
-                'condition' => 'model = :model AND status = :status','params' => array(
-                    ':model' => 'Post',
+                ],
+                'order'  => 'comments.id'
+            ],
+            'commentsCount' => [
+                self::STAT,
+                'Comment',
+                'model_id',
+                'condition' => 'model = :model AND status = :status AND level > 1',
+                'params'    => [
+                    ':model'  => 'Post',
                     ':status' => Comment::STATUS_APPROVED
-                )
-            ),
-            'category' => array(self::BELONGS_TO,'Category','category_id')
-        );
+                ]
+            ],
+            'category'      => [self::BELONGS_TO, 'Category', 'category_id']
+        ];
     }
 
+    /**
+     * @return array
+     */
     public function scopes()
     {
-        return array(
-            'published' => array(
+        return [
+            'published' => [
                 'condition' => 't.status = :status',
-                'params'    => array(':status' => self::STATUS_PUBLISHED),
-            ),
-            'public' => array(
+                'params'    => [':status' => self::STATUS_PUBLISHED],
+            ],
+            'public'    => [
                 'condition' => 't.access_type = :access_type',
-                'params'    => array(':access_type' => self::ACCESS_PUBLIC),
-            ),
-        );
+                'params'    => [':access_type' => self::ACCESS_PUBLIC],
+            ],
+            'moderated' => [
+                'condition' => 't.status = :status',
+                'params'    => [':status' => self::STATUS_MODERATED]
+            ],
+            'recent'    => [
+                'order' => 'publish_time DESC'
+            ]
+        ];
     }
 
     /**
      * Условие для получения определённого количества записей:
-     * 
+     *
      * @param integer $count - количество записей
-     * 
+     *
      * @return self
      */
     public function limit($count = null)
     {
         $this->getDbCriteria()->mergeWith(
-            array(
+            [
                 'limit' => $count,
-            )
+            ]
         );
+
         return $this;
     }
 
@@ -171,10 +255,11 @@ class Post extends YModel
     public function sortByPubDate($typeSort = 'ASC')
     {
         $this->getDbCriteria()->mergeWith(
-            array(
-                'order' => $this->getTableAlias() . '.publish_date ' . $typeSort,
-            )
+            [
+                'order' => $this->getTableAlias() . '.publish_time ' . $typeSort,
+            ]
         );
+
         return $this;
     }
 
@@ -183,55 +268,28 @@ class Post extends YModel
      */
     public function attributeLabels()
     {
-        return array(
-            'id'               => Yii::t('BlogModule.blog', 'id'),
-            'blog_id'          => Yii::t('BlogModule.blog', 'Blog'),
-            'create_user_id'   => Yii::t('BlogModule.blog', 'Create user'),
-            'update_user_id'   => Yii::t('BlogModule.blog', 'Update user'),
-            'create_date'      => Yii::t('BlogModule.blog', 'Created at'),
-            'update_date'      => Yii::t('BlogModule.blog', 'Updated at'),
-            'publish_date'     => Yii::t('BlogModule.blog', 'Date'),
-            'publish_date_tmp' => Yii::t('BlogModule.blog', 'Publish date'),
-            'publish_time_tmp' => Yii::t('BlogModule.blog', 'Publish time'),
-            'slug'             => Yii::t('BlogModule.blog', 'Url'),
-            'title'            => Yii::t('BlogModule.blog', 'Title'),
-            'quote'            => Yii::t('BlogModule.blog', 'Quote'),
-            'content'          => Yii::t('BlogModule.blog', 'Content'),
-            'link'             => Yii::t('BlogModule.blog', 'Link'),
-            'status'           => Yii::t('BlogModule.blog', 'Status'),
-            'comment_status'   => Yii::t('BlogModule.blog', 'Comments'),
-            'access_type'      => Yii::t('BlogModule.blog', 'Access'),
-            'keywords'         => Yii::t('BlogModule.blog', 'Keywords'),
-            'description'      => Yii::t('BlogModule.blog', 'description'),
-            'tags'             => Yii::t('BlogModule.blog', 'Tags'),
-            'image'            => Yii::t('BlogModule.blog', 'Image'),
-            'category_id'      => Yii::t('BlogModule.blog', 'Category')
-        );
-    }
-
-    /**
-     * @return array customized attribute descriptions (name=>description)
-     */
-    public function attributeDescriptions()
-    {
-        return array(
-            'id'               => Yii::t('BlogModule.blog', 'Post id.'),
-            'blog_id'          => Yii::t('BlogModule.blog', 'Choose a blog you want to add the record to'),
-            'slug'             => Yii::t('BlogModule.blog', 'URL-friendly name of the blog.<br /><br /> For example: <br /><br /><pre>http://site.ru/blogs/my/<br /><span class="label">my-na-more</span>/</pre> It you don\'t know what is it you can leave this field empty.'),
-            'publish_date'     => Yii::t('BlogModule.blog', 'Publish date'),
-            'publish_date_tmp' => Yii::t('BlogModule.blog', 'Publish date, formatted as:<br /><span class="label">05-09-2012</span>'),
-            'publish_time_tmp' => Yii::t('BlogModule.blog', 'Publish time, formatted as:<br /><span class="label">12:00</span>'),
-            'title'            => Yii::t('BlogModule.blog', 'Post title, for example:<br /><span class="label">Our seaside vacation.</span>'),
-            'quote'            => Yii::t('BlogModule.blog', 'Please enter announcement text. A couple of sentences is enough. The text will be used, for example, at the main page or in the posts list.'),
-            'content'          => Yii::t('BlogModule.blog', 'Full text of the post which is displayed when you click on &laquo;More&raquo; link'),
-            'link'             => Yii::t('BlogModule.blog', 'Source link of the post. Source website or an article which you have used to write the post.'),
-            'status'           => Yii::t('BlogModule.blog', 'Post status:<br /><br /><span class="label label-success">published</span> &ndash;Visible for everyone.<br /><br /><span class="label label-warning">draft</span> &ndash; Visible for admins.<br /><br /><span class="label label-info">scheduled</span> &ndash; Will be published at a publish date.'),
-            'comment_status'   => Yii::t('BlogModule.blog', 'If checked &ndash; Users are able to leave comments on the post'),
-            'access_type'      => Yii::t('BlogModule.blog', 'Post access<br /><br /><span class="label label-success">public</span> &ndash; Everyone can read this post<br /><br /><span class="label label-warning">private</span> &ndash; only you can read this post'),
-            'keywords'         => Yii::t('BlogModule.blog', 'SEO keywords separated by comma. For example, if your post is about your seaside vacation keyword would be: <pre>sea, travel, sun, etc.</pre>'),
-            'description'      => Yii::t('BlogModule.blog', 'Short post description. Should not be more than one or two sentences. Should reflect the main points of the post. For example: <pre>The story of how we were almost eaten by sharks.</pre>This text is often used in search engine <a href="http://help.yandex.ru/webmaster/?id=111131">snippet</a>.'),
-            'tags'             => Yii::t('BlogModule.blog', 'Keywords for post categorization, for example:<br /><span class="label">sea</span>'),
-        );
+        return [
+            'id'             => Yii::t('BlogModule.blog', 'id'),
+            'blog_id'        => Yii::t('BlogModule.blog', 'Blog'),
+            'create_user_id' => Yii::t('BlogModule.blog', 'Created'),
+            'update_user_id' => Yii::t('BlogModule.blog', 'Update user'),
+            'create_time'    => Yii::t('BlogModule.blog', 'Created at'),
+            'update_time'    => Yii::t('BlogModule.blog', 'Updated at'),
+            'publish_time'   => Yii::t('BlogModule.blog', 'Date'),
+            'slug'           => Yii::t('BlogModule.blog', 'Url'),
+            'title'          => Yii::t('BlogModule.blog', 'Title'),
+            'quote'          => Yii::t('BlogModule.blog', 'Quote'),
+            'content'        => Yii::t('BlogModule.blog', 'Content'),
+            'link'           => Yii::t('BlogModule.blog', 'Link'),
+            'status'         => Yii::t('BlogModule.blog', 'Status'),
+            'comment_status' => Yii::t('BlogModule.blog', 'Comments'),
+            'access_type'    => Yii::t('BlogModule.blog', 'Access'),
+            'keywords'       => Yii::t('BlogModule.blog', 'Keywords'),
+            'description'    => Yii::t('BlogModule.blog', 'description'),
+            'tags'           => Yii::t('BlogModule.blog', 'Tags'),
+            'image'          => Yii::t('BlogModule.blog', 'Image'),
+            'category_id'    => Yii::t('BlogModule.blog', 'Category')
+        ];
     }
 
     /**
@@ -243,16 +301,18 @@ class Post extends YModel
         // Warning: Please modify the following code to remove attributes that
         // should not be searched.
 
-        $criteria = new CDbCriteria;
+        $criteria = new CDbCriteria();
 
         $criteria->compare('t.id', $this->id, true);
         $criteria->compare('blog_id', $this->blog_id);
         $criteria->compare('t.create_user_id', $this->create_user_id, true);
         $criteria->compare('t.update_user_id', $this->update_user_id, true);
-        $criteria->compare('t.create_date', $this->create_date);
-        $criteria->compare('t.update_date', $this->update_date);
-        $criteria->compare('slug', $this->slug, true);
-        $criteria->compare('publish_date', $this->publish_date, true);
+        $criteria->compare('t.create_time', $this->create_time);
+        $criteria->compare('t.update_time', $this->update_time);
+        $criteria->compare('t.slug', $this->slug, true);
+        if ($this->publish_time) {
+            $criteria->compare('DATE(from_unixtime(publish_time))', date('Y-m-d', strtotime($this->publish_time)));
+        }
         $criteria->compare('title', $this->title, true);
         $criteria->compare('quote', $this->quote, true);
         $criteria->compare('content', $this->content, true);
@@ -262,172 +322,522 @@ class Post extends YModel
         $criteria->compare('access_type', $this->access_type);
         $criteria->compare('t.category_id', $this->category_id, true);
 
-        $criteria->order = 'publish_date DESC';
-        $criteria->with  = array('createUser', 'updateUser', 'blog');
-
-        return new CActiveDataProvider('Post', array('criteria' => $criteria));
-    }
-
-    public function allPosts()
-    {
-        $criteria = new CDbCriteria;
-        $criteria->addCondition('t.status = :status');
-        $criteria->addCondition('t.access_type = :access_type');
-        $criteria->params = array(
-            ':status'      => self::STATUS_PUBLISHED,
-            ':access_type' => self::ACCESS_PUBLIC
-        );
-        $criteria->with  = array('blog', 'createUser');
-        $criteria->order = 'publish_date DESC';
+        $criteria->with = ['createUser', 'updateUser', 'blog'];
 
         return new CActiveDataProvider(
-            'Post', array('criteria' => $criteria)
+            'Post', [
+                'criteria' => $criteria,
+                'sort'     => [
+                    'defaultOrder' => 't.publish_time DESC, t.id DESC',
+                ]
+            ]
         );
     }
 
+    /**
+     * @return CActiveDataProvider
+     */
+    public function allPosts()
+    {
+        $criteria = new CDbCriteria();
+        $criteria->addCondition('t.status = :status');
+        $criteria->addCondition('t.access_type = :access_type');
+        $criteria->params = [
+            ':status'      => self::STATUS_PUBLISHED,
+            ':access_type' => self::ACCESS_PUBLIC
+        ];
+        $criteria->with = ['blog', 'createUser', 'commentsCount'];
+        $criteria->order = 'publish_time DESC';
+
+        return new CActiveDataProvider(
+            'Post', ['criteria' => $criteria]
+        );
+    }
+
+    /**
+     * @return array
+     */
     public function behaviors()
     {
         $module = Yii::app()->getModule('blog');
-        return array(
-            'CTimestampBehavior' => array(
+
+        return [
+            'CTimestampBehavior' => [
                 'class'             => 'zii.behaviors.CTimestampBehavior',
                 'setUpdateOnCreate' => true,
-                'createAttribute'   => 'create_date',
-                'updateAttribute'   => 'update_date',
-            ),
-            'tags' => array(
-                'class'                => 'application.modules.yupe.extensions.taggable.EARTaggableBehavior',
+            ],
+            'tags'               => [
+                'class'                => 'vendor.yiiext.taggable-behavior.EARTaggableBehavior',
                 'tagTable'             => Yii::app()->db->tablePrefix . 'blog_tag',
                 'tagBindingTable'      => Yii::app()->db->tablePrefix . 'blog_post_to_tag',
                 'tagModel'             => 'Tag',
                 'modelTableFk'         => 'post_id',
                 'tagBindingTableTagId' => 'tag_id',
                 'cacheID'              => 'cache',
-            ),
-            'imageUpload' => array(
-                'class'             =>'application.modules.yupe.components.behaviors.ImageUploadBehavior',
-                'scenarios'         => array('insert','update'),
-                'attributeName'     => 'image',
-                'minSize'           => $module->minSize,
-                'maxSize'           => $module->maxSize,
-                'types'             => $module->allowedExtensions,
-                'uploadPath'        => $module->getUploadPath(),
-                'imageNameCallback' => array($this, 'generateFileName'),
-            ),
-        );
+            ],
+            'imageUpload'        => [
+                'class'         => 'yupe\components\behaviors\ImageUploadBehavior',
+                'attributeName' => 'image',
+                'minSize'       => $module->minSize,
+                'maxSize'       => $module->maxSize,
+                'types'         => $module->allowedExtensions,
+                'uploadPath'    => $module->uploadPath,
+            ],
+        ];
     }
 
-    public function generateFileName()
-    {
-        return md5($this->slug . microtime(true) . rand());
-    }
-
-    public function getImageUrl()
-    {
-        if($this->image)
-            return Yii::app()->baseUrl . '/' . Yii::app()->getModule('yupe')->uploadPath . '/' .
-                Yii::app()->getModule('blog')->uploadPath . '/' . $this->image;
-        return false;
-    }
-
+    /**
+     * @return bool
+     */
     public function beforeSave()
     {
-        $this->publish_date   = strtotime($this->publish_date_tmp . ' ' . $this->publish_time_tmp);
+        $this->publish_time = strtotime($this->publish_time);
+
         $this->update_user_id = Yii::app()->user->getId();
 
-        if ($this->isNewRecord) {
+        if ($this->getIsNewRecord()) {
             $this->create_user_id = $this->update_user_id;
             $this->create_user_ip = Yii::app()->getRequest()->userHostAddress;
         }
 
+        $this->setTags($this->tags);
+
         return parent::beforeSave();
     }
 
+    /**
+     *
+     */
     public function afterDelete()
     {
         Comment::model()->deleteAll(
-            'model = :model AND model_id = :model_id', array(
-                ':model' => 'Post',
+            'model = :model AND model_id = :model_id',
+            [
+                ':model'    => 'Post',
                 ':model_id' => $this->id
-            )
+            ]
         );
 
-        return parent::afterDelete();
+        parent::afterDelete();
     }
 
+    /**
+     * @return bool
+     */
     public function beforeValidate()
     {
-        if (!$this->slug)
-            $this->slug = YText::translit($this->title);
+        if (!$this->slug) {
+            $this->slug = yupe\helpers\YText::translit($this->title);
+        }
 
         return parent::beforeValidate();
     }
 
+    /**
+     * @return array
+     */
     public function getStatusList()
     {
-        return array(
+        return [
             self::STATUS_DRAFT     => Yii::t('BlogModule.blog', 'Draft'),
             self::STATUS_PUBLISHED => Yii::t('BlogModule.blog', 'Published'),
-            self::STATUS_SHEDULED  => Yii::t('BlogModule.blog', 'Scheduled'),
-        );
+            self::STATUS_SCHEDULED => Yii::t('BlogModule.blog', 'Scheduled'),
+            self::STATUS_MODERATED => Yii::t('BlogModule.blog', 'Moderated'),
+            self::STATUS_DELETED   => Yii::t('BlogModule.blog', 'Deleted')
+        ];
     }
 
+    /**
+     * @return string
+     */
     public function getStatus()
     {
-        $data = $this->statusList;
+        $data = $this->getStatusList();
+
         return isset($data[$this->status]) ? $data[$this->status] : Yii::t('BlogModule.blog', '*unknown*');
     }
 
+    /**
+     * @return array
+     */
     public function getAccessTypeList()
     {
-        return array(
+        return [
             self::ACCESS_PRIVATE => Yii::t('BlogModule.blog', 'Private'),
             self::ACCESS_PUBLIC  => Yii::t('BlogModule.blog', 'Public'),
-        );
+        ];
     }
 
+    /**
+     * @return string
+     */
     public function getAccessType()
     {
-        $data = $this->accessTypeList;
+        $data = $this->getAccessTypeList();
+
         return isset($data[$this->access_type]) ? $data[$this->access_type] : Yii::t('BlogModule.blog', '*unknown*');
     }
 
+    /**
+     * @return string
+     */
     public function getCommentStatus()
     {
-        $data = $this->commentStatusList;
-        return isset($data[$this->comment_status]) ? $data[$this->comment_status] : Yii::t('BlogModule.blog', '*unknown*');
-    }
+        $data = $this->getCommentStatusList();
 
-    public function getCommentStatusList()
-    {
-        return array(
-            self::ACCESS_PRIVATE => Yii::t('BlogModule.blog', 'Forbidden'),
-            self::ACCESS_PUBLIC  => Yii::t('BlogModule.blog', 'Allowed'),
+        return isset($data[$this->comment_status]) ? $data[$this->comment_status] : Yii::t(
+            'BlogModule.blog',
+            '*unknown*'
         );
     }
 
     /**
-     * after find event:
-     *
-     * @return parent::afterFind()
-     **/
-    public function afterFind()
+     * @return array
+     */
+    public function getCommentStatusList()
     {
-
-        /**
-         * Fixing publish date for UI:
-         **/
-        $this->publish_date_tmp = date('d-m-Y', $this->publish_date);
-        $this->publish_time_tmp = date('h:i', $this->publish_date);
-
-        return parent::afterFind();
+        return [
+            self::COMMENT_NO  => Yii::t('BlogModule.blog', 'Forbidden'),
+            self::COMMENT_YES => Yii::t('BlogModule.blog', 'Allowed'),
+        ];
     }
 
+    /**
+     * @inheritdoc
+     */
+    public function afterFind()
+    {
+        $this->tags = $this->getTags();
+        $this->publish_time = date('d-m-Y H:i', $this->publish_time);
+
+        parent::afterFind();
+    }
+
+    /**
+     * @param int $limit
+     * @return string
+     */
     public function getQuote($limit = 500)
     {
         return $this->quote
-            ?: YText::characterLimiter(
-                $this->content, (int) $limit
+            ?: yupe\helpers\YText::characterLimiter(
+                $this->content,
+                (int)$limit
             );
     }
+
+    /**
+     * @param null $blogId
+     * @param int $cache
+     * @return mixed
+     */
+    public function getArchive($blogId = null, $cache = 3600)
+    {
+        $data = Yii::app()->getCache()->get("Blog::Post::archive::{$blogId}");
+
+        if (false === $data) {
+
+            $criteria = new CDbCriteria();
+
+            if ($blogId) {
+                $criteria->condition = 'blog_id = :blog_id';
+                $criteria->params = [
+                    ':blog_id' => (int)$blogId
+                ];
+            }
+
+            $models = $this->public()->published()->recent()->findAll($criteria);
+
+            if (!empty($models)) {
+
+                foreach ($models as $model) {
+
+                    list($day, $month, $year) = explode('-', date('d-m-Y', strtotime($model->publish_time)));
+
+                    $data[$year][$month][] = [
+                        'title'        => $model->title,
+                        'slug'         => $model->slug,
+                        'publish_time' => $model->publish_time,
+                        'quote'        => $model->getQuote()
+                    ];
+                }
+            } else {
+                $data = [];
+            }
+
+            Yii::app()->getCache()->set("Blog::Post::archive::{$blogId}", $data, (int)$cache);
+        }
+
+        return $data;
+    }
+
+    /**
+     * @param int $limit
+     * @param $cacheTime
+     * @return mixed
+     */
+    public function getStream($limit = 10, $cacheTime)
+    {
+        $data = Yii::app()->cache->get('Blog::Post::Stream');
+
+        if (false === $data) {
+            $data = Yii::app()->db->createCommand()
+                ->select('p.title, p.slug, max(c.create_time) comment_date, count(c.id) as commentsCount')
+                ->from('{{comment_comment}} c')
+                ->join('{{blog_post}} p', 'c.model_id = p.id')
+                ->where(
+                    'c.model = :model AND p.status = :status AND c.status = :commentstatus AND c.id <> c.root',
+                    [
+                        ':model'         => 'Post',
+                        ':status'        => Post::STATUS_PUBLISHED,
+                        ':commentstatus' => Comment::STATUS_APPROVED
+                    ]
+                )
+                ->group('c.model, c.model_id, p.title, p.slug')
+                ->order('comment_date DESC')
+                ->having('count(c.id) > 0')
+                ->limit((int)$limit)
+                ->queryAll();
+
+            Yii::app()->cache->set('Blog::Post::Stream', $data, (int)$cacheTime);
+        }
+
+        return $data;
+    }
+
+    /**
+     * @param $id
+     * @param array $with
+     * @return mixed
+     */
+    public function get($id, array $with = [])
+    {
+        if (is_int($id)) {
+            return Post::model()->public()->published()->with($with)->findByPk($id);
+        }
+
+        return Post::model()->public()->published()->with($with)->find(
+            't.slug = :slug',
+            [
+                ':slug' => $id
+            ]
+        );
+    }
+
+    /**
+     * @param $tag
+     * @param array $with
+     * @return mixed
+     */
+    public function getByTag($tag, array $with = ['blog', 'createUser', 'commentsCount'])
+    {
+        return Post::model()->with($with)
+            ->published()
+            ->public()
+            ->sortByPubDate('DESC')
+            ->taggedWith($tag)->findAll();
+    }
+
+    /**
+     * @param $blogId
+     * @return Post
+     */
+    public function getForBlog($blogId)
+    {
+        $posts = new Post('search');
+        $posts->unsetAttributes();
+        $posts->blog_id = (int)$blogId;
+        $posts->status = Post::STATUS_PUBLISHED;
+        $posts->access_type = Post::ACCESS_PUBLIC;
+
+        return $posts;
+    }
+
+    /**
+     * @param $categoryId
+     * @return Post
+     */
+    public function getForCategory($categoryId)
+    {
+        $posts = new Post('search');
+        $posts->unsetAttributes();
+        $posts->category_id = (int)$categoryId;
+        $posts->status = Post::STATUS_PUBLISHED;
+        $posts->access_type = Post::ACCESS_PUBLIC;
+
+        return $posts;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getCategories()
+    {
+        return Yii::app()->db->createCommand()
+            ->select('cc.name, bp.category_id, count(bp.id) cnt, cc.slug, cc.description')
+            ->from('yupe_blog_post bp')
+            ->join('yupe_category_category cc', 'bp.category_id = cc.id')
+            ->where('bp.category_id IS NOT NULL')
+            ->group('bp.category_id')
+            ->having('cnt > 0')
+            ->order('cnt DESC')
+            ->queryAll();
+    }
+
+    /**
+     * @return int|mixed
+     */
+    public function getCommentCount()
+    {
+        return $this->commentsCount > 0 ? $this->commentsCount : 0;
+    }
+
+    /**
+     * @param array $post
+     * @param $tags
+     * @return bool
+     */
+    public function createPublicPost(array $post)
+    {
+        if (empty($post['blog_id']) || empty($post['user_id'])) {
+            $this->addError('blog_id', Yii::t('BlogModule.blog', "Blog is empty!"));
+
+            return false;
+        }
+
+        $blog = Blog::model()->get((int)$post['blog_id'], []);
+
+        if (null === $blog) {
+            $this->addError('blog_id', Yii::t('BlogModule.blog', "You can't write in this blog!"));
+
+            return false;
+        }
+
+        if ($blog->isPrivate() && !$blog->isOwner($post['user_id'])) {
+            $this->addError('blog_id', Yii::t('BlogModule.blog', "You can't write in this blog!"));
+
+            return false;
+        }
+
+        if (!$blog->isPrivate() && !$blog->userIn($post['user_id'])) {
+            $this->addError('blog_id', Yii::t('BlogModule.blog', "You can't write in this blog!"));
+
+            return false;
+        }
+
+        $this->setAttributes($post);
+        $this->setTags($post['tags']);
+        $this->publish_time = date('d-m-Y h:i');
+        $this->status = $post['status'] == self::STATUS_DRAFT ? self::STATUS_DRAFT : $blog->post_status;
+
+        return $this->save();
+    }
+
+    /**
+     * @param $user
+     * @return Post
+     */
+    public function getForUser($user)
+    {
+        $posts = new Post('search');
+        $posts->unsetAttributes();
+        $posts->create_user_id = (int)$user;
+
+        return $posts;
+    }
+
+    /**
+     * @param $postId
+     * @param $userId
+     * @return int
+     */
+    public function deleteUserPost($postId, $userId)
+    {
+        return $this->updateAll(
+            ['status' => self::STATUS_DELETED],
+            'create_user_id = :userId AND id = :id AND status != :status',
+            [
+                ':userId' => (int)$userId,
+                ':id'     => (int)$postId,
+                ':status' => self::STATUS_PUBLISHED
+            ]
+        );
+    }
+
+    /**
+     * @param $postId
+     * @param $userId
+     * @return CActiveRecord
+     */
+    public function findUserPost($postId, $userId)
+    {
+        return $this->find(
+            'id = :id AND create_user_id = :userId AND status != :status',
+            [
+                ':userId' => (int)$userId,
+                ':id'     => (int)$postId,
+                ':status' => self::STATUS_PUBLISHED
+            ]
+        );
+    }
+
+    /**
+     * @return mixed|string
+     */
+    public function getTitle()
+    {
+        return $this->title;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getLink($params = [])
+    {
+        return Yii::app()->createAbsoluteUrl('/blog/post/view/', CMap::mergeArray(['slug' => $this->slug], $params));
+    }
+
+    /**
+     * @return bool
+     */
+    public function isPublished()
+    {
+        return $this->status == self::STATUS_PUBLISHED;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isDraft()
+    {
+        return $this->status == self::STATUS_DRAFT;
+    }
+
+    /**
+     * @return bool
+     */
+    public function publish()
+    {
+        $transaction = Yii::app()->db->beginTransaction();
+
+        try {
+            $this->status = self::STATUS_PUBLISHED;
+            $this->publish_time = date('d-m-Y h:i');
+            if ($this->save()) {
+                Yii::app()->eventManager->fire(
+                    BlogEvents::POST_PUBLISH,
+                    new PostPublishEvent($this, Yii::app()->getUser())
+                );
+            }
+            $transaction->commit();
+
+            return true;
+        } catch (Exception $e) {
+            $transaction->rollback();
+            Yii::log($e->__toString(), CLogger::LEVEL_ERROR);
+
+            return true;
+        }
+    }
+
 }

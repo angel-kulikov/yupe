@@ -1,7 +1,11 @@
 <?php
+require dirname(__FILE__) . '/../vendor/autoload.php';
+$yiic = require dirname(__FILE__) . '/../vendor/yiisoft/yii/framework/yii.php';
 
-// change the following paths if necessary
-$yiic = dirname(__FILE__) . '/../vendor/yiisoft/yii/framework/yiic.php';
-$config = dirname(__FILE__) . '/config/console.php';
+$config = require dirname(__FILE__) . '/config/console.php';
+$configManager = new yupe\components\ConfigManager();
+$configManager->sentEnv(\yupe\components\ConfigManager::ENV_CONSOLE);
 
-require_once($yiic);
+$app = \Yii::createConsoleApplication($configManager->merge($config));
+$app->commandRunner->addCommands(YII_PATH . '/cli/commands');
+$app->run();

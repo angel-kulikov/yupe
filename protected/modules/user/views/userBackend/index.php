@@ -1,39 +1,67 @@
 <?php
-    $this->breadcrumbs = array(
-        Yii::app()->getModule('user')->getCategory() => array(),
-        Yii::t('UserModule.user', 'Users') => array('/user/userBackend/index'),
-        Yii::t('UserModule.user', 'Management'),
-    );
 
-    $this->pageTitle = Yii::t('UserModule.user', 'Users - management');
+/**
+ * @var $model User
+ * @var $this UserBackendController
+ */
 
-    $this->menu = array(
-        array('label' => Yii::t('UserModule.user', 'Users'), 'items' => array(
-            array('icon' => 'list-alt', 'label' => Yii::t('UserModule.user', 'Manage users'), 'url' => array('/user/userBackend/index')),
-            array('icon' => 'plus-sign', 'label' => Yii::t('UserModule.user', 'Create user'), 'url' => array('/user/userBackend/create')),
-        )),
-        array('label' => Yii::t('UserModule.user', 'Tokens'), 'items' => array(
-            array('icon' => 'list-alt', 'label' => Yii::t('UserModule.user', 'Token list'), 'url' => array('/user/tokensBackend/index')),
-        )),
-    );
+$this->breadcrumbs = [
+    Yii::t('UserModule.user', 'Users') => ['/user/userBackend/index'],
+    Yii::t('UserModule.user', 'Management'),
+];
+
+$this->pageTitle = Yii::t('UserModule.user', 'Users - management');
+
+$this->menu = [
+    [
+        'label' => Yii::t('UserModule.user', 'Users'),
+        'items' => [
+            [
+                'icon'  => 'fa fa-fw fa-list-alt',
+                'label' => Yii::t('UserModule.user', 'Manage users'),
+                'url'   => ['/user/userBackend/index']
+            ],
+            [
+                'icon'  => 'fa fa-fw fa-plus-square',
+                'label' => Yii::t('UserModule.user', 'Create user'),
+                'url'   => ['/user/userBackend/create']
+            ],
+        ]
+    ],
+    [
+        'label' => Yii::t('UserModule.user', 'Tokens'),
+        'items' => [
+            [
+                'icon'  => 'fa fa-fw fa-list-alt',
+                'label' => Yii::t('UserModule.user', 'Token list'),
+                'url'   => ['/user/tokensBackend/index']
+            ],
+        ]
+    ],
+];
 ?>
+
 <div class="page-header">
     <h1>
-        <?php echo Yii::t('UserModule.user', 'Users'); ?>
-        <small><?php echo Yii::t('UserModule.user', 'management'); ?></small>
+        <?=  Yii::t('UserModule.user', 'Users'); ?>
+        <small><?=  Yii::t('UserModule.user', 'management'); ?></small>
     </h1>
 </div>
 
-<button class="btn btn-small dropdown-toggle" data-toggle="collapse" data-target="#search-toggle">
-    <i class="icon-search">&nbsp;</i>
-    <?php echo CHtml::link(Yii::t('UserModule.user', 'Find users'), '#', array('class' => 'search-button')); ?>
-    <span class="caret">&nbsp;</span>
-</button>
+<p>
+    <a class="btn btn-default btn-sm dropdown-toggle" data-toggle="collapse" data-target="#search-toggle">
+        <i class="fa fa-search">&nbsp;</i>
+        <?=  Yii::t('UserModule.user', 'Find users'); ?>
+        <span class="caret">&nbsp;</span>
+    </a>
+</p>
 
 <div id="search-toggle" class="collapse out search-form">
-<?php
-Yii::app()->clientScript->registerScript('search', "
-    $('.search-form form').submit(function() {
+    <?php
+    Yii::app()->clientScript->registerScript(
+        'search',
+        "
+    $('.search-form form').submit(function () {
         event.preventDefault();
 
         $.fn.yiiGridView.update('user-grid', {
@@ -41,85 +69,138 @@ Yii::app()->clientScript->registerScript('search', "
         });
     });
 
-    $(document).on('click', '.verify-email', function(){
+    $(document).on('click', '.verify-email', function () {
         var link = $(this);
-        
+
         event.preventDefault();
 
         $.post(link.attr('href'), actionToken.token)
-            .done(function(response){
+            .done(function (response) {
                 bootbox.alert(response.data);
             });
     });
-");
-$this->renderPartial('_search', array('model' => $model));
-?>
+"
+    );
+    $this->renderPartial('_search', ['model' => $model]);
+    ?>
 </div>
 
-<br/>
-
-<p><?php echo Yii::t('UserModule.user', 'This section represents account management!'); ?></p>
-
-<?php $this->widget('yupe\widgets\CustomGridView', array(
-    'id'            => 'user-grid',
-    'type'         => 'condensed',
-    'dataProvider' => $model->search(),
-    'columns'      => array(
-        array(
-            'name'        => 'id',
-            'value'       => '$data->id',
-            'htmlOptions' => array(
-                'style'   => 'width: 40px; text-align: center'
-            )
-        ),
-        array(
-            'name'  => 'nick_name',
-            'type'  => 'raw',
-            'value' => 'CHtml::link($data->nick_name, array("/user/userBackend/update", "id" => $data->id))',
-        ),
-        array(
-            'name'  => 'email',
-            'type'  => 'raw',
-            'value' => '$data->getVerifyIcon() . " " . $data->email',
-        ),
-        array(
-            'name'   => 'access_level',
-            'value'  => '$data->getAccessLevel()',
-        ),
-        array(
-            'header' => Yii::t('UserModule.user', 'Register date'),
-            'name'   => 'data.reg.created',
-            'value'  => 'UserToken::beautifyDate(isset($data->reg->created) ? $data->reg->created : null)',
-        ),
-        'last_visit',
-        array(
-            'name'   => 'status',
-            'type'   => 'raw',
-            'value'  => '$data->changeStatus($this->grid)',
-        ),
-        array(
-            'header'   => Yii::t('UserModule.user', 'Management'),
-            'class'    => 'bootstrap.widgets.TbButtonColumn',
-            'template' => '{view}{update}{password}{sendactivation}{delete}',
-            'buttons'  => array(
-                'password' => array(
-                    'icon'     => 'lock',
-                    'label'    => Yii::t('UserModule.user', 'Change password'),
-                    'url'      => 'array("/user/userBackend/changepassword", "id" => $data->id)',
+<?php $this->widget(
+    'yupe\widgets\CustomGridView',
+    [
+        'id'           => 'user-grid',
+        'dataProvider' => $model->search(),
+        'filter'       => $model,
+        'columns'      => [
+            [
+                'name'  => 'nick_name',
+                'type'  => 'raw',
+                'value' => 'CHtml::link($data->nick_name, array("/user/userBackend/update", "id" => $data->id))',
+            ],
+            [
+                'name'  => 'email',
+                'type'  => 'raw',
+                'value' => 'CHtml::link($data->email, "mailto:" . $data->email)',
+            ],
+            [
+                'class'    => 'bootstrap.widgets.TbEditableColumn',
+                'editable' => [
+                    'url'    => $this->createUrl('/user/userBackend/inline'),
+                    'mode'   => 'popup',
+                    'type'   => 'select',
+                    'title'  => Yii::t(
+                        'UserModule.user',
+                        'Select {field}',
+                        ['{field}' => mb_strtolower($model->getAttributeLabel('access_level'))]
+                    ),
+                    'source' => $model->getAccessLevelsList(),
+                    'params' => [
+                        Yii::app()->request->csrfTokenName => Yii::app()->request->csrfToken
+                    ]
+                ],
+                'name'     => 'access_level',
+                'type'     => 'raw',
+                'value'    => '$data->getAccessLevel()',
+                'filter'   => CHtml::activeDropDownList(
+                    $model,
+                    'access_level',
+                    $model->getAccessLevelsList(),
+                    ['class' => 'form-control', 'empty' => '']
                 ),
-                'sendactivation' => array(
-                    'label'   => Yii::t('UserModule.user', 'Send activation confirm'),
-                    'url'     => 'array("/user/userBackend/sendactivation", "id" => $data->id)',
-                    'icon'    => 'repeat',
-                    'visible' => '$data->getIsActivated() === false',
-                    'options'  => array(
-                        'class' => 'user sendactivation'
-                    )
+            ],
+            [
+                'class'   => 'yupe\widgets\EditableStatusColumn',
+                'name'    => 'status',
+                'url'     => $this->createUrl('/user/userBackend/inline'),
+                'source'  => $model->getStatusList(),
+                'options' => [
+                    User::STATUS_ACTIVE     => ['class' => 'label-success'],
+                    User::STATUS_BLOCK      => ['class' => 'label-danger'],
+                    User::STATUS_NOT_ACTIVE => ['class' => 'label-warning'],
+                ],
+            ],
+            [
+                'class'    => 'bootstrap.widgets.TbEditableColumn',
+                'editable' => [
+                    'url'    => $this->createUrl('/user/userBackend/inline'),
+                    'mode'   => 'popup',
+                    'type'   => 'select',
+                    'title'  => Yii::t(
+                        'UserModule.user',
+                        'Select {field}',
+                        ['{field}' => mb_strtolower($model->getAttributeLabel('email_confirm'))]
+                    ),
+                    'source' => $model->getEmailConfirmStatusList(),
+                    'params' => [
+                        Yii::app()->request->csrfTokenName => Yii::app()->request->csrfToken
+                    ]
+                ],
+                'name'     => 'email_confirm',
+                'type'     => 'raw',
+                'value'    => '$data->getEmailConfirmStatus()',
+                'filter'   => CHtml::activeDropDownList(
+                    $model,
+                    'email_confirm',
+                    $model->getEmailConfirmStatusList(),
+                    ['class' => 'form-control', 'empty' => '']
                 ),
-            ),
-            'htmlOptions' => array(
-                'style'   => 'width: 80px; text-align: right;'
-            )
-        ),
-    ),
-)); ?>
+            ],
+            [
+                'name'   => 'create_time',
+                'filter' => false,
+                'value'  => function($data){
+                    return Yii::app()->getDateFormatter()->formatDateTime($data->create_time);
+                },
+            ],
+            [
+                'name'   => 'visit_time',
+                'value'  => function($data){
+                    return Yii::app()->getDateFormatter()->formatDateTime($data->visit_time);
+                },
+                'filter' => false
+            ],
+            [
+                'header'      => Yii::t('UserModule.user', 'Management'),
+                'class'       => 'yupe\widgets\CustomButtonColumn',
+                'template'    => '{view}{update}{password}{sendactivation}{delete}',
+                'buttons'     => [
+                    'password'       => [
+                        'icon'  => 'fa fa-fw fa-lock',
+                        'label' => Yii::t('UserModule.user', 'Change password'),
+                        'url'   => 'array("/user/userBackend/changepassword", "id" => $data->id)',
+                        'options' => ['class' => 'change-password btn btn-sm btn-default']
+                    ],
+                    'sendactivation' => [
+                        'label'   => Yii::t('UserModule.user', 'Send activation confirm'),
+                        'url'     => 'array("/user/userBackend/sendactivation", "id" => $data->id)',
+                        'icon'    => 'fa fa-fw fa-repeat',
+                        'visible' => '$data->status != User::STATUS_ACTIVE',
+                        'options' => [
+                            'class' => 'user sendactivation btn btn-sm btn-default'
+                        ]
+                    ],
+                ],
+            ],
+        ],
+    ]
+); ?>

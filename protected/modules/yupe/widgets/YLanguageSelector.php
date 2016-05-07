@@ -10,31 +10,61 @@
  * @link     http://yupe.ru
  *
  **/
+namespace yupe\widgets;
+
+use Yii;
+
+/**
+ * Class YLanguageSelector
+ * @package yupe\widgets
+ */
 class YLanguageSelector extends YWidget
 {
+    /**
+     * @var bool
+     */
     public $enableFlag = true;
 
+    /**
+     * @var string
+     */
     public $view = 'languageselector';
 
+    /**
+     * @return bool
+     * @throws \CException
+     */
     public function run()
     {
-        $langs = array_keys($this->controller->yupe->getLanguagesList());
+        $langs = array_keys($this->getController()->yupe->getLanguagesList());
+
         if (count($langs) <= 1) {
             return false;
         }
-        if ($this->enableFlag) {
-            Yii::app()->clientScript->registerCssFile(Yii::app()->theme->baseUrl . '/web/css/flags.css');
+
+        if (!Yii::app()->getUrlManager() instanceof \yupe\components\urlManager\LangUrlManager) {
+            Yii::log(
+                'For use multi lang, please, enable "upe\components\urlManager\LangUrlManager" as default UrlManager',
+                \CLogger::LEVEL_WARNING
+            );
+
+            return false;
         }
+
+        if ($this->enableFlag) {
+            Yii::app()->getClientScript()->registerCssFile(Yii::app()->getTheme()->getAssetsUrl().'/css/flags.css');
+        }
+
         $this->render(
             $this->view,
-            array(
+            [
                 'langs' => $langs,
-                'currentLanguage' => Yii::app()->language,
-                'cleanUrl' => Yii::app()->urlManager->getCleanUrl(Yii::app()->getRequest()->url),
-                'homeUrl' => Yii::app()->homeUrl . (Yii::app()->homeUrl[strlen(
-                    Yii::app()->homeUrl
-                ) - 1] != "/" ? '/' : ''),
-            )
+                'currentLanguage' => Yii::app()->getLanguage(),
+                'cleanUrl' => Yii::app()->getUrlManager()->getCleanUrl(Yii::app()->getRequest()->getUrl()),
+                'homeUrl' => Yii::app()->getHomeUrl().(Yii::app()->getHomeUrl()[strlen(
+                        Yii::app()->getHomeUrl()
+                    ) - 1] != "/" ? '/' : ''),
+            ]
         );
     }
 }

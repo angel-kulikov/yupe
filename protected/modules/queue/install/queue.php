@@ -1,21 +1,21 @@
 <?php
-return array(
-    'module'   => array(
-        'class' => 'application.modules.queue.QueueModule',
-    ),
-    'import'    => array(
+return [
+    'module'    => [
+        'class'          => 'application.modules.queue.QueueModule',
+        'workerNamesMap' => [
+            1 => 'Mail sending',
+            2 => 'Image resizing',
+        ],
+    ],
+    'import'    => [
         'application.modules.queue.components.*',
         'application.modules.queue.models.*',
-    ),
-    'component' => array(
-        'queue' => array(
-            'class'          => 'application.modules.queue.components.YDbQueue',
-            'connectionId'   => 'db',
-            'workerNamesMap' => array(
-                1 => 'Mail sending',
-                2 => 'Image resizing',
-            ),
-        ),
-    ),
-    'rules'     => array(),
-);
+    ],
+    'component' => [
+        'queue' => [
+            'class'        => 'application.modules.queue.components.YDbQueue',
+            'connectionId' => 'db'
+        ],
+    ],
+    'rules'     => [],
+];

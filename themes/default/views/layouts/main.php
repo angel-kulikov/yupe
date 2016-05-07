@@ -1,86 +1,76 @@
 <!DOCTYPE html>
-<html lang="<?php echo Yii::app()->language; ?>">
-<head prefix="og: http://ogp.me/ns#
-    fb: http://ogp.me/ns/fb#
-    article: http://ogp.me/ns/article#">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge;chrome=1">
-    <meta charset="<?php echo Yii::app()->charset; ?>"/>
-    <meta name="keywords" content="<?php echo $this->keywords; ?>"/>
-    <meta name="description" content="<?php echo $this->description; ?>"/>
-    <meta property="og:title" content="<?php echo CHtml::encode($this->pageTitle); ?>"/>
-    <meta property="og:description" content="<?php echo $this->description; ?>"/>
-    <title><?php echo CHtml::encode($this->pageTitle); ?></title>
+<html lang="<?= Yii::app()->language; ?>">
+<head>
+    <?php \yupe\components\TemplateEvent::fire(DefautThemeEvents::HEAD_START);?>
+
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta http-equiv="Content-Language" content="ru-RU" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title><?= $this->title;?></title>
+    <meta name="description" content="<?= $this->description;?>" />
+    <meta name="keywords" content="<?= $this->keywords;?>" />
+
+    <?php if ($this->canonical): ?>
+        <link rel="canonical" href="<?= $this->canonical ?>" />
+    <?php endif; ?>
+
+    <?php
+    Yii::app()->getClientScript()->registerCssFile($this->mainAssets . '/css/main.css');
+    Yii::app()->getClientScript()->registerCssFile($this->mainAssets . '/css/flags.css');
+    Yii::app()->getClientScript()->registerCssFile($this->mainAssets . '/css/yupe.css');
+    Yii::app()->getClientScript()->registerScriptFile($this->mainAssets . '/js/blog.js');
+    Yii::app()->getClientScript()->registerScriptFile($this->mainAssets . '/js/bootstrap-notify.js');
+    Yii::app()->getClientScript()->registerScriptFile($this->mainAssets . '/js/jquery.li-translit.js');
+    ?>
+    <script type="text/javascript">
+        var yupeTokenName = '<?= Yii::app()->getRequest()->csrfTokenName;?>';
+        var yupeToken = '<?= Yii::app()->getRequest()->getCsrfToken();?>';
+    </script>
     <!--[if IE]>
     <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
+    <link rel="stylesheet" href="http://yandex.st/highlightjs/8.2/styles/github.min.css">
+    <script src="http://yastatic.net/highlightjs/8.2/highlight.min.js"></script>
+    <?php \yupe\components\TemplateEvent::fire(DefautThemeEvents::HEAD_END);?>
 </head>
 
 <body>
-<?php $this->widget('application.modules.menu.widgets.MenuWidget', array('name' => 'top-menu')); ?>
+
+<?php \yupe\components\TemplateEvent::fire(DefautThemeEvents::BODY_START);?>
+
+<?php if (Yii::app()->hasModule('menu')): ?>
+    <?php $this->widget('application.modules.menu.widgets.MenuWidget', ['name' => 'top-menu']); ?>
+<?php endif; ?>
 <!-- container -->
 <div class='container'>
     <!-- flashMessages -->
-    <?php $this->widget('YFlashMessages'); ?>
+    <?php $this->widget('yupe\widgets\YFlashMessages'); ?>
     <!-- breadcrumbs -->
     <?php $this->widget(
         'bootstrap.widgets.TbBreadcrumbs',
-        array(
+        [
             'links' => $this->breadcrumbs,
-        )
+        ]
     );?>
     <div class="row">
-        <!-- content -->
-        <section class="span9 content">
-            <?php echo $content; ?>
-        </section>
-        <!-- content end-->
-
-        <!-- sidebar -->
-        <aside class="span3 sidebar">
-            <?php if (Yii::app()->user->isAuthenticated()): ?>
-                <div class="widget last-login-users-widget">
-                    <?php $this->widget('application.modules.user.widgets.ProfileWidget'); ?>
-                </div>
-            <?php endif; ?>
-
-            <div class="widget blogs-widget">
-                <?php $this->widget('application.modules.blog.widgets.BlogsWidget', array('cacheTime' => $this->yupe->coreCacheTime)); ?>
-            </div>
-
-            <div class="widget last-posts-widget">
-                <?php $this->widget('application.modules.blog.widgets.LastPostsWidget', array('cacheTime' => $this->yupe->coreCacheTime)); ?>
-            </div>
-
-            <div class="widget tags-cloud-widget">
-                <?php $this->widget(
-                    'application.modules.yupe.extensions.taggable.widgets.TagCloudWidget.TagCloudWidget',
-                    array('cacheTime' => $this->yupe->coreCacheTime, 'model' => 'Post')
-                ); ?>
-            </div>
-
-            <div class="widget last-questions-widget">
-                <?php $this->widget('application.modules.feedback.widgets.FaqWidget', array('cacheTime' => $this->yupe->coreCacheTime)); ?>
-            </div>
-
-            <div class="widget last-login-users-widget">
-                <?php $this->widget(
-                    'application.modules.user.widgets.LastLoginUsersWidget',
-                    array(
-                        'cacheTime' => $this->yupe->coreCacheTime,
-                    )
-                ); ?>
-            </div>
-        </aside>
-        <!-- sidebar end -->
+        <?= $content; ?>
     </div>
     <!-- footer -->
     <?php $this->renderPartial('//layouts/_footer'); ?>
     <!-- footer end -->
 </div>
+<div class='notifications top-right' id="notifications"></div>
 <!-- container end -->
-<?php $this->widget(
-    "application.modules.contentblock.widgets.ContentBlockWidget",
-    array("code" => "STAT", "silent" => true)
-); ?>
+<?php if (Yii::app()->hasModule('contentblock')): ?>
+    <?php $this->widget(
+        "application.modules.contentblock.widgets.ContentBlockWidget",
+        ["code" => "STAT", "silent" => true]
+    ); ?>
+<?php endif; ?>
+
+<?php \yupe\components\TemplateEvent::fire(DefautThemeEvents::BODY_END);?>
+
 </body>
 </html>

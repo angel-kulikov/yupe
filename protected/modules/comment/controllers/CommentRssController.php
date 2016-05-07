@@ -10,58 +10,54 @@
  * @since 0.1
  *
  */
-
-class CommentRssController extends yupe\components\controllers\FrontController
+class CommentRssController extends yupe\components\controllers\RssController
 {
-    public function actions()
+    public function loadData()
     {
-        if (!($limit = (int) Yii::app()->getModule('news')->rssCount)) {
+        $module = Yii::app()->getModule('comment');
+
+        if (!($limit = (int)$module->rssCount)) {
             throw new CHttpException(404);
         }
-
-        $criteria = new CDbCriteria;
-        $criteria->order = 't.creation_date DESC';
-        $criteria->params = array();
-        $criteria->limit = $limit;
-
-        $title = Yii::app()->getModule('yupe')->siteName;
-        $description = Yii::app()->getModule('yupe')->siteDescription;
 
         $model = Yii::app()->getRequest()->getQuery('model');
         $modelId = (int)Yii::app()->getRequest()->getQuery('modelId');
 
-        if(empty($model) || empty($modelId)) {
+        if (empty($model) || empty($modelId)) {
             throw new CHttpException(404);
         }
 
-        $criteria->addCondition('model = :model')
-            ->addCondition('model_id = :modelId')
-            ->addCondition('t.id<>t.root');
+        $models = $module->getModelsAvailableForRss();
 
-        $criteria->params = array(
-            ':model'    => $model,
-            ':modelId'  => $modelId,
-        );
+        if(empty($models) || !in_array($model, $models)) {
+            throw new CHttpException(404);
+        }
 
-        $data = Comment::model()->cache(Yii::app()->getModule('yupe')->coreCacheTime)->approved()->with('author')->findAll($criteria);
+        $this->title = $this->yupe->siteName;
+        $this->description = $this->yupe->siteDescription;
 
-        return array(
-            'feed' => array(
-                'class' => 'application.modules.yupe.components.actions.YFeedAction',
-                'data' => $data,
-                'title' => $title,
-                'description' => $description,
-                'itemFields' => array(
+        $this->data = Yii::app()->commentManager->getCommentsForModel($model, $modelId);
+    }
+
+    public function actions()
+    {
+        return [
+            'feed' => [
+                'class' => 'yupe\components\actions\YFeedAction',
+                'data' => $this->data,
+                'title' => $this->title,
+                'description' => $this->description,
+                'itemFields' => [
                     'author_object' => false,
                     'author_nickname' => false,
                     'content' => 'text',
-                    'datetime' => 'creation_date',
+                    'datetime' => 'create_time',
                     'link' => false,
-                    'linkParams' => array('title' => 'alias'),
+                    'linkParams' => ['title' => 'alias'],
                     'title' => false,
-                    'updated' => 'creation_date',
-                ),
-            ),
-        );
+                    'updated' => 'create_time',
+                ],
+            ],
+        ];
     }
 }

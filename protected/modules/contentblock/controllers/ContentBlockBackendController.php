@@ -1,4 +1,5 @@
 <?php
+
 /**
  * ContentBlockBackendController контроллер для управления блоками контента в панели управления
  *
@@ -11,28 +12,60 @@
  */
 class ContentBlockBackendController extends yupe\components\controllers\BackController
 {
+    public function accessRules()
+    {
+        return [
+            ['allow', 'roles' => ['admin']],
+            ['allow', 'actions' => ['index'], 'roles' => ['ContentBlock.ContentblockBackend.Index']],
+            ['allow', 'actions' => ['view'], 'roles' => ['ContentBlock.ContentblockBackend.View']],
+            ['allow', 'actions' => ['create'], 'roles' => ['ContentBlock.ContentblockBackend.Create']],
+            ['allow', 'actions' => ['update', 'toggle', 'inline'], 'roles' => ['ContentBlock.ContentblockBackend.Update']],
+            ['allow', 'actions' => ['delete', 'multiaction'], 'roles' => ['ContentBlock.ContentblockBackend.Delete']],
+            ['deny']
+        ];
+    }
+
+    public function actions()
+    {
+        return [
+            'inline' => [
+                'class'           => 'yupe\components\actions\YInLineEditAction',
+                'model'           => 'ContentBlock',
+                'validAttributes' => ['name', 'code', 'type', 'description']
+            ],
+            'toggle' => [
+                'class'     => 'booster.actions.TbToggleAction',
+                'modelName' => 'ContentBlock',
+            ],
+        ];
+    }
+
     /**
      * Displays a particular model.
-     * 
+     *
      * @param integer $id the ID of the model to be displayed
      *
      * @return void
      */
     public function actionView($id)
     {
-        $model                 = $this->loadModel($id);
-        
-        $code                  = "<?php \$this->widget(\"application.modules.contentblock.widgets.ContentBlockWidget\", array(\"code\" => \"{$model->code}\")); ?>";
-        
-        $highlighter           = new CTextHighlighter;
+        $model = $this->loadModel($id);
+
+        $code = "<?php \$this->widget(\n\t\"application.modules.contentblock.widgets.ContentBlockWidget\",\n\tarray(\"code\" => \"{$model->code}\"));\n?>";
+        $codeCategory = "<?php \$this->widget(\n\t\"application.modules.contentblock.widgets.ContentBlockGroupWidget\",\n\tarray(\"category\" => \"{$model->getCategoryAlias()}\"));\n?>";
+
+        $highlighter = new CTextHighlighter();
         $highlighter->language = 'PHP';
-        $example               = $highlighter->highlight($code); 
+        $example = $highlighter->highlight($code);
+        $exampleCategory = $highlighter->highlight($codeCategory);
 
         $this->render(
-            'view', array(
-                'model'   => $model,
-                'example' => $example,
-            )
+            'view',
+            [
+                'model'           => $model,
+                'example'         => $example,
+                'exampleCategory' => $exampleCategory
+            ]
         );
     }
 
@@ -44,34 +77,32 @@ class ContentBlockBackendController extends yupe\components\controllers\BackCont
      */
     public function actionCreate()
     {
-        $model = new ContentBlock;
-
-        // Uncomment the following line if AJAX validation is needed
-        // $this->performAjaxValidation($model);
+        $model = new ContentBlock();
 
         if (($data = Yii::app()->getRequest()->getPost('ContentBlock')) !== null) {
             $model->setAttributes($data);
 
             if ($model->save()) {
                 Yii::app()->user->setFlash(
-                    YFlashMessages::SUCCESS_MESSAGE,
+                    yupe\widgets\YFlashMessages::SUCCESS_MESSAGE,
                     Yii::t('ContentBlockModule.contentblock', 'New content block was added!')
                 );
 
                 $this->redirect(
-                    (array) Yii::app()->getRequest()->getPost(
-                        'submit-type', array('create')
+                    (array)Yii::app()->getRequest()->getPost(
+                        'submit-type',
+                        ['create']
                     )
                 );
             }
         }
-        $this->render('create', array('model' => $model));
+        $this->render('create', ['model' => $model]);
     }
 
     /**
      * Updates a particular model.
      * If update is successful, the browser will be redirected to the 'view' page.
-     * 
+     *
      * @param integer $id the ID of the model to be updated
      *
      * @return void
@@ -80,34 +111,32 @@ class ContentBlockBackendController extends yupe\components\controllers\BackCont
     {
         $model = $this->loadModel($id);
 
-        // Uncomment the following line if AJAX validation is needed
-        // $this->performAjaxValidation($model);
-
         if (($data = Yii::app()->getRequest()->getPost('ContentBlock')) !== null) {
             $model->setAttributes($data);
 
             if ($model->save()) {
                 Yii::app()->user->setFlash(
-                    YFlashMessages::SUCCESS_MESSAGE,
+                    yupe\widgets\YFlashMessages::SUCCESS_MESSAGE,
                     Yii::t('ContentBlockModule.contentblock', 'Content block was changed!')
                 );
 
                 Yii::app()->cache->delete("ContentBlock{$model->code}");
 
                 $this->redirect(
-                    (array) Yii::app()->getRequest()->getPost(
-                        'submit-type', array('update', 'id' => $model->id)
+                    (array)Yii::app()->getRequest()->getPost(
+                        'submit-type',
+                        ['update', 'id' => $model->id]
                     )
                 );
             }
         }
-        $this->render('update', array('model' => $model));
+        $this->render('update', ['model' => $model]);
     }
 
     /**
      * Deletes a particular model.
      * If deletion is successful, the browser will be redirected to the 'admin' page.
-     * 
+     *
      * @param integer $id the ID of the model to be deleted
      *
      * @return void
@@ -117,13 +146,13 @@ class ContentBlockBackendController extends yupe\components\controllers\BackCont
     public function actionDelete($id)
     {
         if (Yii::app()->getRequest()->getIsPostRequest()) {
-            
+
             // we only allow deletion via POST request
             $this->loadModel($id)->delete();
 
             // if AJAX request (triggered by deletion via admin grid view), we should not redirect the browser
             Yii::app()->getRequest()->getIsAjaxRequest() || $this->redirect(
-                (array) Yii::app()->getRequest()->getPost('returnUrl', 'index')
+                (array)Yii::app()->getRequest()->getPost('returnUrl', 'index')
             );
 
         } else {
@@ -139,48 +168,36 @@ class ContentBlockBackendController extends yupe\components\controllers\BackCont
     public function actionIndex()
     {
         $model = new ContentBlock('search');
-        
+
         $model->unsetAttributes(); // clear any default values
-        
+
         $model->setAttributes(
             Yii::app()->getRequest()->getParam(
-                'ContentBlock', array()
+                'ContentBlock',
+                []
             )
         );
 
-        $this->render('index', array('model' => $model));
+        $this->render('index', ['model' => $model]);
     }
 
     /**
      * Returns the data model based on the primary key given in the GET variable.
      * If the data model is not found, an HTTP exception will be raised.
-     * 
-     * @param integer the ID of the model to be loaded
+     *
+     * @param integer $id the ID of the model to be loaded
      *
      * @return ContentBlock $model
      *
-     * @throws CHttpEcxeption
+     * @throws CHttpException
      */
     public function loadModel($id)
     {
-        $model = ContentBlock::model()->findByPk((int) $id);
-        if ($model === null)
+        $model = ContentBlock::model()->with('category')->findByPk((int)$id);
+        if ($model === null) {
             throw new CHttpException(404, Yii::t('ContentBlockModule.contentblock', 'Page was not found!'));
-        return $model;
-    }
-
-    /**
-     * Performs the AJAX validation.
-     * 
-     * @param CModel the model to be validated
-     *
-     * @return void
-     */
-    protected function performAjaxValidation(ContentBlock $model)
-    {
-        if (Yii::app()->getRequest()->getIsAjaxRequest() && Yii::app()->getRequest()->getPost('ajax') === 'content-block-form') {
-            echo CActiveForm::validate($model);
-            Yii::app()->end();
         }
+
+        return $model;
     }
 }

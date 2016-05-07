@@ -17,36 +17,149 @@
 
 use yupe\components\WebModule;
 
+/**
+ * Class YupeModule
+ */
 class YupeModule extends WebModule
 {
+    /**
+     *
+     */
+    const VERSION = '1.0-beta-1';
+
+    /**
+     * @var
+     */
     public $enableAssets;
+    /**
+     * @var
+     */
     public $cache;
 
+    /**
+     * @var
+     */
     public $siteDescription;
+    /**
+     * @var
+     */
     public $siteName;
+    /**
+     * @var
+     */
     public $siteKeyWords;
 
+    /**
+     * @var string
+     */
     public $backendLayout = 'column2';
+    /**
+     * @var
+     */
     public $backendTheme;
+    /**
+     * @var string
+     */
     public $emptyLayout = 'empty';
+    /**
+     * @var
+     */
     public $theme;
 
-    public $brandUrl;
+    /**
+     * @var int
+     */
     public $coreCacheTime = 3600;
+    /**
+     * @var string
+     */
     public $coreModuleId = 'yupe';
-    public $editorsDir = 'application.modules.yupe.widgets.editors';
+
+    /**
+     * @var string
+     */
     public $uploadPath = 'uploads';
+    /**
+     * @var
+     */
     public $email;
 
-    public $categoryIcon;
-    public $categorySort;
-
-    public $availableLanguages = 'ru,en';
+    /**
+     * @var string
+     */
+    public $availableLanguages = 'ru,en,zh_cn';
+    /**
+     * @var string
+     */
     public $defaultLanguage = 'ru';
+    /**
+     * @var string
+     */
     public $defaultBackendLanguage = 'ru';
 
-    public $otherCategoryName;
-    public $updateChannel = 'release';
+    /**
+     * @var int
+     */
+    public $adminMenuOrder = -1;
+
+    /**
+     * @var string
+     */
+    public $profileModel = 'User';
+
+    /**
+     * @var
+     */
+    public $allowedIp;
+    /**
+     * @var int
+     */
+    public $hidePanelUrls = 0;
+
+    /**
+     * @var string
+     */
+    public $logo = 'images/logo.png';
+
+    /**
+     * @var array
+     * @since 0.8
+     *
+     * Массив фильтров для контроллеров панели управления
+     */
+    protected $backEndFilters = [['yupe\filters\YBackAccessControl - error']];
+
+    /**
+     * @return array
+     * @since 0.8
+     *
+     * Вернет массив фильтров для контроллеров панели управления
+     */
+    public function getBackendFilters()
+    {
+        return $this->backEndFilters;
+    }
+
+    /**
+     * @since 0.8
+     *
+     * Устанавливает массив фильтров для контроллеров панели управления
+     */
+    public function setBackendFilters($filters)
+    {
+        $this->backEndFilters = $filters;
+    }
+
+    /**
+     * @param $filter
+     * @since 0.8
+     *
+     * Добавить новый фильтр для контроллеров панели управления
+     */
+    public function addBackendFilter($filter)
+    {
+        $this->backEndFilters[] = $filter;
+    }
 
     /**
      * Возвращаем версию:
@@ -55,7 +168,27 @@ class YupeModule extends WebModule
      **/
     public function getVersion()
     {
-        return Yii::t('YupeModule.yupe', '0.6(dev)');
+        return self::VERSION;
+    }
+
+    /**
+     * @return array
+     */
+    public function getAllowedIp()
+    {
+        if (strpos($this->allowedIp, ',')) {
+            return explode(',', trim($this->allowedIp));
+        }
+
+        return [];
+    }
+
+    /**
+     * @since 0.7
+     */
+    public function getLogo()
+    {
+        return Yii::app()->getTheme()->getAssetsUrl() . '/' . $this->logo;
     }
 
     /**
@@ -65,107 +198,107 @@ class YupeModule extends WebModule
      **/
     public function checkSelf()
     {
-        $messages = array();
+        $messages = [];
 
         if (Yii::app()->hasModule('install')) {
-            $messages[WebModule::CHECK_ERROR][] = array(
-                'type' => WebModule::CHECK_ERROR,
+            $messages[WebModule::CHECK_ERROR][] = [
+                'type'    => WebModule::CHECK_ERROR,
                 'message' => Yii::t(
                     'YupeModule.yupe',
                     'You have active " Install" module, you must disable it after installation! <a href="http://www.yiiframework.com/doc/guide/basics.module">More about Yii modules</a>'
                 ),
-            );
+            ];
         }
 
-        if (Yii::app()->db->enableProfiling) {
-            $messages[WebModule::CHECK_ERROR][] = array(
-                'type' => WebModule::CHECK_ERROR,
+        if (Yii::app()->getDb()->enableProfiling) {
+            $messages[WebModule::CHECK_ERROR][] = [
+                'type'    => WebModule::CHECK_ERROR,
                 'message' => Yii::t(
                     'YupeModule.yupe',
                     'Please, disable profiler (file /protected/config/db.php, parameter "enableProfiling")!'
                 ),
-            );
+            ];
         }
 
-        if (Yii::app()->db->enableParamLogging) {
-            $messages[WebModule::CHECK_ERROR][] = array(
-                'type' => WebModule::CHECK_ERROR,
+        if (Yii::app()->getDb()->enableParamLogging) {
+            $messages[WebModule::CHECK_ERROR][] = [
+                'type'    => WebModule::CHECK_ERROR,
                 'message' => Yii::t(
                     'YupeModule.yupe',
                     'Please, disable logging (file /protected/config/db.php, parameter "enableParamLogging")!'
                 ),
-            );
+            ];
         }
 
         if (Yii::app()->hasModule('gii')) {
-            $messages[WebModule::CHECK_ERROR][] = array(
-                'type' => WebModule::CHECK_ERROR,
+            $messages[WebModule::CHECK_ERROR][] = [
+                'type'    => WebModule::CHECK_ERROR,
                 'message' => Yii::t(
                     'YupeModule.yupe',
                     'You have active "gii" module. You must disable it after installation! <a href="http://www.yiiframework.com/doc/guide/basics.module">More about Yii modules</a>'
                 ),
-            );
+            ];
         }
 
         $uploadPath = Yii::getPathOfAlias('webroot') . '/' . $this->uploadPath;
 
         if (!is_writable($uploadPath)) {
-            $messages[WebModule::CHECK_ERROR][] = array(
-                'type' => WebModule::CHECK_ERROR,
+            $messages[WebModule::CHECK_ERROR][] = [
+                'type'    => WebModule::CHECK_ERROR,
                 'message' => Yii::t(
                     'YupeModule.yupe',
                     'Directory "{dir}" is not available for write! {link}',
-                    array(
-                        '{dir}' => $uploadPath,
+                    [
+                        '{dir}'  => $uploadPath,
                         '{link}' => CHtml::link(
                             Yii::t('YupeModule.yupe', 'Change settings'),
-                            array('/yupe/backend/modulesettings/', 'module' => 'yupe')
+                            ['/yupe/backend/modulesettings/', 'module' => 'yupe']
                         ),
-                    )
+                    ]
                 ),
-            );
+            ];
         }
 
-        if (!is_writable(Yii::app()->runtimePath)) {
-            $messages[WebModule::CHECK_ERROR][] = array(
-                'type' => WebModule::CHECK_ERROR,
+        if (!is_writable(Yii::app()->getRuntimePath())) {
+            $messages[WebModule::CHECK_ERROR][] = [
+                'type'    => WebModule::CHECK_ERROR,
                 'message' => Yii::t(
                     'YupeModule.yupe',
                     'Directory "{dir}" is not available for write!',
-                    array('{dir}' => Yii::app()->runtimePath)
+                    ['{dir}' => Yii::app()->runtimePath]
                 ),
-            );
+            ];
         }
 
         if (!is_writable(Yii::app()->getAssetManager()->basePath)) {
-            $messages[WebModule::CHECK_ERROR][] = array(
-                'type' => WebModule::CHECK_ERROR,
+            $messages[WebModule::CHECK_ERROR][] = [
+                'type'    => WebModule::CHECK_ERROR,
                 'message' => Yii::t(
                     'YupeModule.yupe',
                     'Directory "{dir}" is not available for write!',
-                    array('{dir}' => Yii::app()->getAssetManager()->basePath)
+                    ['{dir}' => Yii::app()->getAssetManager()->basePath]
                 ),
-            );
+            ];
         }
 
         if (defined('YII_DEBUG') && YII_DEBUG) {
-            $messages[WebModule::CHECK_ERROR][] = array(
-                'type' => WebModule::CHECK_ERROR,
+            $messages[WebModule::CHECK_ERROR][] = [
+                'type'    => WebModule::CHECK_ERROR,
                 'message' => Yii::t(
                     'YupeModule.yupe',
                     'Yii is working in debug mode, please, disable it! <br/> <a href="http://www.yiiframework.com/doc/guide/topics.performance">More about Yii performance</a>'
                 ),
-            );
+            ];
         }
 
-        if (!Yii::app()->db->schemaCachingDuration) {
-            $messages[WebModule::CHECK_ERROR][] = array(
-                'type' => WebModule::CHECK_ERROR,
+        if (!Yii::app()->getDb()->schemaCachingDuration) {
+            $messages[WebModule::CHECK_ERROR][] = [
+                'type'    => WebModule::CHECK_ERROR,
                 'message' => Yii::t(
                     'YupeModule.yupe',
                     'Please, enable DB caching! <br/> <a href="http://www.yiiframework.com/doc/guide/topics.performance">More about Yii performance</a>'
                 ),
-            );
+            ];
         }
 
         return isset($messages[WebModule::CHECK_ERROR]) ? $messages : true;
@@ -178,23 +311,31 @@ class YupeModule extends WebModule
      **/
     public function getParamsLabels()
     {
-        return array(
-            'siteDescription' => Yii::t('YupeModule.yupe', 'Site description'),
-            'siteName' => Yii::t('YupeModule.yupe', 'Site title'),
-            'siteKeyWords' => Yii::t('YupeModule.yupe', 'Site keywords'),
-            'backendLayout' => Yii::t('YupeModule.yupe', 'Layout of backend'),
-            'backendTheme' => Yii::t('YupeModule.yupe', 'Theme of backend'),
-            'theme' => Yii::t('YupeModule.yupe', 'Frontend theme'),
-            'coreCacheTime' => Yii::t('YupeModule.yupe', 'Chacing time (sec.)'),
-            'editorsDir' => Yii::t('YupeModule.yupe', 'Visual editors catalog'),
-            'uploadPath' => Yii::t('YupeModule.yupe', 'File uploads catalog (relative to the site root)'),
-            'editor' => Yii::t('YupeModule.yupe', 'Visual editor'),
-            'email' => Yii::t('YupeModule.yupe', 'Admin Email'),
-            'availableLanguages' => Yii::t('YupeModule.yupe', 'List of available languages (for example. ru,en,de)'),
-            'defaultLanguage' => Yii::t('YupeModule.yupe', 'Default language'),
+        return [
+            'siteDescription'        => Yii::t('YupeModule.yupe', 'Site description'),
+            'siteName'               => Yii::t('YupeModule.yupe', 'Site title'),
+            'siteKeyWords'           => Yii::t('YupeModule.yupe', 'Site keywords'),
+            'backendLayout'          => Yii::t('YupeModule.yupe', 'Layout of backend'),
+            'backendTheme'           => Yii::t('YupeModule.yupe', 'Theme of backend'),
+            'theme'                  => Yii::t('YupeModule.yupe', 'Frontend theme'),
+            'coreCacheTime'          => Yii::t('YupeModule.yupe', 'Chacing time (sec.)'),
+            'uploadPath'             => Yii::t('YupeModule.yupe', 'File uploads catalog (relative to the site root)'),
+            'editor'                 => Yii::t('YupeModule.yupe', 'Visual editor'),
+            'email'                  => Yii::t('YupeModule.yupe', 'Admin Email'),
+            'availableLanguages'     => Yii::t(
+                'YupeModule.yupe',
+                'List of available languages (for example. ru,en,de)'
+            ),
+            'defaultLanguage'        => Yii::t('YupeModule.yupe', 'Default language'),
             'defaultBackendLanguage' => Yii::t('YupeModule.yupe', 'Default backend language'),
-            'updateChannel' => Yii::t('YupeModule.yupe', 'Update Yupe'),
-        );
+            'allowedIp'              => Yii::t('YupeModule.yupe', 'Allowed IP'),
+            'hidePanelUrls'          => Yii::t('YupeModule.yupe', 'Hide panel urls'),
+            'logo'                   => Yii::t('YupeModule.yupe', 'Logo'),
+            'allowedExtensions'      => Yii::t('YupeModule.yupe', 'Allowed extensions (separated by comma)'),
+            'mimeTypes'              => Yii::t('YupeModule.yupe', 'Mime types'),
+            'maxSize'                => Yii::t('YupeModule.yupe', 'Maximum size (in bytes)'),
+
+        ];
     }
 
     /**
@@ -204,23 +345,80 @@ class YupeModule extends WebModule
      **/
     public function getEditableParams()
     {
-        return array(
+        return [
             'coreCacheTime',
-            'theme' => $this->getThemes(),
-            'backendLayout',
-            'backendTheme' => $this->getThemes(true),
+            'theme'                  => $this->getThemes(),
+            'backendTheme'           => $this->getThemes(true),
             'siteName',
             'siteDescription',
             'siteKeyWords',
-            'editorsDir',
             'uploadPath',
-            'editor' => $this->getEditors(),
+            'editor'                 => $this->getEditors(),
             'email',
             'availableLanguages',
-            'defaultLanguage' => $this->getLanguagesList(),
+            'defaultLanguage'        => $this->getLanguagesList(),
             'defaultBackendLanguage' => $this->getLanguagesList(),
-            //'updateChannel'          => $this->updateChannelList,
-        );
+            'allowedIp',
+            'hidePanelUrls'          => $this->getChoice(),
+            'logo',
+            'allowedExtensions',
+            'mimeTypes',
+            'maxSize',
+        ];
+    }
+
+    /**
+     * массив групп параметров модуля, для группировки параметров на странице настроек
+     *
+     * @return array
+     */
+    public function getEditableParamsGroups()
+    {
+        return [
+            'site'     => [
+                'label' => Yii::t('YupeModule.yupe', 'Site settings'),
+                'items' => [
+                    'logo',
+                    'siteName',
+                    'siteDescription',
+                    'siteKeyWords'
+                ]
+            ],
+            'theme'    => [
+                'label' => Yii::t('YupeModule.yupe', 'Themes'),
+                'items' => [
+                    'theme',
+                    'backendTheme'
+                ]
+            ],
+            'language' => [
+                'label' => Yii::t('YupeModule.yupe', 'Language settings'),
+                'items' => [
+                    'availableLanguages',
+                    'defaultLanguage',
+                    'defaultBackendLanguage',
+                ]
+            ],
+            'editors'  => [
+                'label' => Yii::t('YupeModule.yupe', 'Visual editors settings'),
+                'items' => [
+                    'editor',
+                    'uploadPath',
+                    'allowedExtensions',
+                    'mimeTypes',
+                    'maxSize',
+                ]
+            ],
+            'main'     => [
+                'label' => Yii::t('YupeModule.yupe', 'Main settings admin panel'),
+                'items' => [
+                    'hidePanelUrls',
+                    'allowedIp',
+                    'email',
+                    'coreCacheTime'
+                ]
+            ],
+        ];
     }
 
     /**
@@ -230,46 +428,15 @@ class YupeModule extends WebModule
      */
     public function rules()
     {
-        return array(
-            array('availableLanguages','filter','filter'=>function($str){ return preg_replace('/\s+/','',$str); }),
-        );
-    }
-
-    /**
-     * массив групп параметров модуля, для группировки параметров на странице настроек
-     * 
-     * @return array
-     */
-    public function getEditableParamsGroups()
-    {
-        return array(
-            'main' => array(
-                'label' => Yii::t('YupeModule.yupe', 'Main settings'),
-            ),
-            'theme' => array(
-                'label' => Yii::t('YupeModule.yupe', 'Theme settings'),
-                'items' => array(
-                    'backendLayout',
-                    'backendTheme',
-                )
-            ),
-            'language' => array(
-                'label' => Yii::t('YupeModule.yupe', 'Language settings'),
-                'items' => array(
-                    'availableLanguages',
-                    'defaultLanguage',
-                    'defaultBackendLanguage',
-                )
-            ),
-            'editors' => array(
-                'label' => Yii::t('YupeModule.yupe', 'Visual editors settings'),
-                'items' => array(
-                    'editorsDir',
-                    'uploadPath',
-                    'editor',
-                )
-            ),
-        );
+        return [
+            [
+                'availableLanguages',
+                'filter',
+                'filter' => function ($str) {
+                    return preg_replace('/\s+/', '', $str);
+                }
+            ],
+        ];
     }
 
     /**
@@ -299,25 +466,12 @@ class YupeModule extends WebModule
      **/
     public function getLanguagesList()
     {
-        $langs = array();
+        $langs = [];
         foreach (explode(',', $this->availableLanguages) as $lang) {
-            $langs[$lang] = Yii::app()->locale->getLocaleDisplayName($lang);
+            $langs[$lang] = Yii::app()->getLocale()->getLocaleDisplayName($lang);
         }
-        return $langs;
-    }
 
-    /**
-     * Возвращаем массив возможных трекеров обновления:
-     *
-     * @return mixed
-     **/
-    protected function getUpdateChannelList()
-    {
-        $channelsList = array(
-            'disabled' => Yii::t('YupeModule.yupe', 'Update disabled'),
-            'release' => Yii::t('YupeModule.yupe', 'Update by releases'),
-        );
-        return $channelsList;
+        return $langs;
     }
 
     /**
@@ -327,7 +481,7 @@ class YupeModule extends WebModule
      **/
     public function getAdminPageLink()
     {
-        return array('/yupe/backend/modulesettings', 'module' => 'yupe');
+        return '/yupe/backend/settings';
     }
 
     /**
@@ -337,64 +491,77 @@ class YupeModule extends WebModule
      **/
     public function getNavigation()
     {
-        return array(
-            array(
-                'label' => Yii::t('YupeModule.yupe', 'Clean cache'),
-                'url' => 'javascript::void();',
-                'icon' => 'trash',
-                'items' => array(
-                    array(
-                        'icon' => 'trash',
-                        'label' => Yii::t('YupeModule.yupe', 'Clean settings cache'),
-                        'url' => array('/yupe/backend/flushDumpSettings'),
-                        'linkOptions' => array(
-                            'class' => 'flushAction',
+        return [
+            [
+                'label'       => Yii::t('YupeModule.yupe', 'Clean cache'),
+                'url'         => ['/yupe/backend/ajaxflush', 'method' => 1],
+                'linkOptions' => [
+                    'class'  => 'flushAction',
+                    'method' => 'cacheAll',
+                ],
+                'icon'        => 'fa fa-fw fa-trash-o',
+                'items'       => [
+                    [
+                        'icon'        => 'fa fa-fw fa-trash-o',
+                        'label'       => Yii::t('YupeModule.yupe', 'Clean cache'),
+                        'url'         => ['/yupe/backend/ajaxflush', 'method' => 1],
+                        'linkOptions' => [
+                            'class'  => 'flushAction',
                             'method' => 'cacheFlush',
-                        )
-                    ),
-                    array(
-                        'icon' => 'trash',
-                        'label' => Yii::t('YupeModule.yupe', 'Clean cache'),
-                        'url' => array('/yupe/backend/ajaxflush', 'method' => 1),
-                        'linkOptions' => array(
-                            'class' => 'flushAction',
+                        ]
+                    ],
+                    [
+                        'icon'        => 'fa fa-fw fa-trash-o',
+                        'label'       => Yii::t('YupeModule.yupe', 'Clean settings cache'),
+                        'url'         => ['/yupe/backend/flushDumpSettings'],
+                        'linkOptions' => [
+                            'class'  => 'flushAction',
                             'method' => 'cacheFlush',
-                        )
-                    ),
-                    array(
-                        'icon' => 'trash',
-                        'label' => Yii::t('YupeModule.yupe', 'Clean assets'),
-                        'url' => array('/yupe/backend/ajaxflush', 'method' => 2),
-                        'linkOptions' => array(
-                            'class' => 'flushAction',
+                        ]
+                    ],
+                    [
+                        'icon'        => 'fa fa-fw fa-trash-o',
+                        'label'       => Yii::t('YupeModule.yupe', 'Clean assets'),
+                        'url'         => ['/yupe/backend/ajaxflush', 'method' => 2],
+                        'linkOptions' => [
+                            'class'  => 'flushAction',
                             'method' => 'assetsFlush',
-                        )
-                    ),
-                    array(
-                        'icon' => 'trash',
-                        'label' => Yii::t('YupeModule.yupe', 'Clean cache and assets'),
-                        'url' => array('/yupe/backend/ajaxflush', 'method' => 3),
-                        'linkOptions' => array(
-                            'class' => 'flushAction',
+                        ],
+                        'visible' => !Yii::app()->getAssetManager()->linkAssets
+                    ],
+                    [
+                        'icon'        => 'fa fa-fw fa-trash-o',
+                        'label'       => Yii::t('YupeModule.yupe', 'Clean cache and assets'),
+                        'url'         => ['/yupe/backend/ajaxflush', 'method' => 3],
+                        'linkOptions' => [
+                            'class'  => 'flushAction',
                             'method' => 'cacheAssetsFlush',
-                        )
-                    ),
-                )
-            ),
-            array(
-                'icon' => 'picture',
+                        ],
+                        'visible' => !Yii::app()->getAssetManager()->linkAssets
+                    ],
+                ]
+            ],
+            [
+                'icon'  => "fa fa-fw fa-th",
+                'label' => Yii::t('YupeModule.yupe', 'Modules'),
+                'url'   => ['/yupe/backend/settings'],
+            ],
+            [
+                'icon'  => 'fa fa-fw fa-picture-o',
                 'label' => Yii::t('YupeModule.yupe', 'Theme settings'),
-                'url' => array('/yupe/backend/themesettings'),
-            ),
-            array(
-                'icon' => 'wrench',
+                'url'   => ['/yupe/backend/themesettings'],
+            ],
+            [
+                'icon'  => 'fa fa-fw fa-wrench',
                 'label' => Yii::t('YupeModule.yupe', 'Site settings'),
-                'url' => array(
-                    '/yupe/backend/modulesettings',
-                    'module' => 'yupe',
-                ),
-            ),
-        );
+                'url'   => $this->getSettingsUrl(),
+            ],
+            [
+                'icon'  => "fa fa-fw fa-question-circle",
+                'label' => Yii::t('YupeModule.yupe', 'About Yupe!'),
+                'url'   => ['/yupe/backend/help'],
+            ]
+        ];
     }
 
     /**
@@ -434,7 +601,7 @@ class YupeModule extends WebModule
      **/
     public function getAuthor()
     {
-        return Yii::t('YupeModule.yupe', 'yupe team');
+        return 'yupe team';
     }
 
     /**
@@ -464,419 +631,17 @@ class YupeModule extends WebModule
      **/
     public function getIcon()
     {
-        return "cog";
+        return "fa fa-fw fa-cog";
     }
 
     /**
      * Инициализация модуля:
      *
-     * @return nothing
+     * @return void
      **/
     public function init()
     {
         parent::init();
-    }
-
-    /**
-     * Возвращаем список модулей:
-     *
-     * @param bool $navigationOnly - только навигация
-     * @param bool $disableModule  - отключённые модули
-     *
-     * @return mixed
-     **/
-    public function getModules($navigationOnly = false, $disableModule = false)
-    {
-
-        $this->otherCategoryName = Yii::t('YupeModule.yupe', 'Other');
-
-        $this->categoryIcon = array(
-            Yii::t('YupeModule.yupe', 'Services') => 'briefcase',
-            $this->otherCategoryName => 'cog',
-        );
-
-        $this->categorySort = array(
-            Yii::t('YupeModule.yupe', 'Content'),
-            Yii::t('YupeModule.yupe', 'Structure'),
-            Yii::t('YupeModule.yupe', 'Users'),
-            Yii::t('YupeModule.yupe', 'Services'),
-            Yii::t('YupeModule.yupe', 'Yupe!'),
-            $this->otherCategoryName,
-        );
-
-        $modules = $yiiModules = $order = array();
-
-        if (count(Yii::app()->modules)) {
-            /**
-             * @todo внести получение модулей в кэш
-             * Получаем модули и заполняем основные массивы
-             **/
-            foreach (Yii::app()->modules as $key => $value) {
-                $key = strtolower($key);
-                $module = Yii::app()->getModule($key);
-                if (($module !== null)) {
-                    if ($module instanceof WebModule) {
-                        $category = (!$module->category)
-                            ? $this->otherCategoryName
-                            : $module->category;
-                        $modules[$key] = $module;
-                        $order[$category][$key] = $module->adminMenuOrder;
-                    } else {
-                        $yiiModules[$key] = $module;
-                    }
-                }
-            }
-
-            $modulesNavigation = Yii::app()->cache->get('YupeModulesNavigation-' . Yii::app()->language);
-
-            if ($modulesNavigation === false) {
-                
-                // Формируем навигационное меню
-                $modulesNavigation = array();
-
-                // Шаблон настройка модулей
-                $settings = array(
-                    'icon' => "wrench",
-                    'label' => Yii::t('YupeModule.yupe', 'Modules'),
-                    'url' => array('/yupe/backend/settings'),
-                    //'items' => array(),
-                );
-
-                // Сортируем категории модулей
-                if (count($order) > 1) {
-                    $categorySort = array_reverse($this->categorySort);
-
-                    foreach ($categorySort as $iValue) {
-                        if (isset($order[$iValue])) {
-                            $orderValue = $order[$iValue];
-                            unset($order[$iValue]);
-                            $order = array($iValue => $orderValue) + $order;
-                        }
-                    }
-                }
-
-                // Обходим категории модулей
-                foreach ($order as $keyCategory => $valueCategory) {
-                    // Настройки модуля, если таковые имеются:
-                    $modSettings = array();
-                    $settings['items'] = array();
-
-                    // Шаблон категорий
-                    $modulesNavigation[$keyCategory] = array(
-                        'label' => $keyCategory,
-                        'url' => '#',
-                        'items' => array(),
-                    );
-
-                    if (isset($this->categoryIcon[$keyCategory])) {
-                        $modulesNavigation[$keyCategory]['icon'] = $this->categoryIcon[$keyCategory] . ' white';
-                    }
-
-                    // Сортируем модули в категории
-                    asort($valueCategory, SORT_NUMERIC);
-
-                    // Обходим модули
-                    foreach ($valueCategory as $key => $value) {
-                        // Собраются подпункты категории "Настройки модулей", кроме пункта Юпи
-                        if ($modules[$key]->editableParams && $key != $this->id) {
-                            $modSettings = array(
-                                '---',
-                                array(
-                                    'icon' => 'cog',
-                                    'label' => Yii::t('YupeModule.yupe', 'Module settings'),
-                                    'url' => array('/yupe/backend/modulesettings', 'module' => $modules[$key]->id),
-                                ),
-                            );
-                        }
-
-                        // Проверка на вывод модуля в категориях, потребуется при отключении модуля
-                        if (!$modules[$key]->getIsShowInAdminMenu()) {
-                            continue;
-                        }
-
-                        // Если нет иконка для данной категории, подставляется иконка первого модуля
-                        if (!isset($modulesNavigation[$keyCategory]['icon']) && $modules[$key]->icon) {
-                            $modulesNavigation[$keyCategory]['icon'] = $modules[$key]->icon . ' white';
-                        }
-
-                        // Шаблон модулей
-                        $data = array(
-                            'icon' => $modules[$key]->icon,
-                            'label' => $modules[$key]->name,
-                            'url' => $modules[$key]->adminPageLinkNormalize,
-                            'items' => array(),
-                        );
-
-                        // Добавляем подменю у модулей
-                        $links = $modules[$key]->getNavigation();
-                        if (is_array($links)) {
-                            $data['items'] = $links;
-                        } else {
-                            unset($modSettings[0]);
-                        }
-
-                        if ($key !== $this->id) {
-                            $data['items'] = array_merge(
-                                $data['items'], $key == $this->id ? array() : $modSettings
-                            );                            
-                        }
-
-                        $modulesNavigation[$keyCategory]['items'][$modules[$key]->id] = $data;
-                    }
-                }
-
-                // Удаляем последию категория, если она пуста
-                if (!isset($settings['items'][count($settings['items']) - 1]['icon'])) {
-                    unset($settings['items'][count($settings['items']) - 1]);
-                }
-
-                // Заполняем категорию Юпи!
-                $modulesNavigation[$this->category]['items']['settings'] = $settings;
-
-                // Цепочка зависимостей:
-                $chain = new CChainedCacheDependency();
-
-                // Зависимость на тег:
-                $chain->dependencies->add(
-                    new TagsCache('yupe', 'navigation', 'installedModules')
-                );
-
-                // Зависимость на каталог 'application.config.modules':
-                $chain->dependencies->add(
-                    new CDirectoryCacheDependency(
-                        Yii::getPathOfAlias('application.config.modules')
-                    )
-                );
-
-                Yii::app()->cache->set(
-                    'YupeModulesNavigation-' . Yii::app()->language,
-                    $modulesNavigation,
-                    0,
-                    $chain
-                );
-            }
-        }
-
-        if (CHtml::normalizeUrl("/" . Yii::app()->controller->route) != '/yupe/backend/index'
-            && Yii::app()->controller instanceof YBackendController
-        ) {
-            // Устанавливаем активную категорию
-            $thisCategory = Yii::app()->controller->module->category
-                ? Yii::app()->controller->module->category
-                : $this->otherCategoryName;
-            $thisCategory = & $modulesNavigation[$thisCategory];
-            $thisCategory['active'] = true;
-
-            // Устанавливаем активный модуль
-            $thisModule = (
-                (Yii::app(
-                )->controller->action->id == 'modulesettings' && isset($_GET['module']) && $_GET['module'] != 'yupe') ||
-                    Yii::app()->controller->action->id == 'settings'
-            ) ? 'settings' : Yii::app()->controller->module->getId();
-            $thisModule = & $thisCategory['items'][$thisModule];
-            if (!empty($thisModule)) {
-                $thisModule['active'] = true;
-            }
-
-            unset($thisModule);
-            unset($thisCategory);
-        }
-
-        // Подгрузка отключенных модулей
-        if ($disableModule) {
-            $modules += $this->getModulesDisabled($modules);
-        }
-
-        return ($navigationOnly === true) ? $modulesNavigation : array(
-            'modules' => $modules,
-            'yiiModules' => $yiiModules,
-            'modulesNavigation' => $modulesNavigation,
-        );
-    }
-
-    /**
-     * Метод проверяет является ли каталог валидным модулем Yii/Yupe
-     *
-     * @param string $module - ID модуля
-     *
-     * @since 0.6
-     *
-     * @return boolean true - модуль валиде false - нет
-     */
-
-    public function isValidModule($module)
-    {
-        if(!$module) {
-            return false;
-        }
-
-        $modulePath = $this->getModulesConfigDefault().DIRECTORY_SEPARATOR.$module;
-
-        if(!is_dir($modulePath)) {
-            return false;
-        }
-
-        $files = glob($modulePath . DIRECTORY_SEPARATOR . '*Module.php');
-
-        return empty($files) ? false : true;
-    }
-
-    /**
-     * Подгружает и выдает список отключенных модулей
-     *
-     * @param array $enableModule - список активных модулей, по умолчанию array()
-     *
-     * @since 0.5
-     *
-     * @return array список отключенных модулей
-     */
-    public function getModulesDisabled($enableModule = array())
-    {
-        if (($imports = Yii::app()->cache->get('pathForImports')) !== false){
-            $this->setImport($imports);
-        }
-        
-        try {
-            if ($imports === false || ($modules = @Yii::app()->cache->get('modulesDisabled')) == false) {
-                $modConfigs = Yii::getPathOfAlias('application.config.modules');
-                $modPath = Yii::getPathOfAlias('application.modules');
-                $cacheFile = Yii::app()->configManager->cacheFile;
-
-                foreach (new GlobIterator($modConfigs . '/*.php') as $item) {
-
-                    if (is_dir($modPath . '/' . $item->getBaseName('.php')) == false && $cacheFile != $item->getBaseName('.php')) {
-                        Yii::app()->cache->flush();
-
-                        unlink($modConfigs . '/' . $item->getBaseName());
-                        
-                        throw new Exception(
-                            Yii::t('YupeModule.yupe', 'There is an error occurred when try get modules from the cache. It seems that module\'s folder was deleted.')
-                        );
-                    }
-                }
-                
-                $path = $this->getModulesConfigDefault();
-                $enableModule = array_keys($enableModule);
-
-                $modules = array();
-                $imports = array();
-                
-                if ($handler = opendir($path)) {
-                    while (($dir = readdir($handler))) {
-                        if(!$this->isValidModule($dir)) {
-                            continue;
-                        }
-                        if ($dir != '.' && $dir != '..' && !is_file($dir) && !isset($enableModule[$dir])) {
-                            $modules[$dir] = $this->getCreateModule($dir);
-                            $imports[] = Yii::app()->cache->get('tmpImports');
-                        }
-                    }
-                    closedir($handler);
-                }
-
-                $chain = new CChainedCacheDependency();
-
-                // Зависимость на тег:
-                $chain->dependencies->add(
-                    new TagsCache('yupe', 'modulesDisabled', 'getModulesDisabled', 'installedModules', 'pathForImports')
-                );
-
-                // Зависимость на каталог 'application.config.modules':
-                $chain->dependencies->add(
-                    new CDirectoryCacheDependency(
-                        Yii::getPathOfAlias('application.config.modules')
-                    )
-                );
-
-                Yii::app()->cache->set('modulesDisabled', $modules, 0, $chain);
-                Yii::app()->cache->set('pathForImports', $imports, 0, $chain);
-            }
-        } catch (Exception $e) {
-            Yii::app()->cache->flush();
-
-            Yii::app()->user->setFlash(
-                YFlashMessages::ERROR_MESSAGE,
-                $e->getMessage()
-            );
-            
-            return Yii::app()->controller->redirect(
-                Yii::app()->getRequest()->url
-            );
-        }
-
-        return $modules;
-    }
-
-    /**
-     * Подгружает модуль
-     *
-     * @param array $name - имя модуля
-     *
-     * @since  0.5
-     * @return array класс модуля
-     */
-    public function getCreateModule($name)
-    {
-        if (Yii::app()->hasModule($name)) {
-            return Yii::app()->getModule($name);
-        }
-
-        $path = $this->getModulesConfigDefault();
-        $module = null;
-        if ($path) {
-            //посмотреть внутри файл с окончанием Module.php
-            $files = glob($path . '/' . $name . '/' . '*Module.php');
-            // @TODO А если файлов не 1, добавить прочтение install/module.php
-            if (count($files) == 1) {
-                $className = pathinfo($files[0], PATHINFO_FILENAME);
-                Yii::app()->cache->set('tmpImports', 'application.modules.' . $name . '.' . $className);
-                Yii::import('application.modules.' . $name . '.' . $className);
-                $module = Yii::createComponent($className, $name, null, false);
-            }
-        }
-        return $module;
-    }
-
-    /**
-     * Получаем путь к папке или файлу с конфигурацией модуля(-ей)
-     *
-     * @param string $module - Имя модуля
-     *
-     * @since 0.5
-     * @return string путь к папке или файлу с конфигурацией модуля(-ей)
-     */
-    public function getModulesConfig($module = false)
-    {
-        return Yii::app()->basePath . '/config/modules/' . ($module ? $module . '.php' : '');
-    }
-
-    /**
-     * Получаем путь к папке или файлу с резервной конфигурацией модуля(-ей)
-     *
-     * @param string $module Имя модуля
-     *
-     * @since 0.5
-     * @return string путь к папке или файлу с резервной конфигурацией модуля(-ей)
-     */
-
-    public function getModulesConfigBack($module = false)
-    {
-        return Yii::app()->basePath . '/config/modulesBack/' . ($module ? $module . '.php' : '');
-    }
-
-    /**
-     * Получаем путь к папке c дефолтной конфигурацией модуля
-     *
-     * @param string $module Имя модуля
-     *
-     * @since 0.5
-     * @return string путь к папке c дефолтной конфигурацией модуля или путь к модулям
-     */
-    public function getModulesConfigDefault($module = false)
-    {
-        return ($module
-            ? Yii::getPathOfAlias('application.modules.' . $module) . '/install/' . $module . '.php'
-            : Yii::getPathOfAlias('application.modules'));
     }
 
     /**
@@ -890,45 +655,10 @@ class YupeModule extends WebModule
     public function getBackendLayoutAlias($layoutName = '')
     {
         if ($this->backendTheme) {
-            return 'webroot.themes.backend_' . $this->backendTheme . '.views.yupe.layouts.' . ($layoutName ? $layoutName : $this->backendLayout);
+            return 'themes.backend_' . $this->backendTheme . '.views.yupe.layouts.' . ($layoutName ? $layoutName : $this->backendLayout);
         } else {
             return 'application.modules.yupe.views.layouts.' . ($layoutName ? $layoutName : $this->backendLayout);
         }
-    }
-
-    /**
-     * Метод возвращает список доступных для использования в панели управления визуальных редакторов
-     *
-     * @since 0.4
-     * @todo возможно, стоит добавить кэширование чтобы каждый раз не ходить по файловой системе
-     *
-     * Для добавления нового редатора необходимо:
-     * Скопировать каталог с виджетом редактора в application.modules.yupe.widgets.editors
-     * php-файл с виджетом должен иметь имя *Widget.php, например "EImperaviRedactorWidget"
-     *
-     * @return mixed
-     */
-    public function getEditors()
-    {
-        if(($widgets = Yii::app()->cache->get('Yupe::editors')) === false) {
-            $path = Yii::getPathOfAlias($this->editorsDir);
-            $widgets = array();
-            if ($path && $handler = opendir($path)) {
-                while (($dir = readdir($handler))) {
-                    if ($dir != '.' && $dir != '..' && !is_file($dir)) {
-                        //посмотреть внутри файл с окончанием Widget.php
-                        $files = glob($path . '/' . $dir . '/' . '*Widget.php');
-                        if (count($files) == 1) {
-                            $editor = $this->editorsDir . '.' . $dir . '.' . basename(array_shift($files), '.php');
-                            $widgets[$editor] = $editor;
-                        }
-                    }
-                }
-                closedir($handler);
-            }
-            Yii::app()->cache->set('Yupe::editors',$widgets);
-        }
-        return $widgets;
     }
 
     /**
@@ -947,7 +677,7 @@ class YupeModule extends WebModule
      */
     public function getThemes($backend = false)
     {
-        $themes = array();
+        $themes = [];
 
         if (isset(Yii::app()->themeManager->basePath) && $handler = opendir(Yii::app()->themeManager->basePath)) {
             while (($file = readdir($handler))) {
@@ -966,6 +696,7 @@ class YupeModule extends WebModule
             }
             closedir($handler);
         }
+
         return $themes;
     }
 
@@ -975,25 +706,29 @@ class YupeModule extends WebModule
      * @param array $menu - список пунктов
      *
      * @since 0.5
-     * @return array приобразованный список пунктов
+     * @return array преобразованный список пунктов
      */
     public function getSubMenu($menu)
     {
-        $items = array();
-        $endItem = count($menu) - 1;
+        $items = [];
+        $endItemKey = count($menu) ? array_reverse(array_keys($menu))[0] : '';
         foreach ($menu as $key => $item) {
-            if (isset($item['items']) && is_array($item['items'])) {
+            if ($key === '') {
+                continue;
+            }
+            if (isset($item['items']) && is_array($item['items']) && !empty($item['items'])) {
                 $subItems = $item['items'];
                 unset($item['items'], $item['icon'], $item['url']);
                 $items[] = $item;
                 $items = array_merge($items, $subItems);
-                if ($key != $endItem) {
+                if ($key != $endItemKey) {
                     $items[] = "---";
                 }
             } else {
                 $items[] = $item;
             }
         }
+
         return $items;
     }
 
@@ -1019,13 +754,22 @@ class YupeModule extends WebModule
         $langs = explode(',', $this->availableLanguages);
 
         if (count($langs) <= 1) {
-            return array();
+            return [];
         }
 
-        $items = array();
-        $currentLanguage = Yii::app()->language;
+        if (!Yii::app()->getUrlManager() instanceof \yupe\components\urlManager\LangUrlManager) {
+            Yii::log(
+                'For use multi lang, please, enable "yupe\components\urlManager\LangUrlManager" as default UrlManager',
+                CLogger::LEVEL_WARNING
+            );
 
-        $homeUrl = Yii::app()->homeUrl . (Yii::app()->homeUrl[strlen(Yii::app()->homeUrl) - 1] != "/" ? '/' : '');
+            return [];
+        }
+
+        $items = [];
+        $currentLanguage = Yii::app()->getLanguage();
+
+        $homeUrl = Yii::app()->getHomeUrl() . (Yii::app()->homeUrl[strlen(Yii::app()->homeUrl) - 1] != "/" ? '/' : '');
         $cp = Yii::app()->urlManager->getCleanUrl(Yii::app()->getRequest()->url);
 
         foreach ($langs as $lang) {
@@ -1033,54 +777,102 @@ class YupeModule extends WebModule
             if ($lang == $currentLanguage) {
                 continue;
             } else {
-                $items[] = array(
-                    'icon' => 'iconflags iconflags-' . $lang,
+                $items[] = [
+                    'icon'  => 'iconflags iconflags-' . $lang,
                     'label' => Yii::t('YupeModule.yupe', $lang),
-                    'url' => $homeUrl . Yii::app()->urlManager->replaceLangUrl($cp, $lang),
-                );
+                    'url'   => $homeUrl . Yii::app()->urlManager->replaceLangUrl($cp, $lang),
+                ];
             }
         }
 
-
-        return array(
-            array(
-                'icon' => 'iconflags iconflags-' . $currentLanguage,
-                'label' => Yii::t('YupeModule.yupe', $currentLanguage),
-                'items' => $items,
-                'submenuOptions' => array('style' => 'min-width: 20px;'),
-            )
-        );
+        return [
+            [
+                'icon'           => 'iconflags iconflags-' . $currentLanguage,
+                'label'          => Yii::t('YupeModule.yupe', $currentLanguage),
+                'items'          => $items,
+                'submenuOptions' => ['style' => 'min-width: 20px;'],
+            ]
+        ];
     }
 
     /**
      * Генерация анкора PoweredBy
-     * 
+     *
      * @param string $color - цвет
-     * @param string $text  - текс
-     * 
-     * @return анкор poweredBy
+     * @param string $text - текст
+     *
+     * @return string poweredBy
      */
     public function poweredBy($color = 'yellow', $text = '')
     {
         if (empty($text)) {
             $text = Yii::t('YupeModule.yupe', 'Powered by Yupe!');
         }
+
         return CHtml::link(
-            CHtml::image(Yii::app()->baseUrl . "/web/images/yupe_{$color}.png", $text),
+            CHtml::image(
+                Yii::app()->getAssetManager()->publish(
+                    Yii::getPathOfAlias('application.modules.yupe.views.assets')
+                ) . "/img/yupe_{$color}.png",
+                $text,
+                ['alt' => CHtml::encode($text)]
+            ),
             'http://yupe.ru?from=pb',
-            array('title' => $text, 'alt' => $text)
+            [
+                'title' => CHtml::encode($text),
+                'target'=> '_blank'
+            ]
         );
     }
 
     /**
      * Получаем массив с именами модулей, от которых зависит работа данного модуля
-     * 
+     *
      * @return array Массив с именами модулей, от которых зависит работа данного модуля
-     * 
+     *
      * @since 0.5
      */
     public function getDependencies()
     {
-        return array('user');
+        return ['user'];
+    }
+
+    /**
+     * @return array
+     */
+    public function getLayoutsList()
+    {
+        $data = [];
+
+        foreach (new GlobIterator(Yii::app()->getTheme()->basePath . DIRECTORY_SEPARATOR . 'views' . DIRECTORY_SEPARATOR . 'layouts' . DIRECTORY_SEPARATOR . '*.php') as $item) {
+            $name = $item->getBaseName('.php');
+            $data[$name] = $name;
+        }
+
+        return $data;
+    }
+
+
+    public function getAuthItems()
+    {
+        return [
+            [
+                'name'        => 'ManageYupeParams',
+                'description' => Yii::t('YupeModule.yupe', 'Modules update'),
+                'type'        => AuthItem::TYPE_TASK,
+                'items'       => [
+                    [
+                        'type'        => AuthItem::TYPE_OPERATION,
+                        'name'        => 'Yupe.YupeBackend.index',
+                        'description' => Yii::t('YupeModule.yupe', 'Yupe panel')
+                    ],
+                    [
+                        'type'        => AuthItem::TYPE_OPERATION,
+                        'name'        => 'Update.UpdateBackend.update',
+                        'description' => Yii::t('YupeModule.yupe', 'Modules update')
+                    ],
+                ]
+            ]
+        ];
     }
 }

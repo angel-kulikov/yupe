@@ -1,50 +1,90 @@
 <?php
-$form = $this->beginWidget('bootstrap.widgets.TbActiveForm', array(
-    'id'                     => 'gallery-form',
-    'enableAjaxValidation'   => false,
-    'enableClientValidation' => true,
-    'type'                   => 'vertical',
-    'htmlOptions'            => array('class' => 'well'),
-    'inlineErrors'           => true,
-)); ?>
-    <div class="alert alert-info">
-        <?php echo Yii::t('GalleryModule.gallery', 'Fields with'); ?>
-        <span class="required">*</span>
-        <?php echo Yii::t('GalleryModule.gallery', 'are required.'); ?>
-    </div>
+$form = $this->beginWidget(
+    'bootstrap.widgets.TbActiveForm',
+    [
+        'id'                     => 'gallery-form',
+        'enableAjaxValidation'   => false,
+        'enableClientValidation' => true,
+        'type'                   => 'vertical',
+        'htmlOptions'            => ['class' => 'well'],
+    ]
+); ?>
+<div class="alert alert-info">
+    <?=  Yii::t('GalleryModule.gallery', 'Fields with'); ?>
+    <span class="required">*</span>
+    <?=  Yii::t('GalleryModule.gallery', 'are required.'); ?>
+</div>
 
-    <?php echo $form->errorSummary($model); ?>
+<?=  $form->errorSummary($model); ?>
 
-    <div class='control-group <?php echo $model->hasErrors("name") ? "error" : ""; ?>'>
-        <?php echo $form->textFieldRow($model, 'name', array('class' => 'span7', 'maxlength' => 300)); ?>
+<div class='row'>
+    <div class="col-sm-2">
+        <?=  $form->dropDownListGroup(
+            $model,
+            'owner',
+            [
+                'widgetOptions' => [
+                    'data' => User::getFullNameList(),
+                ],
+            ]
+        ); ?>
     </div>
-    <div class='control-group <?php echo $model->hasErrors("owner") ? "error" : ""; ?>'>
-        <?php echo $form->dropDownListRow($model, 'owner', $model->usersList); ?>
+    <div class='col-sm-2'>
+        <?=  $form->dropDownListGroup(
+            $model,
+            'status',
+            [
+                'widgetOptions' => [
+                    'data' => $model->getStatusList(),
+                ],
+            ]
+        ); ?>
     </div>
-    <div class="row-fluid control-group <?php echo $model->hasErrors('description') ? 'error' : ''; ?>">
-        <div class="span12">
-            <?php echo $form->labelEx($model, 'description'); ?>
-            <?php $this->widget($this->module->editor, array(
-                'model'       => $model,
-                'attribute'   => 'description',
-                'options'     => $this->module->editorOptions,
-            )); ?>
-            <?php echo $form->error($model, 'description'); ?>
-        </div>
-    </div>
-    <div class='control-group <?php echo $model->hasErrors("status") ? "error" : ""; ?>'>
-        <?php echo $form->dropDownListRow($model, 'status', $model->statusList); ?>
-    </div>
+</div>
 
-    <?php $this->widget('bootstrap.widgets.TbButton', array(
+<div class='row'>
+    <div class="col-sm-7">
+        <?=  $form->textFieldGroup($model, 'name'); ?>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-sm-12 form-group">
+        <?=  $form->labelEx($model, 'description'); ?>
+        <?php $this->widget(
+            $this->module->getVisualEditor(),
+            [
+                'model'     => $model,
+                'attribute' => 'description',
+            ]
+        ); ?>
+        <?=  $form->error($model, 'description'); ?>
+    </div>
+</div>
+
+
+<?php $this->widget(
+    'bootstrap.widgets.TbButton',
+    [
         'buttonType' => 'submit',
-        'type'       => 'primary',
-        'label'      => $model->isNewRecord ? Yii::t('GalleryModule.gallery', 'Create gallery and continue') : Yii::t('GalleryModule.gallery', 'Save gallery and continue'),
-    )); ?>
-    <?php $this->widget('bootstrap.widgets.TbButton', array(
+        'context'    => 'primary',
+        'label'      => $model->isNewRecord ? Yii::t('GalleryModule.gallery', 'Create gallery and continue') : Yii::t(
+                'GalleryModule.gallery',
+                'Save gallery and continue'
+            ),
+    ]
+); ?>
+
+<?php $this->widget(
+    'bootstrap.widgets.TbButton',
+    [
         'buttonType'  => 'submit',
-        'htmlOptions' => array('name' => 'submit-type', 'value' => 'index'),
-        'label'       => $model->isNewRecord ? Yii::t('GalleryModule.gallery', 'Create gallery and close') : Yii::t('GalleryModule.gallery', 'Save gallery and close'),
-    )); ?>
+        'htmlOptions' => ['name' => 'submit-type', 'value' => 'index'],
+        'label'       => $model->isNewRecord ? Yii::t('GalleryModule.gallery', 'Create gallery and close') : Yii::t(
+                'GalleryModule.gallery',
+                'Save gallery and close'
+            ),
+    ]
+); ?>
 
 <?php $this->endWidget(); ?>

@@ -18,7 +18,7 @@
  * The followings are the available model relations:
  * @property MailEvent $event
  *
-  * MailTemplate model class
+ * MailTemplate model class
  * Класс модели MailTemplate
  *
  * @category YupeModel
@@ -27,9 +27,9 @@
  * @license  BSD https://raw.github.com/yupe/yupe/master/LICENSE
  * @link     http://yupe.ru
  **/
-class MailTemplate extends YModel
+class MailTemplate extends yupe\models\YModel
 {
-    const STATUS_ACTIVE     = 1;
+    const STATUS_ACTIVE = 1;
     const STATUS_NOT_ACTIVE = 0;
 
     /**
@@ -63,18 +63,19 @@ class MailTemplate extends YModel
     {
         // NOTE: you should only define rules for those attributes that
         // will receive user inputs.
-        return array(
-            array('code, name, from, to, theme', 'filter', 'filter' => array($obj = new CHtmlPurifier(), 'purify')),
-            array('event_id, code, name, from, to, theme, body', 'required'),
-            array('status', 'numerical', 'integerOnly' => true),
-            array('event_id', 'length', 'max' => 10),
-            array('name, from, to', 'length', 'max' => 300),
-            array('code', 'length', 'max' => 100),
-            array('code', 'unique'),
+        return [
+            ['code, name, from, to, theme', 'filter', 'filter' => [$obj = new CHtmlPurifier(), 'purify']],
+            ['event_id, code, name, from, to, theme, body', 'required'],
+            ['status', 'numerical', 'integerOnly' => true],
+            ['event_id', 'length', 'max' => 10],
+            ['name, from, to', 'length', 'max' => 300],
+            ['code', 'length', 'max' => 100],
+            ['code', 'unique'],
+            ['description', 'safe'],
             // The following rule is used by search().
             // Please remove those attributes that should not be searched.
-            array('id, event_id, name, description, from, to, theme, body, status', 'safe', 'on' => 'search'),
-        );
+            ['id, event_id, name, description, from, to, theme, body, status', 'safe', 'on' => 'search'],
+        ];
     }
 
     /**
@@ -86,9 +87,9 @@ class MailTemplate extends YModel
     {
         // NOTE: you may need to adjust the relation name and the related
         // class name for the relations automatically generated below.
-        return array(
-            'event' => array(self::BELONGS_TO, 'MailEvent', 'event_id'),
-        );
+        return [
+            'event' => [self::BELONGS_TO, 'MailEvent', 'event_id'],
+        ];
     }
 
     /**
@@ -98,7 +99,7 @@ class MailTemplate extends YModel
      */
     public function attributeLabels()
     {
-        return array(
+        return [
             'id'          => Yii::t('MailModule.mail', 'ID'),
             'event_id'    => Yii::t('MailModule.mail', 'Event'),
             'name'        => Yii::t('MailModule.mail', 'Title'),
@@ -109,7 +110,7 @@ class MailTemplate extends YModel
             'body'        => Yii::t('MailModule.mail', 'Message'),
             'code'        => Yii::t('MailModule.mail', 'Symbolic code'),
             'status'      => Yii::t('MailModule.mail', 'Status'),
-        );
+        ];
     }
 
     /**
@@ -122,32 +123,32 @@ class MailTemplate extends YModel
         // Warning: Please modify the following code to remove attributes that
         // should not be searched.
 
-        $criteria = new CDbCriteria;
+        $criteria = new CDbCriteria();
 
         $criteria->compare('id', $this->id, true);
         $criteria->compare('event_id', $this->event_id, true);
         $criteria->compare('name', $this->name, true);
         $criteria->compare('description', $this->description, true);
-        $criteria->compare('from', $this->from, true);
-        $criteria->compare('to', $this->to, true);
+        $criteria->compare('`from`', $this->from, true);
+        $criteria->compare('`to`', $this->to, true);
         $criteria->compare('theme', $this->theme, true);
         $criteria->compare('body', $this->body, true);
         $criteria->compare('status', $this->status);
 
-        return new CActiveDataProvider(get_class($this), array('criteria' => $criteria));
+        return new CActiveDataProvider(get_class($this), ['criteria' => $criteria]);
     }
 
     /**
      * Получаем массив статусов:
      *
-     * @return miced status
+     * @return array status
      **/
     public function getStatusList()
     {
-        return array(
+        return [
             self::STATUS_ACTIVE     => Yii::t('MailModule.mail', 'active'),
             self::STATUS_NOT_ACTIVE => Yii::t('MailModule.mail', 'not active'),
-        );
+        ];
     }
 
     /**
@@ -158,6 +159,7 @@ class MailTemplate extends YModel
     public function getStatus()
     {
         $data = $this->statusList;
+
         return isset($data[$this->status]) ? $data[$this->status] : Yii::t('MailModule.mail', '--unknown--');
     }
 }

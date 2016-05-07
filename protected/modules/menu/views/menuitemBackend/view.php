@@ -1,69 +1,108 @@
 <?php
-    $this->breadcrumbs = array(
-        Yii::app()->getModule('menu')->getCategory() => array(),
-        Yii::t('MenuModule.menu', 'Menu') => array('/menu/menuBackend/index'),
-        Yii::t('MenuModule.menu', 'Menu items') => array('/menu/menuitemBackend/index'),
-        $model->title,
-    );
+$this->breadcrumbs = [
+    Yii::t('MenuModule.menu', 'Menu')       => ['/menu/menuBackend/index'],
+    Yii::t('MenuModule.menu', 'Menu items') => ['/menu/menuitemBackend/index'],
+    $model->title,
+];
 
-    $this->pageTitle = Yii::t('MenuModule.menu', 'Menu items - show');
+$this->pageTitle = Yii::t('MenuModule.menu', 'Menu items - show');
 
-    $this->menu = array(
-        array('label' => Yii::t('MenuModule.menu', 'Menu'), 'items' => array(
-            array('icon' => 'plus-sign', 'label' => Yii::t('MenuModule.menu', 'Create menu'), 'url' => array('/menu/menuBackend/create')),
-            array('icon' => 'list-alt', 'label' => Yii::t('MenuModule.menu', 'Manage menu'), 'url' => array('/menu/menuBackend/index')),
-        )),
-        array('label' => Yii::t('MenuModule.menu', 'Menu items'), 'items' => array(
-            array('icon' => 'plus-sign', 'label' => Yii::t('MenuModule.menu', 'Create menu item'), 'url' => array('/menu/menuitemBackend/create')),
-            array('icon' => 'list-alt', 'label' => Yii::t('MenuModule.menu', 'Manage menu items'), 'url' => array('/menu/menuitemBackend/index')),
-            array('label' => Yii::t('MenuModule.menu', 'Menu item') . ' «' . $model->title . '»'),
-            array('icon' => 'pencil', 'label' => Yii::t('MenuModule.menu', 'Change menu item'), 'url' => array('/menu/menuitemBackend/update', 'id' => $model->id)),
-            array('icon' => 'eye-open', 'encodeLabel' => false, 'label' => Yii::t('MenuModule.menu', 'View menu item'), 'url' => array(
-                '/menu/menuitemBackend/view',
-                'id' => $model->id
-            )),
-            array('icon' => 'trash', 'label' => Yii::t('MenuModule.menu', 'Remove menu item'), 'url' => '#', 'linkOptions' => array(
-                'submit' => array('/menu/menuitemBackend/delete', 'id' => $model->id),
-                'confirm' => Yii::t('MenuModule.menu', 'Do you really want to delete?')),
-            ),
-        )),
-    );
+$this->menu = [
+    [
+        'label' => Yii::t('MenuModule.menu', 'Menu'),
+        'items' => [
+            [
+                'icon'  => 'fa fa-fw fa-list-alt',
+                'label' => Yii::t('MenuModule.menu', 'Manage menu'),
+                'url'   => ['/menu/menuBackend/index']
+            ],
+            [
+                'icon'  => 'fa fa-fw fa-plus-square',
+                'label' => Yii::t('MenuModule.menu', 'Create menu'),
+                'url'   => ['/menu/menuBackend/create']
+            ],
+        ]
+    ],
+    [
+        'label' => Yii::t('MenuModule.menu', 'Menu items'),
+        'items' => [
+            [
+                'icon'  => 'fa fa-fw fa-list-alt',
+                'label' => Yii::t('MenuModule.menu', 'Manage menu items'),
+                'url'   => ['/menu/menuitemBackend/index']
+            ],
+            [
+                'icon'  => 'fa fa-fw fa-plus-square',
+                'label' => Yii::t('MenuModule.menu', 'Create menu item'),
+                'url'   => ['/menu/menuitemBackend/create']
+            ],
+            ['label' => Yii::t('MenuModule.menu', 'Menu item') . ' «' . $model->title . '»'],
+            [
+                'icon'  => 'fa fa-fw fa-pencil',
+                'label' => Yii::t('MenuModule.menu', 'Change menu item'),
+                'url'   => ['/menu/menuitemBackend/update', 'id' => $model->id]
+            ],
+            [
+                'icon'        => 'fa fa-fw fa-eye',
+                'encodeLabel' => false,
+                'label'       => Yii::t('MenuModule.menu', 'View menu item'),
+                'url'         => [
+                    '/menu/menuitemBackend/view',
+                    'id' => $model->id
+                ]
+            ],
+            [
+                'icon'        => 'fa fa-fw fa-trash-o',
+                'label'       => Yii::t('MenuModule.menu', 'Remove menu item'),
+                'url'         => '#',
+                'linkOptions' => [
+                    'submit'  => ['/menu/menuitemBackend/delete', 'id' => $model->id],
+                    'confirm' => Yii::t('MenuModule.menu', 'Do you really want to delete?'),
+                    'params'  => [Yii::app()->getRequest()->csrfTokenName => Yii::app()->getRequest()->csrfToken],
+                ],
+            ],
+        ]
+    ],
+];
 ?>
 <div class="page-header">
     <h1>
-        <?php echo Yii::t('MenuModule.menu', 'Show menu item'); ?><br />
-        <small>&laquo;<?php echo $model->title; ?>&raquo;</small>
+        <?=  Yii::t('MenuModule.menu', 'Show menu item'); ?><br/>
+        <small>&laquo;<?=  $model->title; ?>&raquo;</small>
     </h1>
 </div>
 
-<?php $this->widget('bootstrap.widgets.TbDetailView', array(
-    'data'       => $model,
-    'attributes' => array(
-        'id',
-        'title',
-        'href',
-        'class',
-        'title_attr',
-        'before_link',
-        'after_link',
-        'target',
-        'rel',
-        array(
-            'name'  => 'menu_id',
-            'value' => $model->menu->name,
-        ),
-        array(
-            'name'  => 'parent_id',
-            'value' => $model->parent,
-        ),
-        array(
-            'name'  => 'condition_name',
-            'value' => $model->conditionName,
-        ),
-        'sort',
-        array(
-            'name'  => 'status',
-            'value' => $model->getStatus(),
-        ),
-    ),
-)); ?>
+<?php $this->widget(
+    'bootstrap.widgets.TbDetailView',
+    [
+        'data'       => $model,
+        'attributes' => [
+            'id',
+            'title',
+            'href',
+            'class',
+            'title_attr',
+            'before_link',
+            'after_link',
+            'target',
+            'rel',
+            [
+                'name'  => 'menu_id',
+                'value' => $model->menu->name,
+            ],
+            [
+                'name'  => 'parent_id',
+                'value' => $model->parent,
+            ],
+            [
+                'name'  => 'condition_name',
+                'value' => $model->conditionName,
+            ],
+            'sort',
+            [
+                'name'  => 'status',
+                'value' => $model->getStatus(),
+            ],
+        ],
+    ]
+); ?>

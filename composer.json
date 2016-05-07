@@ -1,9 +1,9 @@
 {
     "name": "yupe/yupe",
-    "description": "Yupe is simple and lightweight CMF for web-development, built on top of Yii",
-    "keywords": ["yupe", "yii", "web", "cms", "cmf"],
+    "description": "Yupe is simple and lightweight CMF for web-development, built on top of Yii 1.x",
+    "keywords": ["yupe", "yii", "web", "cms", "cmf", "shop", "ecommerce"],
     "homepage": "http://yupe.ru",
-    "type": "cmf",
+    "type": "project",
     "license": "BSD-3-Clause",
     "authors": [
         {
@@ -13,72 +13,116 @@
             "role": "Developer"
         },
         {
-            "name": "Maxim Timashov",
-            "email": "apexwire@gmail.com",
-            "role": "Developer"
-        },
-        {
-            "name" : "Alexander Tischenko",
-            "email" : "tsm@archaron.ru",
-            "homepage":"http://archaron.ru/",
-            "role": "Developer"
-        },
-        {
             "name": "Nickolay Sedov",
             "email": "yamikspark@gmail.com",
             "homepage": "http://amylabs.ru",
             "role": "Developer"
         },
         {
-            "name": "Evgeniy Kulikov",
-            "email": "tuxuls@gmail.com",
-            "homepage": "http://akulikov.org.ua",
-            "role": "Developer"
-        },
-        {
-            "name": "Alexander Lyzhenkov",
-            "homepage": "http://lyzhenkov.ru",
-            "role": "Developer"
-        },
-        {
-            "name": "Anton Cherepanov",
-            "homepage": "https://twitter.com/davetoxa",
-            "role": "Developer"
-        },
-        {
-            "name": "Anton Kucherov",
-            "homepage": "http://idexter.ru/",
-            "role": "Developer"
-        },
-        {
-            "name": "Alexey Elizarov",
+            "name": "Maxim Timashov",
+            "email": "apexwire@amylabs.ru",
             "homepage": "http://amylabs.ru",
-            "role": "Designer"
+            "role": "Developer"
         },
         {
-            "name": "Kirill Chistov",
-            "homepage": "http://brainstorage.me/hitakiri/profile",
-            "role": "Web master"
+            "name": "Plaksunov Yuri",
+            "homepage": "http://amylabs.ru",
+            "role": "Developer"
+        },
+        {
+            "name": "Oleg Filimonov",
+            "email": "olegsabian@gmail.com",
+            "homepage": "http://amylabs.ru",
+            "role": "Developer"
         }
-
     ],
     "support": {
-        "email": "team@yupe.ru",
+        "email": "support@yupe.ru",
         "issues": "https://github.com/yupe/yupe/issues",
-        "forum": "http://yupe.ru/talk/",
-        "wiki": "http://yupe.ru/wiki/default/pageIndex",
-        "source": "https://github.com/yupe/yupe/"
+        "forum": "http://talk.yupe.ru/",
+        "source": "https://github.com/yupe/yupe/",
+        "docs": "http://docs.yupe.ru/"
     },
     "require": {
-        "php": ">=5.3.7",
-        "yiisoft/yii": ">=1.1.14",
-        "clevertech/yii-booster": "2.0.*",
+        "php": ">=5.4",
+        "yiisoft/yii": "1.1.17",
+        "clevertech/yii-booster": "4.*",
         "yiiext/nested-set-behavior": "dev-master",
-        "yiiext/imperavi-redactor-widget": "dev-master",
-        "zhuravljov/yii2-debug": "dev-master"
+        "yiiext/imperavi-redactor-widget": "1.3.*",
+        "zhuravljov/yii2-debug": "1.4.*",
+        "phpmailer/phpmailer": "5.2.*",
+        "yiiext/taggable-behavior": "1.5.*",
+        "nodge/yii-eauth": "dev-master",
+        "imagine/imagine": "0.6.*",
+        "symfony/event-dispatcher": "3.*",
+        "twig/twig": "1.*",
+        "yiiext/twig-renderer": "1.1.*",
+        "2amigos/transliterator-helper": "dev-master",
+        "yiiext/migrate-command": "dev-master",
+        "samdark/sitemap": "2.0.*"
+    },
+    "repositories": {
+        
+        "taggable": {
+            "type": "package",
+            "package": {
+                "name": "yiiext/taggable-behavior",
+                "version": "1.5.1",
+                "source": {
+                    "url": "https://github.com/yiiext/taggable-behavior.git",
+                    "type": "git",
+                    "reference": "b3713545565374522b3cb2b1fe066720466f0897"
+                }
+            }
+        },
+        "twig": {
+            "type": "package",
+            "package": {
+                "name": "yiiext/twig-renderer",
+                "version": "1.1.15",
+                "source": {
+                    "type": "git",
+                    "url": "https://github.com/yiiext/twig-renderer",
+                    "reference": "v1.1.15"
+                }
+            }
+        }
     },
     "require-dev": {
-        "codeception/codeception": "1.6.*"
+        "codeception/codeception": "*"
     },
-    "minimum-stability": "stable"
+    "minimum-stability": "stable",
+    "autoload": {
+        "psr-4": {
+            "application\\": "protected/",
+            "yupe\\": "protected/modules/yupe/"
+        }
+    },
+    "scripts": {
+        "post-create-project-cmd": [
+            "yupe\\components\\Composer::postCreate"
+        ],
+        "pre-install-cmd": [
+            "yupe\\components\\Composer::preInstall"
+        ],
+        "post-install-cmd": [
+            "yupe\\components\\Composer::postInstall"
+        ],
+        "pre-update-cmd": [
+            "yupe\\components\\Composer::preUpdate"
+        ],
+        "post-update-cmd": [
+            "yupe\\components\\Composer::postUpdate"
+        ]
+    },
+    "extra": {
+        "writable": [
+            "public/assets",
+            "public/uploads",
+            "protected/runtime",
+            "protected/config/db.php",
+            "protected/config/modules",
+            "protected/config/modulesBack"
+        ]
+    }
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * BlogController контроллер для блогов на публичной части сайта
  *
@@ -9,7 +10,7 @@
  * @since 0.1
  *
  */
-class BlogController extends yupe\components\controllers\FrontController
+class BlogController extends \yupe\components\controllers\FrontController
 {
     /**
      * Выводит список блогов
@@ -18,218 +19,117 @@ class BlogController extends yupe\components\controllers\FrontController
      */
     public function actionIndex()
     {
-        $dataProvider = new CActiveDataProvider(
-            'Blog', array(
-                'criteria' => array(
-                    'condition' => 't.status = :status',
-                    'params'    => array(':status' => Blog::STATUS_ACTIVE),
-                    'with'      => array('createUser', 'postsCount', 'membersCount'),
-                    'order'     => 'create_date DESC',
-                ),
-            )
-        );
+        $blogs = new Blog('search');
+        $blogs->unsetAttributes();
+        $blogs->status = Blog::STATUS_ACTIVE;
 
-        $this->render('index', array('dataProvider' => $dataProvider));
+        if (isset($_GET['Blog']['name'])) {
+            $blogs->name = CHtml::encode($_GET['Blog']['name']);
+        }
+
+        $this->render('index', ['blogs' => $blogs]);
     }
 
     /**
      * Отобразить карточку блога
      *
-     * @param string $slug - url блога
+     * @param  string $slug - url блога
      * @throws CHttpException
      *
      * @return void
      */
-    public function actionShow($slug = null)
+    public function actionView($slug = null)
     {
-        $blog = Blog::model()->with('posts')->getByUrl($slug)->published()->find();
+        $blog = Blog::model()->getBySlug($slug);
 
-        if ($blog === null){
-           throw new CHttpException(404, Yii::t('BlogModule.blog', 'Blog "{blog}" was not found!', array('{blog}' => $slug)));
+        if ($blog === null) {
+            throw new CHttpException(404, Yii::t(
+                'BlogModule.blog',
+                'Blog "{blog}" was not found!',
+                ['{blog}' => $slug]
+            ));
         }
 
-        $this->render('show', array('blog' => $blog));
+        $this->render('view', ['blog' => $blog]);
     }
 
     /**
      * "вступление" в блог
      *
-     * @param int $blogId - id-блога
-     *
-     * @return void
+     * @throw CHttpException
      */
-    public function actionJoin($blogId = null)
+    public function actionJoin()
     {
-        if (!Yii::app()->user->isAuthenticated()) {
-            if (Yii::app()->getRequest()->getIsAjaxRequest()) {
-                Yii::app()->ajax->failure(Yii::t('BlogModule.blog', 'Please Sign in!'));
-            } else {
-                Yii::app()->user->setFlash(
-                    YFlashMessages::SUCCESS_MESSAGE,
-                    Yii::t('BlogModule.blog', 'Please Sign in!')
-                );
-                $this->redirect(array('/blog/blog/index'));
-            }
+        if (!Yii::app()->getRequest()->getIsPostRequest() || !Yii::app()->user->isAuthenticated()) {
+            throw new CHttpException(404);
         }
 
-        if ($blogId === null && Yii::app()->getRequest()->getIsPostRequest() && Yii::app()->getRequest()->getIsAjaxRequest())
-            $blogId = Yii::app()->getRequest()->getPost('blogId');
+        $blogId = (int)Yii::app()->request->getPost('blogId');
 
-        $errorMessage = false;
-
-        $blogId = (int) $blogId;
-        if (!$blogId)
-            $errorMessage = Yii::t('BlogModule.blog', 'blogId is not set!');
-
-        if (($blog = Blog::model()->loadModel($blogId)) === null)
-            $errorMessage = Yii::t('BlogModule.blog', 'Blog with id = {id} was not found!', array('{id}' => $blogId));
-
-        if ($errorMessage !== false) {
-            if (Yii::app()->getRequest()->getIsAjaxRequest()) {
-                Yii::app()->ajax->failure($errorMessage);
-            } else {
-                Yii::app()->user->setFlash(
-                    YFlashMessages::ERROR_MESSAGE,
-                    $errorMessage
-                );
-                $this->redirect(array('/blog/blog/index'));
-            }
+        if (!$blogId) {
+            throw new CHttpException(404);
         }
 
-        if ($blog->userInBlog(Yii::app()->user->getId()) === false) {
-            
-            $blog->join(Yii::app()->user->getId());
-            
-            if (Yii::app()->getRequest()->getIsAjaxRequest()) {
-                Yii::app()->ajax->success(
-                    array(
-                        'message' => Yii::t('BlogModule.blog', 'You have joined the blog!'),
-                        'content' => $this->renderPartial('_view', array('data' => $blog), true),
-                    )
-                );
-            } else {
-                Yii::app()->user->setFlash(
-                    YFlashMessages::SUCCESS_MESSAGE,
-                    Yii::t('BlogModule.blog', 'You have joined the blog!')
-                );
-                $this->redirect(array('/blog/blog/index'));
-            }
-        } else {
-            if (Yii::app()->getRequest()->getIsAjaxRequest())
-                Yii::app()->ajax->failure(
-                    array(
-                        'message' => Yii::t('BlogModule.blog', 'You have already joined this blog!'),
-                    )
-                );
-            else
-            {
-                Yii::app()->user->setFlash(
-                    YFlashMessages::SUCCESS_MESSAGE,
-                    Yii::t('BlogModule.blog', 'You have already joined this blog!')
-                );
-                $this->redirect(array('/blog/blog/index'));
-            }
+        $blog = Blog::model()->get($blogId);
+
+        if (!$blog) {
+            throw new CHttpException(404);
         }
+
+        if ($blog->join(Yii::app()->user->getId())) {
+            Yii::app()->ajax->success(Yii::t('BlogModule.blog', 'You have joined!'));
+        }
+
+        //check if user is in blog but blocked
+        if ($blog->hasUserInStatus(Yii::app()->getUser()->getId(), UserToBlog::STATUS_BLOCK)) {
+            Yii::app()->ajax->failure(Yii::t('BlogModule.blog', 'You are blocking in this blog!'));
+        }
+
+        Yii::app()->ajax->failure(Yii::t('BlogModule.blog', 'An error occurred when you were joining the blog!'));
     }
 
     /**
      * "покинуть" блог
      *
-     * @param int $blogId - id-блога
-     *
-     * @return void
+     * @throw CHttpException
      */
-    public function actionUnjoin($blogId = null)
+    public function actionLeave()
     {
-        if (!Yii::app()->user->isAuthenticated()) {
-            if (Yii::app()->getRequest()->getIsAjaxRequest()) {
-                Yii::app()->ajax->failure(Yii::t('BlogModule.blog', 'Please Sign in!'));
-            } else {
-                Yii::app()->user->setFlash(
-                    YFlashMessages::SUCCESS_MESSAGE,
-                    Yii::t('BlogModule.blog', 'Please Sign in!')
-                );
-                $this->redirect(array('/blog/blog/index'));
-            }
+        if (!Yii::app()->getRequest()->getIsPostRequest() || !Yii::app()->user->isAuthenticated()) {
+            throw new CHttpException(404);
         }
 
-        if ($blogId === null && Yii::app()->getRequest()->getIsPostRequest() && Yii::app()->getRequest()->getIsAjaxRequest())
-            $blogId = Yii::app()->getRequest()->getPost('blogId');
+        $blogId = (int)Yii::app()->request->getPost('blogId');
 
-        $errorMessage = false;
-
-        $blogId = (int) $blogId;
-        if (!$blogId)
-            $errorMessage = Yii::t('BlogModule.blog', 'blogId is not set!');
-
-        if (($blog = Blog::model()->loadModel($blogId)) === null)
-            $errorMessage = Yii::t('BlogModule.blog', 'Blog with id = {id} was not found!', array('{id}' => $blogId));
-        elseif ($blog->createUser->id == Yii::app()->user->getId()) {
-            if (Yii::app()->getRequest()->getIsAjaxRequest()) {
-                Yii::app()->ajax->failure(
-                    Yii::t('BlogModule.blog', 'You are creator of this blog and you can\'t leave.')
-                );
-            } else {
-                Yii::app()->user->setFlash(
-                    YFlashMessages::ERROR_MESSAGE,
-                    Yii::t('BlogModule.blog', 'You are creator of this blog and you can\'t leave.')
-                );
-                $this->redirect(array('/blog/blog/index'));
-            }
+        if (!$blogId) {
+            throw new CHttpException(404);
         }
 
+        $blog = Blog::model()->get($blogId);
 
-        if ($errorMessage !== false) {
-            if (Yii::app()->getRequest()->getIsAjaxRequest()) {
-                Yii::app()->ajax->failure($errorMessage);
-            } else {
-                Yii::app()->user->setFlash(
-                    YFlashMessages::ERROR_MESSAGE,
-                    $errorMessage
-                );
-                $this->redirect(array('/blog/blog/index'));
-            }
+        if (!$blog) {
+            throw new CHttpException(404);
         }
 
-        if (($userToBlog = $blog->userInBlog(Yii::app()->user->getId())) !== false) {
-            
-            if ($userToBlog->delete()) {
-                if (Yii::app()->getRequest()->getIsAjaxRequest()) {
-                    Yii::app()->ajax->success(
-                        array(
-                            'message' => Yii::t('BlogModule.blog', 'You left the blog!'),
-                            'content' => $this->renderPartial('_view', array('data' => $blog), true),
-                        )
-                    );
-                } else {
-                    Yii::app()->user->setFlash(
-                        YFlashMessages::SUCCESS_MESSAGE,
-                        Yii::t('BlogModule.blog', 'You left the blog!')
-                    );
-                    $this->redirect(array('/blog/blog/index'));
-                }
-            } else {
-                if (Yii::app()->getRequest()->getIsAjaxRequest()) {
-                    Yii::app()->ajax->failure(Yii::t('BlogModule.blog', 'An error occured when you were leaving the blog!'));
-                } else {
-                    Yii::app()->user->setFlash(
-                        YFlashMessages::SUCCESS_MESSAGE,
-                        Yii::t('BlogModule.blog', 'An error occured when you were leaving the blog!')
-                    );
-                    $this->redirect(array('/blog/blog/index'));
-                }
-            }
-        } else {
-            if (Yii::app()->getRequest()->getIsAjaxRequest())
-                Yii::app()->ajax->failure(Yii::t('BlogModule.blog', 'You are not the member of this blog!'));
-            else
-            {
-                Yii::app()->user->setFlash(
-                    YFlashMessages::SUCCESS_MESSAGE,
-                    Yii::t('BlogModule.blog', 'You are not the member of this blog!')
-                );
-                $this->redirect(array('/blog/blog/index'));
-            }
+        if ($blog->leave(Yii::app()->user->getId())) {
+            Yii::app()->ajax->success(Yii::t('BlogModule.blog', 'You left the blog!'));
         }
+
+        Yii::app()->ajax->failure(Yii::t('BlogModule.blog', 'An error occurred when you were leaving the blog!'));
+    }
+
+    /**
+     * @param $slug
+     * @throws CHttpException
+     */
+    public function actionMembers($slug)
+    {
+        $blog = Blog::model()->getBySlug($slug);
+
+        if (null === $blog) {
+            throw new CHttpException(404);
+        }
+
+        $this->render('members', ['blog' => $blog, 'members' => $blog->getMembersList()]);
     }
 }

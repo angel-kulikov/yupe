@@ -1,4 +1,5 @@
 <?php
+
 /**
  * GalleryController контроллер для просмотра галерей на публичной части сайта
  *
@@ -9,92 +10,115 @@
  * @link     http://yupe.ru
  *
  **/
-class GalleryController extends yupe\components\controllers\FrontController
+class GalleryController extends \yupe\components\controllers\FrontController
 {
+    /**
+     *
+     */
     const GALLERY_PER_PAGE = 10;
 
-    public function actionList()
+    /**
+     *
+     */
+    public function actionIndex()
     {
         $dataProvider = new CActiveDataProvider(
-            'Gallery', array(
-                'criteria' => array(
+            'Gallery', [
+                'criteria' => [
                     'scopes' => 'published'
-                )
-            )
+                ],
+                'sort' => [
+                    'defaultOrder' => 'id DESC',
+                ]
+            ]
         );
-        $this->render('list', array('dataProvider' => $dataProvider));
+
+        $this->render('index', ['dataProvider' => $dataProvider]);
     }
 
-    public function actionShow($id)
+    /**
+     * @param $id
+     * @throws CDbException
+     * @throws CHttpException
+     */
+    public function actionView($id)
     {
-        if (($gallery = Gallery::model()->published()->findByPk($id)) === null)
+        if (($gallery = Gallery::model()->published()->findByPk($id)) === null) {
             throw new CHttpException(404, Yii::t('GalleryModule.gallery', 'Page was not found!'));
+        }
 
-        $image = new Image;
+        $image = new Image();
 
         if (Yii::app()->getRequest()->getIsPostRequest() && !empty($_POST['Image'])) {
-            try
-            {
+
+            try {
                 $transaction = Yii::app()->db->beginTransaction();
                 $image->attributes = $_POST['Image'];
                 if ($image->save() && $gallery->addImage($image)) {
                     $transaction->commit();
                     Yii::app()->user->setFlash(
-                        YFlashMessages::SUCCESS_MESSAGE,
+                        yupe\widgets\YFlashMessages::SUCCESS_MESSAGE,
                         Yii::t('GalleryModule.gallery', 'Photo was created!')
                     );
-                    $this->redirect(array('/gallery/gallery/show', 'id' => $gallery->id));
+                    $this->redirect(['/gallery/gallery/view', 'id' => $gallery->id]);
                 }
-            }
-            catch (Exception $e)
-            {
+            } catch (Exception $e) {
                 $transaction->rollback();
                 Yii::app()->user->setFlash(
-                    YFlashMessages::ERROR_MESSAGE,
+                    yupe\widgets\YFlashMessages::ERROR_MESSAGE,
                     $e->getMessage()
                 );
             }
         }
 
-        if($gallery->status == Gallery::STATUS_PRIVATE && $gallery->owner != Yii::app()->user->id){
+        if ($gallery->status == Gallery::STATUS_PRIVATE && $gallery->owner != Yii::app()->user->id) {
             throw new CHttpException(404);
         }
 
         $this->render(
-            'show', array(
-                'image'        => $image,
-                'model'        => $gallery,
-            )
+            'view',
+            [
+                'image' => $image,
+                'model' => $gallery,
+            ]
         );
     }
 
+    /**
+     * @param $id
+     * @throws CHttpException
+     */
     public function actionImage($id)
     {
-        $model = Image::model()->findByPk((int) $id);
-        if (!$model)
+        $model = Image::model()->findByPk((int)$id);
+
+        if (!$model) {
             throw new CHttpException(404, Yii::t('GalleryModule.gallery', 'Page was not found!'));
-        $this->render('image', array('model' => $model));
+        }
+
+        $this->render('image', ['model' => $model]);
     }
 
+
     /**
-     * Ajax/Get-обёртка для удаления изображения:
-     *
-     * @param int $id - id-изображения
-     *
-     * @return void
-     **/
+     * @param null $id
+     * @throws CHttpException
+     */
     public function actionDeleteImage($id = null)
     {
-        if (($image = Image::model()->findByPk($id)) === null || $image->canChange() === false)
+        if (($image = Image::model()->findByPk($id)) === null || $image->canChange() === false) {
             throw new CHttpException(404, Yii::t('GalleryModule.gallery', 'Page was not found!'));
+        }
 
         $message = Yii::t(
-            'GalleryModule.gallery', 'Image #{id} {result} deleted', array(
+            'GalleryModule.gallery',
+            'Image #{id} {result} deleted',
+            [
                 '{id}' => $id,
                 '{result}' => ($result = $image->delete())
                     ? Yii::t('GalleryModule.gallery', 'успешно')
                     : Yii::t('GalleryModule.gallery', 'не')
-            )
+            ]
         );
 
         if (Yii::app()->getRequest()->getIsPostRequest() && Yii::app()->getRequest()->getIsAjaxRequest()) {
@@ -104,7 +128,7 @@ class GalleryController extends yupe\components\controllers\FrontController
         }
 
         Yii::app()->user->setFlash(
-            $result ? YFlashMessages::SUCCESS_MESSAGE : YFlashMessages::ERROR_MESSAGE,
+            $result ? yupe\widgets\YFlashMessages::SUCCESS_MESSAGE : yupe\widgets\YFlashMessages::ERROR_MESSAGE,
             $message
         );
 
@@ -115,57 +139,61 @@ class GalleryController extends yupe\components\controllers\FrontController
         );
     }
 
+
     /**
-     * Ajax/Get-обёртка для редактирования изображения:
-     *
-     * @param int $id - id-изображения
-     *
-     * @return void
-     **/
+     * @param null $id
+     * @throws CException
+     * @throws CHttpException
+     */
     public function actionEditImage($id = null)
     {
-        if (($image = Image::model()->findByPk($id)) === null || $image->canChange() === false)
+        if (($image = Image::model()->findByPk($id)) === null || $image->canChange() === false) {
             throw new CHttpException(404, Yii::t('GalleryModule.gallery', 'Page was not found!'));
+        }
 
         if ((Yii::app()->getRequest()->getIsPostRequest() || Yii::app()->getRequest()->getIsAjaxRequest())
             && Yii::app()->getRequest()->getPost('Image') !== null
         ) {
-            
+
             $image->setAttributes(Yii::app()->getRequest()->getPost('Image'));
 
             if ($image->validate() && $image->save()) {
 
                 $message = Yii::t(
-                    'GalleryModule.gallery', 'Image #{id} edited', array(
+                    'GalleryModule.gallery',
+                    'Image #{id} edited',
+                    [
                         '{id}' => $id,
-                    )
+                    ]
                 );
 
-                if (Yii::app()->getRequest()->getIsPostRequest() && Yii::app()->getRequest()->getIsAjaxRequest())
+                if (Yii::app()->getRequest()->getIsPostRequest() && Yii::app()->getRequest()->getIsAjaxRequest()) {
                     Yii::app()->ajax->success(
-                        array(
+                        [
                             'message' => $message,
-                            'type'    => 'saved',
-                        )
+                            'type' => 'saved',
+                        ]
                     );
+                }
 
                 Yii::app()->user->setFlash(
-                    YFlashMessages::SUCCESS_MESSAGE,
+                    yupe\widgets\YFlashMessages::SUCCESS_MESSAGE,
                     $message
                 );
 
                 $this->redirect(
-                    array('/gallery/gallery/show', 'id' => $image->gallery->id)
+                    ['/gallery/gallery/view', 'id' => $image->gallery->id]
                 );
             }
         }
 
-        if (Yii::app()->getRequest()->getIsPostRequest() && Yii::app()->getRequest()->getIsAjaxRequest())
+        if (Yii::app()->getRequest()->getIsPostRequest() && Yii::app()->getRequest()->getIsAjaxRequest()) {
             Yii::app()->ajax->success(
-                array(
-                    'form'    => $this->renderPartial('_form', array('model' => $image), true)
-                )
+                [
+                    'form' => $this->renderPartial('_form', ['model' => $image], true)
+                ]
             );
-        $this->render('edit-image', array('model' => $image));
+        }
+        $this->render('edit-image', ['model' => $image]);
     }
 }

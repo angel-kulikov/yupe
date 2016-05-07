@@ -1,22 +1,29 @@
 <?php
-    $this->breadcrumbs = array(
-        Yii::app()->getModule('image')->getCategory() => array(),
-        Yii::t('ImageModule.image', 'Images') => array('/image/imageBackend/index'),
-        Yii::t('ImageModule.image', 'Add'),
-    );
+$this->breadcrumbs = [
+    Yii::t('ImageModule.image', 'Images') => ['/image/imageBackend/index'],
+    Yii::t('ImageModule.image', 'Add'),
+];
 
-    $this->pageTitle = Yii::t('ImageModule.image', 'Images - add');
+$this->pageTitle = Yii::t('ImageModule.image', 'Images - add');
 
-    $this->menu = array(
-        array('icon' => 'list-alt', 'label' => Yii::t('ImageModule.image', 'Image management'), 'url' => array('/image/imageBackend/index')),
-        array('icon' => 'plus-sign', 'label' => Yii::t('ImageModule.image', 'Add image'), 'url' => array('/image/imageBackend/create')),
-    );
+$this->menu = [
+    [
+        'icon'  => 'fa fa-fw fa-list-alt',
+        'label' => Yii::t('ImageModule.image', 'Image management'),
+        'url'   => ['/image/imageBackend/index']
+    ],
+    [
+        'icon'  => 'fa fa-fw fa-plus-square',
+        'label' => Yii::t('ImageModule.image', 'Add image'),
+        'url'   => ['/image/imageBackend/create']
+    ],
+];
 ?>
 <div class="page-header">
     <h1>
-        <?php echo Yii::t('ImageModule.image', 'Images'); ?>
-        <small><?php echo Yii::t('ImageModule.image', 'add'); ?></small>
+        <?=  Yii::t('ImageModule.image', 'Images'); ?>
+        <small><?=  Yii::t('ImageModule.image', 'add'); ?></small>
     </h1>
 </div>
 
-<?php echo  $this->renderPartial('_form', array('model' => $model)); ?>
+<?=  $this->renderPartial('_form', ['model' => $model]); ?>

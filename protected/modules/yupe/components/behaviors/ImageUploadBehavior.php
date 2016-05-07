@@ -1,159 +1,152 @@
 <?php
+
+namespace yupe\components\behaviors;
+
+use Yii;
+use yupe\components\image\Imagine;
+use yupe\components\image\Thumbnailer;
+use yupe\helpers\YFile;
+
 /**
- *
- * @package  yupe.modules.yupe.components.behaviors
- *
-*/
-
-class ImageUploadBehavior extends CActiveRecordBehavior
+ * Class ImageUploadBehavior
+ * @package yupe\components\behaviors
+ */
+class ImageUploadBehavior extends FileUploadBehavior
 {
-    /*
-     * Атрибут модели для хранения изображения
+    /**
+     * @var bool
      */
-    public $attributeName = 'image';
+    public $resizeOnUpload = true;
+    /**
+     * @var array
+     */
+    public $resizeOptions = [];
 
-    /*
-     * Загружаемое изображение
+    /**
+     * @var array
      */
-    public $image;
-    /*
-     * Минимальный размер загружаемого изображения
-     */
-    public $minSize = 0;
+    protected $defaultResizeOptions = [
+        'width' => 950,
+        'height' => 950,
+        'quality' => [
+            'jpegQuality' => 75,
+            'pngCompressionLevel' => 7,
+        ],
+    ];
 
-    /*
-     * Максимальный размер загружаемого изображения
+    /**
+     * @var null|string Полный путь к изображению по умолчанию в публичной папке
      */
-    public $maxSize = 5368709120;
+    public $defaultImage = null;
 
-    /*
-     * Допустимые типы изображений
+    /**
+     * @var Thumbnailer $thumbnailer ;
      */
-    public $types = 'jpg,jpeg,png,gif';
-    /*
-     * Список сценариев в которых будет использовано поведение
-     */
-    public $scenarios = array('insert', 'update');
-    /*
-     * Директория для загрузки изображений
-     */
-    public $uploadPath;
-    /*
-     * Список сценариев в которых изображение обязательно, 'insert, update'
-     */
-    public $requiredOn;
+    protected $thumbnailer;
 
-    /*
-     * Callback функция для генерации имени загружаемого файла
+    /**
+     * @param \CComponent $owner
      */
-    public $imageNameCallback;
-    /*
-     * Параметры для ресайза изображения
-     */
-    public $resize = array('quality' => 100);
-
-    protected $_newImage;
-    protected $_oldImage;
-
     public function attach($owner)
     {
         parent::attach($owner);
 
-        if ($this->checkScenario())
-        {
-            if ($this->requiredOn)
-            {
-                $requiredValidator = CValidator::createValidator('required', $owner, $this->attributeName, array(
-                    'on' => $this->requiredOn,
-                ));
-                $owner->validatorList->add($requiredValidator);
-            }
+        $this->thumbnailer = Yii::app()->thumbnailer;
 
-            $fileValidator = CValidator::createValidator('file', $owner, $this->attributeName, array(
-                'types'      => $this->types,
-                'minSize'    => $this->minSize,
-                'maxSize'    => $this->maxSize,
-                'allowEmpty' => true,
-            ));
-
-            $owner->validatorList->add($fileValidator);
+        if ($this->resizeOnUpload) {
+            $this->resizeOptions = array_merge(
+                $this->defaultResizeOptions,
+                $this->resizeOptions
+            );
         }
     }
 
-    public function afterFind($event)
-    {
-        $this->_oldImage = $this->uploadPath . $this->owner{$this->attributeName};
-    }
-
-    public function beforeValidate($event)
-    {
-        if ($this->checkScenario() && ($this->_newImage = CUploadedFile::getInstance($this->owner, $this->attributeName))) {
-            $this->owner->{$this->attributeName} = $this->_newImage;
-        }
-    }
-
-    public function beforeSave($event)
-    {
-        if ($this->checkScenario() && $this->_newImage instanceof CUploadedFile)
-        {
-            $this->saveImage();
-            $this->deleteImage();
-        }
-    }
-
-    public function beforeDelete($event)
-    {
-        $this->deleteImage();
-    }
-
-    public function deleteImage()
-    {
-        // не удаляем файл если сценарий altlang, используется модулями news, category
-        if ($this->owner->scenario !== 'altlang' && @is_file($this->_oldImage)) {
-            // Удаляем связанные с данным изображением превьюшки:
-            $fileName = pathinfo($this->_oldImage, PATHINFO_BASENAME);
-            foreach (glob($this->uploadPath . 'thumb_cache_*_' . $fileName) as $file)
-                @unlink($file);
-            @unlink($this->_oldImage);
-        }
-    }
-
-    /*
-     * Проверяет допустимо ли использовать поведение в текущем сценарии
+    /**
+     *
      */
-    public function checkScenario()
+    protected function removeFile()
     {
-        return in_array($this->owner->scenario, $this->scenarios);
+        parent::removeFile();
+        $this->removeThumbs();
     }
 
-    /*
-     * Генерирует имя файла с использованием callback функции если возможно
+    /**
+     *
      */
-    protected  function _getImageName() 
+    protected function removeThumbs()
     {
-        return (is_callable($this->imageNameCallback))
-            ? (call_user_func($this->imageNameCallback))
-            : md5(microtime(true) . rand() . rand());
+        $filename = pathinfo($this->getFilePath(), PATHINFO_BASENAME);
 
+        $iterator = new \GlobIterator(
+            $this->thumbnailer->getBasePath().'/'.$this->uploadPath.'/'.'*_'.$filename
+        );
+
+        foreach ($iterator as $file) {
+            @unlink($file->getRealPath());
+        }
     }
 
-    public function saveImage()
+    /**
+     * @throws \CException
+     */
+    public function saveFile()
     {
-        $quality = isset($this->resize['quality']) ? $this->resize['quality'] : 100;
-        $width = isset($this->resize['width']) ? $this->resize['width'] : null;
-        $height = isset($this->resize['height']) ? $this->resize['height'] : null;
+        if (!$this->resizeOnUpload) {
+            return parent::saveFile();
+        }
 
-        $tmpName = $this->_newImage->tempName;
-        $imageName = $this->_getImageName();
-        $image = Yii::app()->image->load($tmpName)->quality($quality);
+        $newFileName = $this->generateFilename();
+        $path = $this->uploadManager->getFilePath($newFileName, $this->getUploadPath());
 
-        if ( ! $newFile = YFile::pathIsWritable($imageName, $image->ext, $this->uploadPath))
-            throw new CHttpException(500, Yii::t('YupeModule.yupe', 'Directory "{dir}" is not acceptable for write!', array('{dir}' => $this->uploadPath)));
+        if (!YFile::checkPath(pathinfo($path, PATHINFO_DIRNAME))) {
+            throw new \CException(
+                Yii::t(
+                    'YupeModule.yupe',
+                    'Directory "{dir}" is not acceptable for write!',
+                    ['{dir}' => $path]
+                )
+            );
+        }
 
-        if (($width !== null && $image->width > $width) || ($height !== null && $image->height > $height))
-            $image->resize($width, $height);
+        Imagine::resize(
+            $this->getUploadedFileInstance()->getTempName(),
+            $this->resizeOptions['width'],
+            $this->resizeOptions['height']
+        )->save(
+            $path,
+            $this->resizeOptions['quality']
+        );
 
-	    if ($image->save($newFile))
-		    $this->owner->{$this->attributeName} = pathinfo($newFile, PATHINFO_BASENAME);
+        $this->getOwner()->setAttribute($this->attributeName, $newFileName);
+    }
+
+    /**
+     * @param int $width
+     * @param int $height
+     * @param bool|true $crop
+     * @param null $defaultImage
+     * @return null|string
+     */
+    public function getImageUrl($width = 0, $height = 0, $crop = true, $defaultImage = null)
+    {
+        $file = $this->getFilePath();
+        $webRoot = Yii::getPathOfAlias('webroot');
+        $defaultImage = $defaultImage ?: $this->defaultImage;
+
+        if (null === $file && (null === $defaultImage || !is_file($webRoot.$defaultImage))) {
+            return null;
+        }
+
+        if ($width || $height) {
+            return $this->thumbnailer->thumbnail(
+                $file ?: $webRoot.$defaultImage,
+                $this->uploadPath,
+                $width,
+                $height,
+                $crop
+            );
+        }
+
+        return $file ? $this->getFileUrl() : $defaultImage;
     }
 }

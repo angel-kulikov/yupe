@@ -22,15 +22,18 @@
  *
  * The followings are the available model relations:
  * @property MenuItem[] $menuItems
+ *
+ * @method Menu active()
  */
-class Menu extends YModel
+class Menu extends yupe\models\YModel
 {
     const STATUS_DISABLED = 0;
-    const STATUS_ACTIVE   = 1;
+    const STATUS_ACTIVE = 1;
+
     /**
      * Returns the static model of the specified AR class.
-     * @param string $className active record class name.
-     * @return Menu the static model class
+     * @param  string $className active record class name.
+     * @return Menu   the static model class
      */
     public static function model($className = __CLASS__)
     {
@@ -50,17 +53,17 @@ class Menu extends YModel
      */
     public function rules()
     {
-        return array(
-            array('name, code, description', 'required', 'except' => 'search'),
-            array('status', 'numerical', 'integerOnly' => true),
-            array('name, code, description', 'filter', 'filter' => array($obj = new CHtmlPurifier(), 'purify')),
-            array('name, description', 'length', 'max' => 255),
-            array('code', 'length', 'max' => 100),
-            array('code', 'YSLugValidator'),
-            array('code', 'unique'),
-            array('status', 'in', 'range' => array_keys($this->statusList)),
-            array('id, name, code, description, status', 'safe', 'on' => 'search'),
-        );
+        return [
+            ['name, code, description', 'required', 'except' => 'search'],
+            ['status', 'numerical', 'integerOnly' => true],
+            ['name, code, description', 'filter', 'filter' => [$obj = new CHtmlPurifier(), 'purify']],
+            ['name, description', 'length', 'max' => 255],
+            ['code', 'length', 'max' => 100],
+            ['code', 'yupe\components\validators\YSLugValidator'],
+            ['code', 'unique'],
+            ['status', 'in', 'range' => array_keys($this->statusList)],
+            ['id, name, code, description, status', 'safe', 'on' => 'search'],
+        ];
     }
 
     /**
@@ -70,9 +73,9 @@ class Menu extends YModel
     {
         // NOTE: you may need to adjust the relation name and the related
         // class name for the relations automatically generated below.
-        return array(
-            'menuItems' => array(self::HAS_MANY, 'MenuItem', 'menu_id'),
-        );
+        return [
+            'menuItems' => [self::HAS_MANY, 'MenuItem', 'menu_id'],
+        ];
     }
 
     /**
@@ -80,13 +83,13 @@ class Menu extends YModel
      */
     public function attributeLabels()
     {
-        return array(
+        return [
             'id'          => Yii::t('MenuModule.menu', 'Id'),
             'name'        => Yii::t('MenuModule.menu', 'Name'),
             'code'        => Yii::t('MenuModule.menu', 'Unified code'),
             'description' => Yii::t('MenuModule.menu', 'Description'),
             'status'      => Yii::t('MenuModule.menu', 'Status'),
-        );
+        ];
     }
 
     /**
@@ -94,13 +97,19 @@ class Menu extends YModel
      */
     public function attributeDescriptions()
     {
-        return array(
+        return [
             'id'          => Yii::t('MenuModule.menu', 'Menu Id'),
             'name'        => Yii::t('MenuModule.menu', 'Menu name'),
-            'code'        => Yii::t('MenuModule.menu', 'Unified code is using in widget, as identifier for menu printing.'),
+            'code'        => Yii::t(
+                'MenuModule.menu',
+                'Unified code is using in widget, as identifier for menu printing.'
+            ),
             'description' => Yii::t('MenuModule.menu', 'Short description'),
-            'status'      => Yii::t('MenuModule.menu', 'Choose menu status: <br /><br /><span class="label label-success">active</span> &ndash; Will be visible on site.<br /><br /><span class="label label-warning">not active</span> &ndash; Will be hidden.'),
-        );
+            'status'      => Yii::t(
+                'MenuModule.menu',
+                'Choose menu status: <br /><br /><span class="label label-success">active</span> &ndash; Will be visible on site.<br /><br /><span class="label label-warning">not active</span> &ndash; Will be hidden.'
+            ),
+        ];
     }
 
     /**
@@ -112,7 +121,7 @@ class Menu extends YModel
         // Warning: Please modify the following code to remove attributes that
         // should not be searched.
 
-        $criteria = new CDbCriteria;
+        $criteria = new CDbCriteria();
 
         $criteria->compare('id', $this->id, true);
         $criteria->compare('name', $this->name, true);
@@ -120,25 +129,25 @@ class Menu extends YModel
         $criteria->compare('description', $this->description, true);
         $criteria->compare('status', $this->status);
 
-        return new CActiveDataProvider(get_class($this), array(
-            'criteria' => $criteria,
-            'sort'     => array('defaultOrder' => 'status DESC, id'),
-        ));
-    }
-
-
-    public function scopes()
-    {
-        return array(
-            'active' => array(
-                'condition' => 'status = :status',
-                'params' => array(
-                    ':status' => self::STATUS_ACTIVE
-                )
-            )
+        return new CActiveDataProvider(
+            get_class($this), [
+                'criteria' => $criteria,
+                'sort'     => ['defaultOrder' => 'status DESC, id'],
+            ]
         );
     }
 
+    public function scopes()
+    {
+        return [
+            'active' => [
+                'condition' => 'status = :status',
+                'params'    => [
+                    ':status' => self::STATUS_ACTIVE
+                ]
+            ]
+        ];
+    }
 
     protected function afterSave()
     {
@@ -156,15 +165,16 @@ class Menu extends YModel
 
     public function getStatusList()
     {
-        return array(
+        return [
             self::STATUS_DISABLED => Yii::t('MenuModule.menu', 'not active'),
             self::STATUS_ACTIVE   => Yii::t('MenuModule.menu', 'active'),
-        );
+        ];
     }
 
     public function getStatus()
     {
         $data = $this->statusList;
+
         return isset($data[$this->status]) ? $data[$this->status] : Yii::t('MenuModule.menu', '*unknown*');
     }
 
@@ -177,23 +187,24 @@ class Menu extends YModel
         if ($items === false) {
             $alias = $this->getDbConnection()->getSchema()->quoteTableName('menuItems');
             $results = self::model()->with(
-                array(
-                    'menuItems' => array(
-                        'on'     => $alias . '.parent_id = :parent_id AND ' . $alias .'.status = 1',
-                        'params' => array('parent_id' => (int) $parent_id),
+                [
+                    'menuItems' => [
+                        'on'     => $alias . '.parent_id = :parent_id AND ' . $alias . '.status = 1',
+                        'params' => ['parent_id' => (int)$parent_id],
                         'order'  => $alias . '.sort ASC, ' . $alias . '.id ASC',
-                    )
-                )
+                    ]
+                ]
             )->findByAttributes(
-                array(
+                [
                     'code' => $code
-                )
+                ]
             );
 
-            $items = array();
+            $items = [];
 
-            if (empty($results))
+            if (empty($results)) {
                 return $items;
+            }
 
             $resultItems = $results->menuItems;
 
@@ -204,62 +215,68 @@ class Menu extends YModel
                 if ($result->href) {
                     // если адрес надо параметризовать через роутер
                     if (!$result->regular_link) {
-                        
-                        $url   = @unserialize($result->href) ?: $result->href;
-                        
-                        $param = array();
-
-                        if (!is_array($url)) {
-
-                            strstr($url, '?') ? list($url, $param) = explode("?", $url) : $param = array();
-                            
-                            if ($param) {
-                                parse_str($param, $param);
-                            }
-                            
+                        $url = $result->href;
+                        $param = [];
+                        strstr($url, '?') ? list($url, $param) = explode("?", $url) : $param = [];
+                        if ($param) {
+                            parse_str($param, $param);
                         }
-
-                        $url = array('url' => (array) $url + $param, 'items' => $childItems);
+                        $url = ['url' => (array)$url + $param, 'items' => $childItems];
                     } else {
                         // если обычная ссылка
-                        $url = array('url' => $result->href, 'items' => $childItems);
+                        $url = ['url' => $result->href, 'items' => $childItems];
                     }
-
+                } elseif ($childItems) {
+                    $url = ['url' => ['#'], 'items' => $childItems];
+                } else {
+                    $url = [];
                 }
-                else if ($childItems)
-                    $url = array('url' => array('#'), 'items' => $childItems);
-                else
-                    $url = array();
 
-                $class      = (($childItems) ? ' submenuItem' : '') . 
-                              (($result->class) ? ' ' . $result->class : '');
-                $title_attr = ($result->title_attr) ? array('title' => $result->title_attr) : array();
-                $target     = ($result->target && $url) ? array('target' => $result->target) : array();
-                $rel        = ($result->rel && $url) ? array('rel' => $result->rel) : array();
+                $class = (($childItems) ? ' submenuItem' : '') . (($result->class) ? ' ' . $result->class : '');
+                $title_attr = ($result->title_attr) ? ['title' => $result->title_attr] : [];
+                $target = ($result->target && $url) ? ['target' => $result->target] : [];
+                $rel = ($result->rel && $url) ? ['rel' => $result->rel] : [];
 
-                $items[] = array(
-                    'label'          => $result->title,
-                    'template'       => $result->before_link . '{menu}' . $result->after_link,
-                    'itemOptions'    => array('class' => 'listItem' . $class),
-                    'linkOptions'    => array(
-                        'class' => 'listItemLink',
-                    ) + $title_attr + $target + $rel,
-                    'visible'        => MenuItem::model()->getConditionVisible($result->condition_name, $result->condition_denial),
-                ) + $url;
+                $items[] = [
+                        'label'       => $result->title,
+                        'template'    => $result->before_link . '{menu}' . $result->after_link,
+                        'itemOptions' => ['class' => 'listItem' . $class],
+                        'linkOptions' => [
+                                'class' => 'listItemLink',
+                            ] + $title_attr + $target + $rel,
+                        'visible'     => MenuItem::model()->getConditionVisible(
+                            $result->condition_name,
+                            $result->condition_denial
+                        ),
+                    ] + $url;
             }
 
-            Yii::app()->cache->set("Menu::{$code}{$parent_id}::user_{$userId}" . Yii::app()->language, $items, 0, new TagsCache('menu', $code, 'loggedIn' . $userId));
+            Yii::app()->cache->set(
+                "Menu::{$code}{$parent_id}::user_{$userId}" . Yii::app()->language,
+                $items,
+                0,
+                new TagsCache('menu', $code, 'loggedIn' . $userId)
+            );
         }
+
         return $items;
     }
 
-    public function addItem($title,$href,$parentId)
+    /**
+     * Добавляет новый пункт меню в меню
+     * @param $title string - Заголовок
+     * @param $href string - Ссылка
+     * @param $parentId int - Родитель
+     * @param bool $regularLink - Обычная ссылка
+     * @return bool
+     */
+    public function addItem($title, $href, $parentId, $regularLink = false)
     {
-        $menuItem = new MenuItem;
+        $menuItem = new MenuItem();
         $menuItem->parent_id = (int)$parentId;
         $menuItem->menu_id = $this->id;
-        $menuItem->title  = $title;
-        $menuItem->href   = $href;
+        $menuItem->title = $title;
+        $menuItem->href = $href;
         $menuItem->condition_name = '';
         $menuItem->class = '';
         $menuItem->title_attr = '';
@@ -267,8 +284,10 @@ class Menu extends YModel
         $menuItem->after_link = '';
         $menuItem->target = '';
         $menuItem->rel = '';
-        if($menuItem->save()){
-            Yii::app()->cache->clear(array('menu', $this->code));
+        $menuItem->regular_link = $regularLink;
+        if ($menuItem->save()) {
+            Yii::app()->cache->clear(['menu', $this->code]);
+
             return true;
         }
 
@@ -277,28 +296,30 @@ class Menu extends YModel
 
     /**
      * Метод изменения пункта меню.
-     * @param $oldTitle Старое название элемента (по нему осуществяется поиск)
-     * @param $newTitle Новое название
-     * @param $href Новая ссылка
-     * @param $parentId id меню
+     * @param $oldTitle string Старое название элемента (по нему осуществяется поиск)
+     * @param $newTitle string Новое название
+     * @param $href string Новая ссылка
+     * @param $parentId int id меню
+     * @param $regularLink bool Обычная ссылка
      * @return bool статус выполнения
      */
-    public function changeItem($oldTitle, $newTitle, $href, $parentId)
+    public function changeItem($oldTitle, $newTitle, $href, $parentId, $regularLink = false)
     {
-        $menuItem = MenuItem::model()->findByAttributes(array("title"=>$oldTitle));
+        $menuItem = MenuItem::model()->findByAttributes(["title" => $oldTitle]);
 
-        if($menuItem === null)
-        {
-            return $this->addItem($newTitle,$href,$parentId);
+        if ($menuItem === null) {
+            return $this->addItem($newTitle, $href, $parentId, $regularLink);
         }
 
         $menuItem->parent_id = (int)$parentId;
         $menuItem->menu_id = $this->id;
-        $menuItem->title  = $newTitle;
-        $menuItem->href   = $href;
+        $menuItem->title = $newTitle;
+        $menuItem->href = $href;
+        $menuItem->regular_link = $regularLink;
 
-        if($menuItem->save()){
-            Yii::app()->cache->clear(array('menu', $this->code));
+        if ($menuItem->save()) {
+            Yii::app()->cache->clear(['menu', $this->code]);
+
             return true;
         }
 

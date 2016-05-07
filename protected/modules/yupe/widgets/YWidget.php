@@ -1,6 +1,6 @@
 <?php
 /**
- * Класс YWidget - базовый класс для всех виджетов Юпи!
+ * Класс yupe\widgets\YWidget - базовый класс для всех виджетов Юпи!
  *
  * Все виджеты Юпи! должны наследовать этот класс
  * Основная особенность - view файлы для виджетов хранятся в каталоге "widgets" текущей темы, подробнее https://github.com/yupe/yupe/issues/26
@@ -12,7 +12,16 @@
  * @link     http://yupe.ru
  *
  */
+namespace yupe\widgets;
 
+use ReflectionClass;
+use CWidget;
+use Yii;
+
+/**
+ * Class YWidget
+ * @package yupe\widgets
+ */
 abstract class YWidget extends CWidget
 {
     /**
@@ -27,7 +36,7 @@ abstract class YWidget extends CWidget
      *
      *  limit - кол-во записей для вывода
      *
-    */
+     */
 
     public $limit = 5;
 
@@ -35,28 +44,65 @@ abstract class YWidget extends CWidget
      *  view - название шаблона (view) который используется для отрисовки виджета
      *
      *
-    */
+     */
     public $view;
 
+    /**
+     * @since 0.8.1
+     *
+     * Модуль к которому относится виджет
+     */
+    public $module;
+
+    /**
+     * @param bool $checkTheme
+     * @return null|string
+     */
+    public function getViewPath($checkTheme = false)
+    {
+        if (null === Yii::app()->getTheme()) {
+            return parent::getViewPath($checkTheme);
+        }
+
+        $themeView = null;
+        $reflection = new ReflectionClass(get_class($this));
+        $path = explode(Yii::app()->getModulePath().DIRECTORY_SEPARATOR, $reflection->getFileName(), 2);
+        if (isset($path[1])) {
+            $path = explode(DIRECTORY_SEPARATOR, $path[1], 2);
+            $themeView = Yii::app()->getThemeManager()->getBasePath().DIRECTORY_SEPARATOR.
+                Yii::app()->getTheme()->getName().DIRECTORY_SEPARATOR.
+                'views'.DIRECTORY_SEPARATOR.
+                $path[0].DIRECTORY_SEPARATOR.
+                'widgets'.DIRECTORY_SEPARATOR.
+                $reflection->getShortName();
+
+            if ($themeView && file_exists($themeView)) {
+                return $themeView;
+            }
+
+            $themeView = implode(
+                DIRECTORY_SEPARATOR,
+                [Yii::app()->getModulePath(), $path[0], 'views', 'widgets', $reflection->getShortName()]
+            );
+
+            if ($themeView && file_exists($themeView)) {
+                return $themeView;
+            }
+        }
+
+        return parent::getViewPath($checkTheme);
+    }
+
+    /**
+     *
+     */
     public function init()
     {
+        if (!$this->cacheTime && $this->cacheTime !== 0) {
+            $this->cacheTime = (int)Yii::app()->getModule('yupe')->coreCacheTime;
+        }
+
         parent::init();
     }
 
-    public function getViewPath($checkTheme = false)
-    {
-        $themeView = null;
-        if (Yii::app()->theme !== null) {
-            $class = get_class($this);
-            $obj = new ReflectionClass($class);
-            $string = explode(Yii::app()->modulePath . DIRECTORY_SEPARATOR, $obj->getFileName(), 2);
-            if (isset($string[1])) {
-                $string = explode(DIRECTORY_SEPARATOR, $string[1], 2);
-                $themeView = Yii::app()->themeManager->basePath . '/' .
-                             Yii::app()->theme->name . '/' . 'views' . '/' .
-                             $string[0] . '/' . 'widgets' . '/' . $class;
-            }
-        }
-        return $themeView && file_exists($themeView) ? $themeView : parent::getViewPath($checkTheme);
-    }
 }

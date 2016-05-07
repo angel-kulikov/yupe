@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Install Form Model
  * Класс формы установки:
@@ -10,29 +11,28 @@
  * @version  0.0.1
  * @link     http://yupe.ru
  **/
-class InstallForm extends YFormModel
+class InstallForm extends yupe\models\YFormModel
 {
     /**
      * Типы баз данных:
      **/
-    const DB_MYSQL      = 1;
+    const DB_MYSQL = 1;
     const DB_POSTGRESQL = 2;
-    const DB_MSSQL      = 3;
-    const DB_ORACLE     = 4;
-
+    const DB_MSSQL = 3;
+    const DB_ORACLE = 4;
 
     /**
      * Параметры для настройки БД:
      **/
-    public $host        = '127.0.0.1';
-    public $port        = '3306';
-    public $socket      = '';
+    public $host = '127.0.0.1';
+    public $port = '3306';
+    public $socket = '';
     public $dbName;
     public $createDb;
     public $dbUser;
     public $dbPassword;
     public $tablePrefix = 'yupe_';
-    public $dbType      = self::DB_MYSQL;
+    public $dbType = self::DB_MYSQL;
 
     /**
      * Для создания пользователя:
@@ -45,20 +45,23 @@ class InstallForm extends YFormModel
     /**
      * Для начальной настройки сайта:
      **/
-    public $siteName        = 'Юпи!';
+    public $siteName = 'Юпи!';
     public $siteDescription = 'Юпи! - самый быстрый способ создать сайт на Yii';
-    public $siteKeyWords    = 'Юпи!, yupe, yii, cms, цмс';
+    public $siteKeyWords = 'Юпи!, yupe, yii, cms, цмс';
     public $siteEmail;
-    public $theme           = 'default';
-    public $backendTheme    = '';
+    public $theme = 'default';
+    public $backendTheme = '';
 
     public $email;
 
     public function init()
     {
-        $this->siteName = Yii::t('InstallModule.install','Yupe!');
-        $this->siteKeyWords = Yii::t('InstallModule.install','Yupe!, yupe, cms, yii');
-        $this->siteDescription = Yii::t('InstallModule.install','Yupe! - the fastest way to create a site build on top of Yiiframework!');
+        $this->siteName = Yii::t('InstallModule.install', 'Yupe!');
+        $this->siteKeyWords = Yii::t('InstallModule.install', 'Yupe!, yupe, cms, yii');
+        $this->siteDescription = Yii::t(
+            'InstallModule.install',
+            'Yupe! - the fastest way to create a site build on top of Yiiframework!'
+        );
         parent::init();
     }
 
@@ -69,32 +72,36 @@ class InstallForm extends YFormModel
      **/
     public function rules()
     {
-        return array(
+        return [
             /**
              * Для настройки БД:
              **/
-            array('host, port, dbName, dbUser, dbType', 'required', 'on' => 'dbSettings'),
-            array('dbPassword', 'length', 'min' => 0, 'max' => 32),
-            array('port, dbType', 'numerical', 'integerOnly' => true),
-            array('dbName, dbUser', 'length', 'min' => 0, 'max' => 256),
-            array('socket, createDb, tablePrefix', 'safe'),
-
+            ['host, port, dbName, dbUser, dbType', 'required', 'on' => 'dbSettings'],
+            ['dbPassword', 'length', 'min' => 0, 'max' => 32],
+            ['port, dbType', 'numerical', 'integerOnly' => true],
+            ['dbName, dbUser', 'length', 'min' => 0, 'max' => 255],
+            ['socket, createDb, tablePrefix', 'safe'],
             /**
              * Для начальной настройки сайта:
              **/
-            array('siteName, siteDescription, siteKeyWords, siteEmail, theme', 'required', 'on' => 'siteSettings'),
-            array('siteName', 'length', 'max' => 30),
-            array('siteDescription, siteKeyWords, theme, backendTheme', 'length', 'max' => 180),
-            array('siteEmail', 'email'),
-
+            ['siteName, siteDescription, siteKeyWords, siteEmail, theme', 'required', 'on' => 'siteSettings'],
+            ['siteName', 'length', 'max' => 255],
+            ['siteDescription, siteKeyWords, theme, backendTheme', 'length', 'max' => 180],
+            ['siteEmail', 'email'],
             /**
              * Для настройки администратора:
              **/
-            array('userName, userPassword, cPassword, userEmail', 'required', 'on' => 'createUser'),
-            array('userPassword, cPassword, userName', 'length', 'min' => 3),
-            array('cPassword', 'compare', 'compareAttribute' => 'userPassword', 'message' => Yii::t('InstallModule.install', 'Passwords are not consistent')),
-            array('userEmail', 'email'),
-        );
+            ['userName, userPassword, cPassword, userEmail', 'required', 'on' => 'createUser'],
+            ['userPassword, cPassword', 'length', 'min' => 8],
+            ['userName', 'length', 'min' => 4],
+            [
+                'cPassword',
+                'compare',
+                'compareAttribute' => 'userPassword',
+                'message'          => Yii::t('InstallModule.install', 'Passwords are not consistent')
+            ],
+            ['userEmail', 'email'],
+        ];
     }
 
     /**
@@ -104,7 +111,7 @@ class InstallForm extends YFormModel
      **/
     public function attributeLabels()
     {
-        return array(
+        return [
             /**
              * Для настройки БД:
              **/
@@ -117,8 +124,6 @@ class InstallForm extends YFormModel
             'dbUser'          => Yii::t('InstallModule.install', 'User'),
             'dbPassword'      => Yii::t('InstallModule.install', 'Password'),
             'tablePrefix'     => Yii::t('InstallModule.install', 'Tables prefix'),
-
-
             /**
              * Для начальной настройки сайта:
              **/
@@ -128,7 +133,6 @@ class InstallForm extends YFormModel
             'siteEmail'       => Yii::t('InstallModule.install', 'Administrator e-mail'),
             'theme'           => Yii::t('InstallModule.install', 'Default frontend theme'),
             'backendTheme'    => Yii::t('InstallModule.install', 'Default backend (Admin CP) theme'),
-
             /**
              * Для настройки администратора:
              **/
@@ -136,7 +140,7 @@ class InstallForm extends YFormModel
             'userEmail'       => Yii::t('InstallModule.install', 'Email'),
             'userPassword'    => Yii::t('InstallModule.install', 'Password'),
             'cPassword'       => Yii::t('InstallModule.install', 'Password confirm'),
-        );
+        ];
     }
 
     /**
@@ -146,7 +150,7 @@ class InstallForm extends YFormModel
      **/
     public function attributeDescriptions()
     {
-        return array(
+        return [
             /**
              * Для настройки БД:
              **/
@@ -159,7 +163,6 @@ class InstallForm extends YFormModel
             'dbUser'          => Yii::t('InstallModule.install', 'User for access to selected DB'),
             'dbPassword'      => Yii::t('InstallModule.install', 'DB access password'),
             'tablePrefix'     => Yii::t('InstallModule.install', 'Table prefix, "yupe_" by defaults'),
-
             /**
              * Для начальной настройки сайта:
              **/
@@ -169,15 +172,17 @@ class InstallForm extends YFormModel
             'siteEmail'       => Yii::t('InstallModule.install', 'Using for administration delivery'),
             'theme'           => Yii::t('InstallModule.install', 'Describe appearance of your Site'),
             'backendTheme'    => Yii::t('InstallModule.install', 'Describe appearance of your Control Panel'),
-
             /**
              * Для настройки администратора:
              **/
             'userName'        => Yii::t('InstallModule.install', 'Admin login'),
-            'userEmail'       => Yii::t('InstallModule.install', 'Site administrator e-mail. Uses for admin cp authorization.'),
+            'userEmail'       => Yii::t(
+                    'InstallModule.install',
+                    'Site administrator e-mail. Uses for admin cp authorization.'
+                ),
             'userPassword'    => Yii::t('InstallModule.install', 'Admin password'),
             'cPassword'       => Yii::t('InstallModule.install', 'Admin password confirm'),
-        );
+        ];
     }
 
     /**
@@ -189,24 +194,21 @@ class InstallForm extends YFormModel
     {
         /** Определяем доступные базы данных:
          *
-         * Варианты СУБД:
+         * Варианты СУБД
          *
-         * self::DB_MYSQL      => 'MySQL',
-         * self::DB_POSTGRESQL => 'PostgreSQL',
-         * self::DB_MSSQL      => 'MSSQL',
-         * self::DB_ORACLE     => 'Oracle',
-         **/
+         * self::DB_MYSQL => 'MySQL',
+         *
+         */
 
-        $dbTypes = array();
+        $dbTypes = [];
         /**
          * Проверяем доступные СУБД:
          */
-        
-        if (extension_loaded('pdo_mysql'))
+
+        if (extension_loaded('pdo_mysql')) {
             $dbTypes[self::DB_MYSQL] = 'MySQL';
-        if (extension_loaded('pdo_pgsql'))
-            $dbTypes[self::DB_POSTGRESQL] = 'PostgreSQL';
-        
+        }
+
         return $dbTypes;
     }
 
@@ -217,10 +219,10 @@ class InstallForm extends YFormModel
      **/
     public function getDbTypes()
     {
-        return array(
+        return [
             self::DB_MYSQL      => 'mysql',
             self::DB_POSTGRESQL => 'pgsql',
-        );
+        ];
     }
 
     /**
@@ -233,19 +235,4 @@ class InstallForm extends YFormModel
         return User::model()->admin()->find()->getAttribute('email');
     }
 
-    /**
-     * Дефолтные настройки для PostgreSQL
-     *
-     * @return array default postgresql settings
-     **/
-    public function getPostgresqlDefaults()
-    {
-        $settings = $this->attributes;
-        return array_merge(
-            $settings, array(
-                'dbType' => self::DB_POSTGRESQL,
-                'port' => '5432',
-            )
-        );
-    }
 }

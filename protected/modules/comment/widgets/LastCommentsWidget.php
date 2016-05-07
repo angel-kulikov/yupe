@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Виджет для вывода последних комментарие
  *
@@ -10,7 +11,7 @@
  * @link     http://yupe.ru
  *
  **/
-class LastCommentsWidget extends YWidget
+class LastCommentsWidget extends yupe\widgets\YWidget
 {
     public $model;
     public $commentStatus;
@@ -29,12 +30,12 @@ class LastCommentsWidget extends YWidget
 
     public function run()
     {
-        $criteria = new CDbCriteria(array(
+        $criteria = new CDbCriteria([
             'condition' => 'status = :status AND id<>root',
-            'params' => array(':status' => $this->commentStatus),
-            'limit' => $this->limit,
-            'order' => 'id DESC',
-        ));
+            'params'    => [':status' => $this->commentStatus],
+            'limit'     => $this->limit,
+            'order'     => 'id DESC',
+        ]);
 
         if ($this->model) {
             $criteria->addCondition('model = :model');
@@ -47,6 +48,6 @@ class LastCommentsWidget extends YWidget
 
         $comments = Comment::model()->findAll($criteria);
 
-        $this->render($this->view, array('models' => $comments));
+        $this->render($this->view, ['models' => $comments]);
     }
 }

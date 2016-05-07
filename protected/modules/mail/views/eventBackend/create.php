@@ -1,27 +1,35 @@
 <?php
 /**
  * Отображение для create:
- * 
- *   @category YupeView
- *   @package  yupe
- *   @author   Yupe Team <team@yupe.ru>
- *   @license  https://github.com/yupe/yupe/blob/master/LICENSE BSD
- *   @link     http://yupe.ru
+ *
+ * @category YupeView
+ * @package  yupe
+ * @author   Yupe Team <team@yupe.ru>
+ * @license  https://github.com/yupe/yupe/blob/master/LICENSE BSD
+ * @link     http://yupe.ru
  **/
-$this->breadcrumbs=array(
-    $this->module->getCategory() => array('index'),
-    Yii::t('MailModule.mail', 'Mail events')=>array('index'),
+$this->breadcrumbs = [
+    Yii::t('MailModule.mail', 'Mail events') => ['index'],
     Yii::t('MailModule.mail', 'Create'),
-);
+];
 
-$this->menu=array(
-    array('icon'=> 'list-alt', 'label' => Yii::t('MailModule.mail', 'Messages list'),'url'=>array('/mail/eventBackend/index')),
-    array('icon'=> 'plus-sign', 'label' => Yii::t('MailModule.mail', 'Create event'),'url'=>array('/mail/eventBackend/create')),
-);
+$this->menu = [
+    ['label' => Yii::t('MailModule.mail', 'Mail events')],
+    [
+        'icon'  => 'fa fa-fw fa-list-alt',
+        'label' => Yii::t('MailModule.mail', 'Messages list'),
+        'url'   => ['/mail/eventBackend/index']
+    ],
+    [
+        'icon'  => 'fa fa-fw fa-plus-square',
+        'label' => Yii::t('MailModule.mail', 'Create event'),
+        'url'   => ['/mail/eventBackend/create']
+    ],
+];
 ?>
 <div class="page-header">
-    <h1><?php echo Yii::t('MailModule.mail', 'Mail events');?>
-        <small><?php echo Yii::t('MailModule.mail', 'adding');?></small>
+    <h1><?=  Yii::t('MailModule.mail', 'Mail events'); ?>
+        <small><?=  Yii::t('MailModule.mail', 'adding'); ?></small>
     </h1>
 </div>
-<?php echo  $this->renderPartial('_form', array('model'=>$model)); ?>
+<?=  $this->renderPartial('_form', ['model' => $model]); ?>

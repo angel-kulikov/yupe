@@ -12,23 +12,39 @@
  * @version  0.1
  * @link     http://yupe.ru
  **/
+namespace yupe\components\actions;
 
+use CCaptchaAction;
+
+/**
+ * Class YCaptchaAction
+ * @package yupe\components\actions
+ */
 class YCaptchaAction extends CCaptchaAction
 {
-
+    /**
+     * @var int|mixed
+     */
     public $minLength = 3;
+    /**
+     * @var int|mixed
+     */
     public $maxLength = 6;
 
-    public function __construct($controller,$id)
+    /**
+     * @param \CController $controller
+     * @param string $id
+     */
+    public function __construct($controller, $id)
     {
-        parent::__construct($controller,$id);
+        parent::__construct($controller, $id);
 
         $module = $controller->getModule();
 
-        if(property_exists($module,"minCaptchaLength")) {
+        if ($module && property_exists($module, "minCaptchaLength")) {
             $this->minLength = $module->minCaptchaLength;
         }
-        if(property_exists($module,"maxCaptchaLength")) {
+        if ($module && property_exists($module, "maxCaptchaLength")) {
             $this->maxLength = $module->maxCaptchaLength;
         }
     }
